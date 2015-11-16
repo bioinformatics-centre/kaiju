@@ -1,0 +1,7 @@
+*.o
+*.swp
+kaiju
+kaiju2krona
+mergeOutputs
+mkbwt
+mkfmi
