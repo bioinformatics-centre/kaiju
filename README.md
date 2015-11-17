@@ -13,6 +13,8 @@ reads, e.g., Illumina or Roche/454, from whole-genome sequencing of
 metagenomic DNA. Reads are directly assigned to taxa using the NCBI taxonomy and a 
 reference database of protein sequences from bacterial and archaeal genomes.
 
+The program is described in a [preprint paper available on bioRxiv](http://biorxiv.org/content/early/2015/11/16/031229).
+
 ###License
 
 Copyright (c) 2015 Peter Menzel and Anders Krogh
