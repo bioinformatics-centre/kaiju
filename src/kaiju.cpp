@@ -75,7 +75,7 @@ int main(int argc, char** argv) {
 	int seed_length = 7;
 	int mismatches  = 0;
 
-	uint64_t num_threads = 1;
+	int num_threads = 1;
 	bool verbose = false;
 	bool debug = false;
 	bool paired  = false;
@@ -160,7 +160,7 @@ int main(int argc, char** argv) {
 								}
 			case 'z': {
 									try {
-										num_threads = stoul(optarg); 
+										num_threads = stoi(optarg);
 									}
 									catch(const std::invalid_argument& ia) {
 										cerr << "Invalid argument in -z " << optarg << endl;
@@ -174,10 +174,11 @@ int main(int argc, char** argv) {
 								usage(argv[0]);
 		}
 	}
-	if(min_score <= 0) { cerr << "Error: Min Score must be greater than 0."  << endl; usage(argv[0]); }
-	if(min_fragment_length <= 0) { cerr << "Error: Min Fragment Length must be greater than 0."  << endl; usage(argv[0]); }
+	if(min_score <= 0) { cerr << "Error: Min Score (-s) must be greater than 0."  << endl; usage(argv[0]); }
+	if(num_threads <= 0) { cerr << "Error: Number of threads (-z) must be greater than 0."  << endl; usage(argv[0]); }
+	if(min_fragment_length <= 0) { cerr << "Error: Min fragment length (-m) must be greater than 0."  << endl; usage(argv[0]); }
 	if(mismatches < 0) { cerr << "Error: Number of mismatches must be >= 0."  << endl; usage(argv[0]); }
-	if(seed_length < 6) { cerr << "Error: Seed length must be >=6."  << endl; usage(argv[0]); }
+	if(seed_length < 7) { cerr << "Error: Seed length must be >= 7."  << endl; usage(argv[0]); }
 	if(nodes_filename.length() == 0) { cerr << "Error: Please specify the location of the nodes.dmp file, using the -t option."  << endl; usage(argv[0]); }
 	if(sa_filename.length() == 0) { cerr << "Error: Please specify the location of the SA file, using the -b option."  << endl; usage(argv[0]); }
 	if(fmi_filename.length() == 0) { cerr << "Error: Please specify the location of the FMI file, using the -f option."  << endl; usage(argv[0]); }
@@ -210,9 +211,8 @@ int main(int argc, char** argv) {
 	if(!nodes_file.is_open()) { cerr << "Error: Could not open file " << nodes_filename << endl; usage(argv[0]); }
 	if(verbose) cerr << "Reading taxonomic tree from file " << nodes_filename << endl;
 	string line;
-	while(nodes_file.good()) {
-		getline(nodes_file, line);
-		if(line.length() == 0) { break; } // this is necessary, because the loop comes around one more time after the last line?!!?!?
+	while(getline(nodes_file, line)) {
+		if(line.length() == 0) { continue; }
 		try {
 			size_t end = line.find_first_not_of("0123456789");
 			uint64_t node = stoul(line.substr(0,end));
@@ -269,7 +269,7 @@ int main(int argc, char** argv) {
 	ProducerConsumerQueue<ReadItem*>* myWorkQueue = new ProducerConsumerQueue<ReadItem*>(500);        
 	std::deque<std::thread> threads;
 	std::deque<ConsumerThread *> threadpointers;
-	for(uint i=0; i < num_threads; i++) {    	
+	for(int i=0; i < num_threads; i++) {
 		ConsumerThread * p = new ConsumerThread(myWorkQueue, config);
 		threadpointers.push_back(p);
 		threads.push_back(std::thread(&ConsumerThread::doWork,p));
@@ -371,7 +371,7 @@ int main(int argc, char** argv) {
 			name = line_from_file;
 			// read lines until next entry starts or file terminates
 			sequence1.clear();
-			while(!in1_file.eof() && in1_file.peek()!='>') {
+			while(!(in1_file.peek()=='>' || in1_file.peek()==EOF)) {
 				getline(in1_file,line_from_file);
 				sequence1.append(line_from_file);
 			}
@@ -395,7 +395,7 @@ int main(int argc, char** argv) {
 					break;
 				}
 				sequence2.clear();
-				while(!in2_file.eof() && in2_file.peek()!='>') {
+				while(!(in2_file.peek()=='>' || in2_file.peek()==EOF)) {
 					getline(in2_file,line_from_file);
 					sequence2.append(line_from_file);
 				}
@@ -456,21 +456,23 @@ void strip(string &s) {
 
 void usage(char *progname) { 
 	fprintf(stderr, "Usage:\n   %s -t nodes.dmp -b allproteins.sa -f allproteins.fmi -i reads.fastq [-j reads2.fastq]\n", progname);
+	fprintf(stderr, "\n");
 	fprintf(stderr, "Mandatory arguments:\n");
 	fprintf(stderr, "   -t FILENAME   Name of nodes.dmp file\n");
 	fprintf(stderr, "   -b FILENAME   Name of .sa file\n");
 	fprintf(stderr, "   -f FILENAME   Name of .fmi file\n");
 	fprintf(stderr, "   -i FILENAME   Name of input file containing reads in FASTA or FASTQ format\n");
+	fprintf(stderr, "\n");
 	fprintf(stderr, "Optional arguments:\n");
 	fprintf(stderr, "   -j FILENAME   Name of second input file for paired-end reads\n");
 	fprintf(stderr, "   -o FILENAME   Name of output file. If not used, then output will be printed to STDOUT\n");
-	fprintf(stderr, "   -z <UINT>     Number of paralle threads (default: 1)\n");
+	fprintf(stderr, "   -z INT        Number of paralle threads (default: 1)\n");
+	fprintf(stderr, "   -a STRING     Run mode, either \"mem\"  or \"greedy\" (default: mem)\n");
+	fprintf(stderr, "   -e INT        Number of mismatches allowed (default: 0)\n");
+	fprintf(stderr, "   -m INT        Minimum match length in MEM mode (default: 11)\n");
+	fprintf(stderr, "   -s INT        Minimum match score in Greedy mode (default: 65)\n");
 	fprintf(stderr, "   -v            Enable verbose output.\n");
 	fprintf(stderr, "   -d            Enable debug output.\n");
-	fprintf(stderr, "   -a MODE       Run mode, either \"mem\"  or \"greedy\" (default: mem)\n");
-	fprintf(stderr, "   -e <UINT>     Number of mismatches allowed (default: 0)\n");
-	fprintf(stderr, "   -m <UINT>     Minimum match length in MEM mode (default: 11)\n");
-	fprintf(stderr, "   -s <UINT>     Minimum match score in Greedy mode (default: 65)\n");
 //fprintf(stderr, "   -l <UINT> Seed length for finding matches in smartfast mode (default: 7)\n");
 	exit(EXIT_FAILURE);
 }

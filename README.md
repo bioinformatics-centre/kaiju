@@ -1,8 +1,6 @@
 
 #Kaiju
 
-version 1.0
-
 Authors:  
 Peter Menzel <pmenzel@gmail.com>   
 Anders Krogh <krogh@binf.ku.dk>   
@@ -47,7 +45,7 @@ For compiling Kaiju and its associated programs:
 cd kaiju/src
 make
 ```
-This will create the executable files `mkfmi`, `mkbwt`, `kaiju`, `mergeOutputs`, and
+This will create the executable files `mkfmi`, `mkbwt`, `kaiju`, `mergeOutputs`, `kaijuReport`, and
 `kaiju2krona` in the `kaiju/bin` directory.
 You can add this directory to your shell's `PATH` variable or copy the those files to a directory in your PATH.
 
@@ -129,7 +127,7 @@ The cutoffs for minimum required match length and match score can be changed usi
 
 ###Output format
 Kaiju will print one line for each read or read pair.
-The default output format contains three columns.
+The default output format contains three columns separated by tabs.
 Using the option `-v` enables the verbose output, which will print additional three columns:
 
 1. either C or U, indicating whether the read is classified or unclassified. 
@@ -141,7 +139,7 @@ Using the option `-v` enables the verbose output, which will print additional th
 
 ##Helper programs
 ###Creating input file for Krona
-The program `kaiju2krona` can be used to convert Kaiju's output file
+The program `kaiju2krona` can be used to convert Kaiju's tab-separated output file
 into a tab-separated text file, which can be imported into [Krona](https://github.com/marbl/Krona/wiki/KronaTools). It requires the nodes.dmp
 and names.dmp files from the NCBI taxonomy in order to map the taxon identifiers from Kaiju's
 output to the taxon names.
@@ -154,21 +152,35 @@ Krona's `ktImportText` program:
 ktImportText -o kaiju.out.html kaiju.out.krona 
 ```
 
+###Creating summary
+The program `kaijuReport` can convert Kaiju's tab-separated output file
+into a summary report file for a given taxonomic rank, e.g., genus. It requires the nodes.dmp
+and names.dmp files from the NCBI taxonomy in order to map the taxon identifiers from Kaiju's
+output to the taxon names.
+```
+kaijuReport -t nodes.dmp -n names.dmp -i kaiju.out -r genus -o kaiju.out.summary
+```
+
 ###Merging outputs
-The program `mergeOutputs` can merge two output files of the same length in the
+The program `mergeOutputs` can merge two tab-separated output files in the
 column format (see above) used by Kaiju and Kraken. Only the first three columns are used.
 
 The files need to be sorted by the read name in the second column, for example by:
 ```
-  sort -k2,2 kaiju.out  >kaiju.out.sort
-  sort -k2,2 kraken.out >kraken.out.sort
+sort -k2,2 kaiju.out  >kaiju.out.sort
+sort -k2,2 kraken.out >kraken.out.sort
 ```
 Then both files can be merged:
 ```
-  mergeOutputs -i kaiju.out.sort -j kraken.out.sort -o combined.out -v
+mergeOutputs -i kaiju.out.sort -j kraken.out.sort -o combined.out -v
 ```
-The output file will also be in the three column format and have the same
-length as the input files.  In the case of conflicting taxon identifiers in both files,
+Again, process substitution can be used without creating intermediate files:
+```
+mergeOutputs -i <(sort -k2,2 kaiju.out) -j <(sort -k2,2 kraken.out) -o combined.out -v
+```
+The output file will be in the same column format as the input files (but only
+contain the first three columns) and it will have the same length as the input
+files (which have to be of same length).  In the case of conflicting taxon identifiers in both files,
 `mergeOutputs` will by default use the identifier found in the first input file (specified by `-i`).
 This behavior can be changed by the `-c` option, which can take the values
 `1` (default), `2` (use identifier from the second file) or `lca`, which determines and prints

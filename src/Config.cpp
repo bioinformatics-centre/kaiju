@@ -18,7 +18,7 @@ void Config::init() {
 }
 
 
-uint64_t lca_from_ids(unordered_map<uint64_t,unsigned int> & node2depth, set<uint64_t> & ids, unordered_map<uint64_t,uint64_t> * nodes) {
+uint64_t Config::lca_from_ids(unordered_map<uint64_t,unsigned int> & node2depth, set<uint64_t> & ids) {
 
 	if(ids.size() == 1) {
 		return *(ids.begin());

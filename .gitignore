@@ -2,6 +2,8 @@
 *.swp
 kaiju
 kaiju2krona
+kaijuReport
 mergeOutputs
 mkbwt
 mkfmi
+bin/

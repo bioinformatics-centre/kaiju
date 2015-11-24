@@ -73,9 +73,8 @@ int main(int argc, char** argv) {
 		nodes_file.open(nodes_filename.c_str());
 		if(!nodes_file.is_open()) { cerr << "Error: Could not open file " << nodes_filename << endl; usage(argv[0]); }
 		string line;
-		while(nodes_file.good()) {
-			getline(nodes_file, line);
-			if(line.length() == 0) { break; } // this is necessary, because the loop comes around one more time after the last line?!!?!?
+		while(getline(nodes_file, line)) {
+			if(line.length() == 0) { continue; }
 			try {
 				size_t end = line.find_first_not_of("0123456789");
 				uint64_t node = stoul(line.substr(0,end));
@@ -264,15 +263,17 @@ string strip(const string &s) {
 
 void usage(char *progname) { 
 	fprintf(stderr, "Usage:\n   %s -i in1.tsv -j in2.tsv [-o outfile.tsv] [-c 1|2|lca] [-t nodes.dmp] [-v] [-d]\n", progname);
+	fprintf(stderr, "\n");
 	fprintf(stderr, "Mandatory arguments:\n");
 	fprintf(stderr, "   -i FILENAME   Name of first input file\n");
 	fprintf(stderr, "   -j FILENAME   Name of second input file\n");
+	fprintf(stderr, "\n");
 	fprintf(stderr, "Optional arguments:\n");
 	fprintf(stderr, "   -o FILENAME   Name of output file.\n");
-	fprintf(stderr, "   -c 1|2|lca   Conflict resolution mode, default: 1\n");
-	fprintf(stderr, "   -t FILENAME   Name of nodes.dmp file, only required of -c is set to lca\n");
-	fprintf(stderr, "   -v Enable verbose output, which will print a summary in the end.\n");
-	fprintf(stderr, "   -d Enable debug output.\n");
+	fprintf(stderr, "   -c STRING     Conflict resolution mode, must be 1, 2 or lca (default: 1)\n");
+	fprintf(stderr, "   -t FILENAME   Name of nodes.dmp file, only required when -c is set to lca\n");
+	fprintf(stderr, "   -v            Enable verbose output, which will print a summary in the end.\n");
+	fprintf(stderr, "   -d            Enable debug output.\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "NOTE: Both input files need to be sorted by the read name in the second column.\n");
 	fprintf(stderr, "\n");

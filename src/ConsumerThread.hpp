@@ -80,7 +80,7 @@ class ConsumerThread {
 	char codon2aa[256];
 	uint8_t aa2int[256];   
 
-	unordered_map<char, vector<char>> blosum_subst;
+	map<char, vector<char>> blosum_subst;
 	int8_t blosum62diag[20];
 	int8_t b62[20][20];
 

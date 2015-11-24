@@ -8,6 +8,7 @@
 #include <fstream>
 #include <time.h>
 #include <unordered_map>
+#include <map>
 #include <algorithm>
 #include <locale>
 #include <string>
@@ -21,8 +22,8 @@ using namespace std;
 int main(int argc, char** argv) {
 
 
-	unordered_map<uint64_t,uint64_t> * nodes = new unordered_map<uint64_t,uint64_t>();
-	unordered_map<uint64_t, string> * node2name = new unordered_map<uint64_t,string>();
+	unordered_map<uint64_t,uint64_t> nodes;
+	unordered_map<uint64_t, string> node2name;
 
 	string nodes_filename = "";
 	string names_filename = "";
@@ -34,7 +35,7 @@ int main(int argc, char** argv) {
 	// --------------------- START ------------------------------------------------------------------
 	// Read command line params
 	char c;
-	while ((c = getopt (argc, argv, "hdvn:t:i:o:")) != -1) {
+	while ((c = getopt (argc, argv, "hvn:t:i:o:")) != -1) {
 		switch (c)  {
 			case 'h':
 				usage(argv[0]);
@@ -63,16 +64,15 @@ int main(int argc, char** argv) {
 	if(!nodes_file.is_open()) { cerr << "Error: Could not open file " << nodes_filename << endl; usage(argv[0]); }
 	if(verbose) cerr << "Reading taxonomic tree from file " << nodes_filename << endl;
 	string line;
-	while(nodes_file.good()) {
-		getline(nodes_file, line);
-		if(line.length() == 0) { break; } // this is necessary, because the loop comes around one more time after the last line?!!?!?
+	while(getline(nodes_file, line)) {
+		if(line.length() == 0) { continue; }
 		try {
 			size_t end = line.find_first_not_of("0123456789");
 			uint64_t node = stoul(line.substr(0,end));
 			size_t start = line.find_first_of("0123456789",end);
 			end = line.find_first_not_of("0123456789",start+1);
 			uint64_t parent = stoul(line.substr(start,end-start));
-			nodes->insert(make_pair(node,parent));  //maybe the nodes->at(node) = parent;  would be faster?!
+			nodes.insert(make_pair(node,parent));
 		}
 		catch(const std::invalid_argument& ia) {
 			cerr << "Found bad number in line: " << line << endl; 
@@ -88,9 +88,8 @@ int main(int argc, char** argv) {
 	names_file.open(names_filename);
 	if(!names_file.is_open()) { cerr << "Error: Could not open file " << names_filename << endl; usage(argv[0]); }
 	if(verbose) cerr << "Reading taxon names from file " << names_filename << endl;
-	while(names_file.good()) {
-		getline(names_file, line);
-		if(line.length() == 0) { break; } // this is necessary, because the loop comes around one more time after the last line?!!?!?
+	while(getline(names_file, line)) {
+		if(line.length() == 0) { continue; }
 		try {
 			if(line.find("scientific name")==string::npos) continue;			
 			size_t start = line.find_first_of("0123456789");
@@ -99,7 +98,7 @@ int main(int argc, char** argv) {
 			start = line.find_first_not_of("\t|",end);
 			end = line.find_first_of("\t|",start+1);
 			string name = line.substr(start,end-start);
-			node2name->insert(make_pair(node,name)); 
+			node2name.insert(make_pair(node,name)); 
 		}
 		catch(const std::invalid_argument& ia) {
 			cerr << "Found bad number in line: " << line << endl; 
@@ -117,11 +116,10 @@ int main(int argc, char** argv) {
 	
 	if(!in1_file.is_open()) {  cerr << "Could not open file " << in1_filename << endl; exit(EXIT_FAILURE); }
 	
-	unordered_map<uint64_t, uint64_t> node2hitcount;
+	map<uint64_t, uint64_t> node2hitcount;
 	
 	while(getline(in1_file,line)) {                		
-
-		if(line.length() == 0) { break; } // this is necessary, because the loop comes around one more time after the last line?!!?!?
+		if(line.length() == 0) { continue; }
 		if(line[0] != 'C') { continue; } // only use classified lines
 
 		size_t found = line.find('\t');
@@ -154,15 +152,24 @@ int main(int argc, char** argv) {
 	if(!krona_file.is_open()) {  cerr << "Could not open file " << out_filename << " for writing" << endl; exit(EXIT_FAILURE); }
 	for(auto  it : node2hitcount) {
 		uint64_t id = it.first;
-		if(nodes->count(id)==0) {
-			cerr << "Warning: Taxon ID " << id << " in database is not contained in taxonomic tree.\n"; 
+		if(nodes.count(id)==0) {
+			cerr << "Warning: Taxon ID " << id << " found in input file is not contained in taxonomic tree file "<< nodes_filename << ".\n";
+			continue;
+		}
+		if(node2name.count(id)==0) {
+			cerr << "Warning: Taxon ID " << id << " found in input file is not contained in names.dmp file "<< names_filename << ".\n";
 			continue;
 		}
 		vector<string> lineage;
-		lineage.push_back(node2name->at(id));
-		while(nodes->count(id)>0 && id != nodes->at(id)) {
-			lineage.insert(lineage.begin(),node2name->at(nodes->at(id)));
-			id = nodes->at(id);	
+		lineage.push_back(node2name.at(id));
+		while(nodes.count(id)>0 && id != nodes.at(id)) {
+			if(node2name.count(nodes.at(id))==0) {
+				cerr << "Warning: Taxon ID " << nodes.at(id) << " found in input file is not contained in names file "<< names_filename << ".\n";
+			}
+			else {
+				lineage.insert(lineage.begin(),node2name.at(nodes.at(id)));
+			}
+			id = nodes.at(id);
 		}
 		krona_file << it.second ;
 		for(auto  itl : lineage) krona_file << "\t" << itl;
@@ -170,23 +177,21 @@ int main(int argc, char** argv) {
 	}
 	krona_file.close();
 
-
-
-	delete nodes;
-	delete node2name;
 	return EXIT_SUCCESS;    
 }
 
 
 void usage(char *progname) { 
 	fprintf(stderr, "Usage:\n   %s -t nodes.dmp -n names.dmp -i kaiju.out -o kaiju2krona.out\n", progname);
+	fprintf(stderr, "\n");
 	fprintf(stderr, "Mandatory arguments:\n");
 	fprintf(stderr, "   -i FILENAME   Name of input file\n");
 	fprintf(stderr, "   -o FILENAME   Name of output file.\n");
 	fprintf(stderr, "   -t FILENAME   Name of nodes.dmp file, only required of -c is set to lca\n");
 	fprintf(stderr, "   -n FILENAME   Name of names.dmp file.\n");
+	fprintf(stderr, "\n");
 	fprintf(stderr, "Optional arguments:\n");
-	fprintf(stderr, "   -v Enable verbose output.\n");
+	fprintf(stderr, "   -v            Enable verbose output.\n");
 	exit(EXIT_FAILURE);
 }
 

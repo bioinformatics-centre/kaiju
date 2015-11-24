@@ -47,9 +47,9 @@ class Config {
 		~Config();
 
 		void init();
+		uint64_t lca_from_ids(unordered_map<uint64_t,unsigned int> & node2depth, set<uint64_t> & ids);
 
 };
 
-uint64_t lca_from_ids(unordered_map<uint64_t,unsigned int> & node2depth, set<uint64_t> & ids, unordered_map<uint64_t,uint64_t> * nodes);
 
 #endif

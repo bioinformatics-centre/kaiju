@@ -446,7 +446,7 @@ uint64_t ConsumerThread::classify_greedyblosum() {
 			extraoutput = ss.str();
 		}
 
-		uint64_t lca = (match_ids.size()==1) ?  *(match_ids.begin()) : lca_from_ids(node2depth, match_ids, config->nodes);
+		uint64_t lca = (match_ids.size()==1) ?  *(match_ids.begin()) : config->lca_from_ids(node2depth, match_ids);
 		//uint64_t lca = lca_fast2(node2depth, &match_ids, config->nodes);
 		return lca;
 
@@ -529,7 +529,7 @@ uint64_t ConsumerThread::classify_length() {
 			extraoutput = ss.str();
 		}
 
-		uint64_t lca = (match_ids.size()==1) ?  *(match_ids.begin()) : lca_from_ids(node2depth, match_ids, config->nodes);
+		uint64_t lca = (match_ids.size()==1) ?  *(match_ids.begin()) : config->lca_from_ids(node2depth, match_ids);
 		return lca;
 
 }
@@ -553,7 +553,7 @@ void ConsumerThread::doWork() {
 		if(config->debug) cerr << "Getting fragments for read: "<< item->sequence1 << "\n"; 
 		getAllFragmentsBits(item->sequence1);
 		if(item->paired) {
-			if(config->debug) cerr << "Getting fragments for 2nd read:" << item->sequence2 << "\n"; 
+			if(config->debug) cerr << "Getting fragments for 2nd read: " << item->sequence2 << "\n";
 			getAllFragmentsBits(item->sequence2);
 		}
 		if(config->debug) cerr << fragments.size()  << " fragments found in the read."<< "\n"; 
