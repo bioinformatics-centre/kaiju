@@ -56,7 +56,7 @@ and the taxonomy information from the NCBI FTP server.
 The files are several GB in size and need to be decompressed. Therefore these steps
 need to be done in a directory with at least 50GB free space.
 ```
-wget ftp://ftp.ncbi.nlm.nih.gov/genomes/Bacteria/all.gbk.tar.gz
+wget ftp://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Bacteria/all.gbk.tar.gz
 wget ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz
 ```
 Note that the location of the files on the server might change in the future.

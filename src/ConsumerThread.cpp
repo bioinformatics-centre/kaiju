@@ -321,7 +321,7 @@ void ConsumerThread::addAllMismatchVariantsAtPosSI(Fragment * f, uint pos, size_
 			fragments.insert(std::pair<uint,Fragment *>(score_after_subst,new Fragment(fragment,f->num_mm+1, pos, f->diff + diff,si)));
 		}
 		else {
-			if(config->debug) { fragment[pos] = itv; cerr << "Skipping fragment "<< fragment <<" and following fragments, because score is too low: " << score_after_subst << " < " << config->min_score << "\n"; }
+			if(config->debug) { fragment[pos] = itv; cerr << "Skipping fragment "<< fragment <<" and following fragments, because score is too low: " << score_after_subst << " < " << max(best_match_score,config->min_score) << "\n"; }
 			break;
 		}
 	}   
