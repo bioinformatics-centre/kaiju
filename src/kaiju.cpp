@@ -1,8 +1,6 @@
 /*************************************************
   Kaiju
 
-  version 1.0.2
-
   Author: Peter Menzel <pmenzel@gmail.com> and
           Anders Krogh <krogh@binf.ku.dk>
 
@@ -34,7 +32,6 @@
 #include <algorithm>
 #include <locale>
 #include <string>
-#include <functional> //TODO remove?
 
 #include "./ProducerConsumerQueue/src/ProducerConsumerQueue.hpp"
 
