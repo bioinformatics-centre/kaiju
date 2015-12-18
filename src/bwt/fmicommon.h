@@ -2,7 +2,6 @@
  * Kaiju is licensed under the GPLv3, see the file LICENSE. */
 
 
-
 /* Since the definition of ex2 may differ between implementations,
    this header file MUST be included AFTER defining ex2
 */
@@ -10,8 +9,6 @@
 
 #ifndef COMMONFMI_h
 #define COMMONFMI_h
-
-#include <pthread.h>
 
 // const char ex1=16;   // Exponent for checkpoint index 1 (dist 2^e1 between them)
 #define ex1 16   // Exponent for checkpoint index 1 (dist 2^e1 between them)
@@ -89,7 +86,9 @@ static FMI *alloc_FMI_common(uchar *bwt, IndexType bwtlen, int alen, size_t inde
   f->bwt = bwt;
   f->bwtlen = bwtlen;
   f->N1 = ((bwtlen-1)>>ex1)+2;
+  if (f->N1<<ex1 == bwtlen) f->N1 -= 1;
   f->N2 = ((bwtlen-1)>>ex2)+2;
+  if (f->N1<<ex2 == bwtlen) f->N2 -= 1;
   f->index1 = (IndexType **)malloc(f->N1*sizeof(IndexType *));
   for (i=0;i<f->N1;++i) f->index1[i]=(IndexType *)malloc(alen*sizeof(IndexType));
   f->index2 = (ushort**)malloc(f->N2*sizeof(ushort*));
@@ -99,152 +98,28 @@ static FMI *alloc_FMI_common(uchar *bwt, IndexType bwtlen, int alen, size_t inde
 
 
 
-typedef struct {
-  FMI *fmi;
-  IndexType R1;
-  pthread_mutex_t lock;
-} FMIpar;
-
-/* This function sets the values at index2.
-   Each FMI method may have to additionally recode the BWT
-
-   NOT FINISHED AND CHECKED
-*/
-static void makeIndex_part_common(FMIpar *fmip) {
-  IndexType i, ii, R1, R2, from, to;
-  int a;
-  uchar *sbwt;
-  FMI *fmi = fmip->fmi;
-  int *total = (int *)malloc(fmi->alen*sizeof(IndexType));
-
-  while (1) {
-    pthread_mutex_lock(&(fmip->lock));
-    R1 = fmip->R1;
-    if (R1>=fmi->N1) {
-      pthread_mutex_unlock(&(fmip->lock));
-      break;
-    }
-    ++fmip->R1;
-    pthread_mutex_unlock(&(fmip->lock));
-    
-    for (a=0;a<fmi->alen;++a) total[a]=0;
-
-    // Note that current char is NOT counted
-    i=0;
-    R2=0;
-    from = R1<<ex1;
-    to = (R1+1)<<ex1;
-    if (to>fmi->bwtlen) to = fmi->bwtlen;
-    sbwt=fmi->bwt;
-    for (ii=from; ii<to; ++ii) {
-      /* Check if we are at a checkpoint 2 */
-      if ( ii>0 && !(ii&check2) ) {
-	R2 = ii>>ex2;
-	/* Checkpoint values */
-	for (a=0; a<fmi->alen; ++a) fmi->index2[R2][a]=(ushort)(total[a]);
-	/* Reset counter */
-	i=0;
-	sbwt+=size2;
-      }
-      a = sbwt[i];
-      if (a<0 || a >= fmi->alen) {
-	fprintf(stderr,"makeIndex_common: letter %d not in range at %ld, alen=%d\n",a,ii,fmi->alen);
-	exit(199);
-      }
-      total[a] += 1;
-      ++i;
-    }
-    for (a=0; a<fmi->alen; ++a) fmi->index2[R2+1][a]=(ushort)(total[a]);    
-  }
-  free(total);
-}
-
-
-
-
-/* This function sets the values at index1 and index2.
-   Each FMI method may have to additionally recode the BWT
-
-   NOT FINISHED AND CHECKED
-*/
-static FMI *makeIndex_common_parallel(uchar *bwt, long bwtlen, int alen, int nthreads) {
-  IndexType R1, R2;
-  int a, i;
-  uchar *sbwt;
-  FMI *fmi = alloc_FMI(bwt,bwtlen,alen);
-  pthread_t *worker = (pthread_t *)malloc(nthreads*sizeof(pthread_t));
-  FMIpar *fmip = (FMIpar *)malloc(sizeof(FMIpar));
-
-  pthread_mutex_init(&(fmip->lock), NULL);
-
-  for (i=0; i<nthreads; ++i) {
-    pthread_create(&(worker[i]), NULL, makeIndex_part_common, (void*)fmip);
-  }
-  for (i=0; i<nthreads; ++i) pthread_join(worker[i], NULL);
-  free(worker);
-  free(fmip);
-
-  IndexType *total = (IndexType *)malloc(alen*sizeof(IndexType));
-  for (a=0;a<alen;++a) {
-    fmi->index1[0][a]=0;
-    fmi->index2[0][a]=0;
-    total[a]=0;
-  }
-
-  for (R1=1; R1<fmi->N1; ++R1) {
-    R2 = R1<<(ex1-ex2);
-    for (a=0;a<alen;++a) {
-      fmi->index1[R1][a] = fmi->index1[R1-1][a]+fmi->index1[R2][a];
-      fmi->index1[R2][a] = 0;
-    }
-  }
-
-  // The last entry of index2 (doesn't matter if last was already a power of ex2)
-  // R2 = 1+((ii-1)>>ex2);
-  R2 = R1<<(ex1-ex2);
-  /* Insert values in checkpoint 2 */
-  for (a=0;a<alen;++a) fmi->index2[R2][a]=(ushort)(total[a]-fmi->index1[R1][a]);
-
-  fprintf(stderr,"index2 done ... ");
-
-  // Now add total letter count to all of index1
-  // Also save the letter starts in the last index 1
-  IndexType ii=0;
-  for (a=1;a<alen;++a) {
-    ii += total[a-1];
-    for (R1=0; R1 < fmi->N1; ++R1) fmi->index1[R1][a] += ii;
-  }
-
-  free(total);
-
-  return fmi;
-}
-
-
-
-
-
-
-
 /* This function sets the values at index1 and index2.
    Each FMI method may have to additionally recode the BWT
 */
 static FMI *makeIndex_common(uchar *bwt, long bwtlen, int alen) {
   IndexType i, ii, R1, R2, *total;
   int a, *current;
-  uchar *sbwt;
+  // uchar *sbwt;
   FMI *fmi = alloc_FMI(bwt,bwtlen,alen);
 
-  current = (int *)malloc(alen*sizeof(int));
-  total = (IndexType *)malloc(alen*sizeof(IndexType));
-  for (a=0;a<alen;++a) fmi->index1[0][a]=0;
+  current = (int *)calloc(alen,sizeof(int));
+  total = (IndexType *)calloc(alen,sizeof(IndexType));
   for (a=0;a<alen;++a) fmi->index2[0][a]=0;
+
+  /*
+  for (a=0;a<alen;++a) fmi->index1[0][a]=0;
   for (a=0;a<alen;++a) current[a]=total[a]=0;
+  */
 
   // Note that current char is NOT counted
   i=0;
   R1=R2=0;
-  sbwt=bwt;
+  // sbwt=bwt;
   IndexType ten_percent = bwtlen/10;
   for (ii=0; ii<bwtlen; ++ii) {
     if ( (ii+1)%ten_percent==0 ) fprintf(stderr,"%d%% ... ",10*(int)((ii+1)/ten_percent));
@@ -261,16 +136,17 @@ static FMI *makeIndex_common(uchar *bwt, long bwtlen, int alen) {
       /* Reset counter */
       for (a=0;a<alen;++a) current[a]=0;
       i=0;
-      sbwt+=size2;
+      // sbwt+=size2;
     }
-    a = sbwt[i];
+    // a = sbwt[i];
+    a = bwt[ii];
     if (a<0 || a>=alen) {
       fprintf(stderr,"makeIndex_common: letter %d not in range at %ld, alen=%d\n",a,ii,alen);
       exit(199);
     }
     total[a] += 1;
     current[a] += 1;
-    ++i;
+    // ++i;
   }
 
   // The last entry of index2 (doesn't matter if last was already a power of ex2)
@@ -282,14 +158,11 @@ static FMI *makeIndex_common(uchar *bwt, long bwtlen, int alen) {
 
   fprintf(stderr,"index2 done ... ");
 
-  // Now add total letter count to all of index1
-  // Also save the letter starts in the last index 1
-  ii=0;
-  for (a=1;a<alen;++a) {
-    ii += total[a-1];
-    fmi->index1[fmi->N1-1][a]=ii;
-    for (R1=0; R1 < fmi->N1-1; ++R1) fmi->index1[R1][a] += ii;
-  }
+  // Save the letter starts in the last index1
+  // Add to all of index1
+  fmi->index1[fmi->N1-1][0]=0;
+  for (a=1;a<alen;++a) fmi->index1[fmi->N1-1][a]=fmi->index1[fmi->N1-1][a-1]+total[a-1];
+  for (R1=0; R1 < fmi->N1-1; ++R1) for (a=1;a<alen;++a) fmi->index1[R1][a] += fmi->index1[fmi->N1-1][a];
 
   free(current);
   free(total);
@@ -312,10 +185,13 @@ static void write_fmi_common(const FMI *f, int index2_size, FILE *fp) {
 
 
 
-/* Write the FMI in file (binary) */
+/* Read the FMI in file (binary)
+*/
 static FMI *read_fmi_common(int index2_size, FILE *fp) {
   int i;
   FMI *f = (FMI *)malloc(sizeof(FMI));
+
+  f->bwt=NULL;
 
   fread(&(f->alen),sizeof(int),1,fp);
   fread(&(f->bwtlen),sizeof(IndexType),1,fp);
@@ -339,8 +215,6 @@ static FMI *read_fmi_common(int index2_size, FILE *fp) {
 
   return f;
 }
-
-
 
 
 

@@ -367,8 +367,7 @@ uint64_t ConsumerThread::classify_greedyblosum() {
 			char * seq = new char [length+1];
 			std::strcpy(seq, fragment.c_str());
 
-			translate2numbers_ptr((uchar *)seq, length, config->trans);
-			//translate2numbers((uchar *)seq, length, config->bwt->alphabet, config->bwt->alen);
+			translate2numbers((uchar *)seq, length, config->astruct);
 			
 			SI * si = NULL;
 			if(num_mm > 0) {
@@ -376,7 +375,7 @@ uint64_t ConsumerThread::classify_greedyblosum() {
 					si = maxMatches_withStart(config->fmi, seq, length, config->min_fragment_length, 1,t->si0,t->si1,t->matchlen); 
 				}
 				else { 
-					si = maxMatches_withStart(config->fmi, seq, length, length - t->pos_lastmm, 1,t->si0,t->si1,t->matchlen); 
+					si = maxMatches_withStart(config->fmi, seq, length, t->matchlen+1, 1,t->si0,t->si1,t->matchlen); 
 				}
 			 	
 			}
@@ -468,10 +467,10 @@ uint64_t ConsumerThread::classify_length() {
 			char * seq = new char[length+1];
 			std::strcpy(seq, fragment.c_str());
 
-			translate2numbers_ptr((uchar *)seq, length, config->trans);
-			//translate2numbers((uchar *)seq, length, config->bwt->alphabet, config->bwt->alen);
+			translate2numbers((uchar *)seq, length, config->astruct);
 			//use longest_match_length here too:
-			SI * si = maxMatches(config->fmi, seq, length, max(config->min_fragment_length,longest_match_length),  1);
+			//SI * si = maxMatches(config->fmi, seq, length, max(config->min_fragment_length,longest_match_length),  1);
+			SI * si = greedyExact(config->fmi, seq, length, max(config->min_fragment_length,longest_match_length),  -1);
 
 			if(!si) {// no match for this fragment
 				if(config->debug) cerr << "No match for this fragment." << "\n";
@@ -491,13 +490,13 @@ uint64_t ConsumerThread::classify_length() {
 				longest_match_length = (uint)si->ql;
 				if(config->verbose) {
 					longest_fragments.clear(); 
-					longest_fragments.push_back(fragment);
+					longest_fragments.push_back(fragment.substr(si->qi,si->ql));
 				}
 			}
 			else if((uint)si->ql == longest_match_length) { 
 				longest_matches_SI.push_back(si);
 				if(config->verbose) 
-					longest_fragments.push_back(fragment);
+					longest_fragments.push_back(fragment.substr(si->qi,si->ql));
 			}
 			else {
 				recursive_free_SI(si);
@@ -651,19 +650,19 @@ void ConsumerThread::ids_from_SI(SI *si) {
 	IndexType k, pos;
 	int iseq;
 	for (k=si->start; k<si->start+si->len; ++k) {
-		get_suffix(config->fmi, config->bwt, k, &iseq, &pos);
+		get_suffix(config->fmi, config->bwt->s, k, &iseq, &pos);
 		uint64_t id = ULONG_MAX;
 		// we can have either  123_4567 oder 4567 as database names
-		char * pch = strchr(config->bwt->ids[iseq],'_');
+		char * pch = strchr(config->bwt->s->ids[iseq],'_');
 		if(pch != NULL)  {
 			id = strtoul(pch+1,NULL,10);
 		}
 		else {
-			id = strtoul(config->bwt->ids[iseq],NULL,10);
+			id = strtoul(config->bwt->s->ids[iseq],NULL,10);
 		}
 
 		if(id == ULONG_MAX)
-			cerr << "Found bad number (out of range error) in database sequence name: " << config->bwt->ids[iseq] << endl; 
+			cerr << "Found bad number (out of range error) in database sequence name: " << config->bwt->s->ids[iseq] << endl; 
 		else
 			match_ids.insert(id);
 	}
@@ -675,7 +674,7 @@ void ConsumerThread::ids_from_SI_recursive(SI *si) {
 		IndexType k, pos;
 		int iseq;
 		for (k=si_it->start; k<si_it->start+si_it->len; ++k) {
-			get_suffix(config->fmi, config->bwt, k, &iseq, &pos);
+			get_suffix(config->fmi, config->bwt->s, k, &iseq, &pos);
 			/*string id = string(b->ids[iseq]);
 			// we can have either  123_4567 oder 4567 as database names
 			size_t find = id.find("_");
@@ -691,16 +690,16 @@ void ConsumerThread::ids_from_SI_recursive(SI *si) {
 			uint64_t id = ULONG_MAX;
 
 			// we can have either  123_4567 oder 4567 as database names
-			char * pch = strchr(config->bwt->ids[iseq],'_');
+			char * pch = strchr(config->bwt->s->ids[iseq],'_');
 			if(pch != NULL)  { //found _, then use number after _
 				id = strtoul(pch+1,NULL,10);
 			}
 			else { // no _ found
-				id = strtoul(config->bwt->ids[iseq],NULL,10);
+				id = strtoul(config->bwt->s->ids[iseq],NULL,10);
 			}
 
 			if(id == ULONG_MAX)
-				cerr << "Found bad number (out of range error) in database sequence name: " << config->bwt->ids[iseq] << endl; 
+				cerr << "Found bad number (out of range error) in database sequence name: " << config->bwt->s->ids[iseq] << endl; 
 			else
 				match_ids.insert(id);
 		} // end for

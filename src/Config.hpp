@@ -18,6 +18,7 @@
 extern "C" {
 #include "./bwt/fmi.h"
 #include "./bwt/bwt.h"
+#include "./bwt/sequence.h"
 }
 
 using namespace std;
@@ -41,7 +42,7 @@ class Config {
 		FMI * fmi;
 		BWT * bwt;
 
-		uchar * trans;
+		AlphabetStruct * astruct;
 
 		Config();
 		~Config();

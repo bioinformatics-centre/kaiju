@@ -1,8 +1,8 @@
 /* This file is part of Kaiju, Copyright 2015 Peter Menzel and Anders Krogh,
  * Kaiju is licensed under the GPLv3, see the file LICENSE. */
 
-#ifndef CONSUMER_THREAD_H
-#define CONSUMER_THREAD_H
+#ifndef CONSUMERTHREAD_H
+#define CONSUMERTHREAD_H
 
 #define NDEBUG
 
@@ -68,6 +68,7 @@ class Fragment {
 }; 
 
 class ConsumerThread {
+	protected:
 	ProducerConsumerQueue<ReadItem*> * myWorkQueue;        
 
 	unordered_map<uint64_t,unsigned int> node2depth;

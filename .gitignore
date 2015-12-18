@@ -1,6 +1,7 @@
 *.o
 *.swp
 kaiju
+kaijux
 kaiju2krona
 kaijuReport
 mergeOutputs

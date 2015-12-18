@@ -1,0 +1,46 @@
+/* This file is part of Kaiju, Copyright 2015 Peter Menzel and Anders Krogh,
+ * Kaiju is licensed under the GPLv3, see the file LICENSE. */
+
+#ifndef CONSUMERTHREADX_H
+#define CONSUMERTHREADX_H
+
+#define NDEBUG
+
+#include <unordered_map>
+#include <unordered_set>
+#include <list>
+#include <assert.h>
+#include <cmath>
+#include <algorithm>
+#include <mutex>
+#include <iostream>
+#include <sstream>
+#include <vector>
+#include <iterator>
+#include <string>
+#include <cstring>
+#include <climits>
+#include <map>
+
+#include "./ProducerConsumerQueue/src/ProducerConsumerQueue.hpp"
+#include "ReadItem.hpp"
+#include "Config.hpp"
+#include "ConsumerThread.hpp"
+
+using namespace std;
+
+class ConsumerThreadx: public ConsumerThread  {
+	void classify_length();
+	void classify_greedyblosum();
+	void ids_from_SI(SI *);
+	void ids_from_SI_recursive(SI *);
+	set<char *> match_ids; 
+
+	public:        
+	ConsumerThreadx(ProducerConsumerQueue<ReadItem*>* workQueue, Config * config) : ConsumerThread(workQueue, config) { };
+	void doWork(); 
+
+	
+};
+#endif
+

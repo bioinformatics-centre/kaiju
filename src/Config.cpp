@@ -9,12 +9,13 @@ Config::Config() { // constructor
 }
 
 Config::~Config() { // Destructor
-		free(trans);
+	free(astruct->trans);
+	free(astruct->a);
+	free(astruct);
 }
 
 void Config::init() {
-	trans = (uchar *)calloc(128,sizeof(uchar));
-	for(int i=0; i<bwt->alen;++i) trans[(int)bwt->alphabet[i]]=i;
+	astruct = alloc_AlphabetStruct(bwt->alphabet,0,0);
 }
 
 
