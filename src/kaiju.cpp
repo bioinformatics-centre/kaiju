@@ -4,7 +4,7 @@
   Author: Peter Menzel <pmenzel@gmail.com> and
           Anders Krogh <krogh@binf.ku.dk>
 
-  Copyright 2012 Peter Menzel and Anders Krogh
+  Copyright 2015 Peter Menzel and Anders Krogh
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
