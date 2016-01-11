@@ -3,7 +3,7 @@ CXXFLAGS = -ansi -pedantic -O3 -pthread -std=c++11 -g
 LDLIBS = -lpthread
 INCLUDES	= -I./ProducerConsumerQueue/src
 
-all: makefile bwt/mkbwt bwt/mkfmi kaiju kaiju2krona mergeOutputs kaijuReport kaijux
+all: makefile bwt/mkbwt bwt/mkfmi kaiju kaiju2krona mergeOutputs kaijuReport kaijux kaijup
 	mkdir -p ../bin && cp kaiju kaijux kaiju2krona mergeOutputs kaijuReport bwt/mkbwt bwt/mkfmi ../util/gbk2faa.pl ../bin/
 
 bwt/mkbwt bwt/mkfmi bwt/bwt.o bwt/compactfmi.o bwt/sequence.o bwt/suffixArray.o:
@@ -12,8 +12,11 @@ bwt/mkbwt bwt/mkfmi bwt/bwt.o bwt/compactfmi.o bwt/sequence.o bwt/suffixArray.o:
 kaiju: makefile ./bwt/bwt.o ./bwt/compactfmi.o ./bwt/sequence.o ./bwt/suffixArray.o kaiju.o ReadItem.o Config.o ConsumerThread.o  
 	$(CXX) -o kaiju kaiju.o ReadItem.o Config.o ConsumerThread.o ./bwt/bwt.o ./bwt/compactfmi.o ./bwt/sequence.o ./bwt/suffixArray.o $(LDLIBS) 
 
-kaijux: makefile ./bwt/bwt.o ./bwt/compactfmi.o ./bwt/sequence.o ./bwt/suffixArray.o kaijux.o ReadItem.o Config.o ConsumerThread.o  ConsumerThreadx.o 
+kaijux: makefile ./bwt/bwt.o ./bwt/compactfmi.o ./bwt/sequence.o ./bwt/suffixArray.o kaijux.o ReadItem.o Config.o ConsumerThread.o ConsumerThreadx.o 
 	$(CXX) -o kaijux kaijux.o ReadItem.o Config.o ConsumerThread.o ConsumerThreadx.o ./bwt/bwt.o ./bwt/compactfmi.o ./bwt/sequence.o ./bwt/suffixArray.o $(LDLIBS) 
+
+kaijup: makefile ./bwt/bwt.o ./bwt/compactfmi.o ./bwt/sequence.o ./bwt/suffixArray.o kaijup.o ReadItem.o Config.o ConsumerThread.o  ConsumerThreadx.o ConsumerThreadp.o
+	$(CXX) -o kaijup kaijup.o ReadItem.o Config.o ConsumerThread.o ConsumerThreadx.o ConsumerThreadp.o ./bwt/bwt.o ./bwt/compactfmi.o ./bwt/sequence.o ./bwt/suffixArray.o $(LDLIBS) 
 
 kaiju2krona: makefile kaiju2krona.o
 	$(CXX) -o kaiju2krona kaiju2krona.o
@@ -42,6 +45,9 @@ kaiju.o: kaiju.cpp makefile ProducerConsumerQueue/src/ProducerConsumerQueue.hpp 
 kaijux.o: kaijux.cpp makefile ProducerConsumerQueue/src/ProducerConsumerQueue.hpp ProducerConsumerQueue/src/ProducerConsumerQueue.tpp
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c kaijux.cpp
 
+kaijup.o: kaijup.cpp makefile ProducerConsumerQueue/src/ProducerConsumerQueue.hpp ProducerConsumerQueue/src/ProducerConsumerQueue.tpp
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c kaijup.cpp
+
 kaiju2krona.o: kaiju2krona.cpp makefile
 	$(CXX) $(CXXFLAGS) -c kaiju2krona.cpp
 
@@ -52,7 +58,7 @@ kaijuReport.o: kaijuReport.cpp makefile
 	$(CXX) $(CXXFLAGS) -c kaijuReport.cpp
 
 clean: 
-	rm -f -v *.o kaiju kaijux kaiju2krona mergeOutputs kaijuReport ../bin/*
+	rm -f -v *.o kaiju kaijux kaijup kaiju2krona mergeOutputs kaijuReport ../bin/*
 	$(MAKE) -C bwt/ clean
 
 .PHONY: clean 

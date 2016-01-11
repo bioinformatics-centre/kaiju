@@ -45,7 +45,7 @@ For compiling Kaiju and its associated programs, type:
 cd kaiju/src
 make
 ```
-This will create the executable files `mkfmi`, `mkbwt`, `kaiju`, `kaijux`, `mergeOutputs`, `kaijuReport`, 
+This will create the executable files `mkfmi`, `mkbwt`, `kaiju`, `kaijux`, `kaijup`, `mergeOutputs`, `kaijuReport`, 
 `kaiju2krona`, and `gbk2faa.pl` in the `kaiju/bin` directory.
 You can add this directory to your shell's PATH variable or copy the files to a directory in your PATH.
 
@@ -186,4 +186,16 @@ This behavior can be changed by the `-c` option, which can take the values
 `1` (default), `2` (use identifier from the second file) or `lca`, which determines and prints
 the least common ancestor of the taxon identifiers from both files. Option `lca`
 requires to specify the nodes.dmp file using the `-t` option.
+
+###KaijuX and KaijuP
+
+The programs `kaijux` and `kaijup` can be used for finding the best matches for a query sequence
+in a protein database without taxonomic classification, i.e., they will just print the identifier
+of the database sequence. Thus, these programs do not use the nodes.dmp file containing the taxonomy,
+but only need the `.fmi` database file. While `kaijux` takes nucleotide sequences as input and translates
+them into the six reading frames, just like standard `kaiju`, `kaijup` takes protein sequences as input,
+which are directly searched in the database.
+All other parameters remain the same as in standard `kaiju`. In case of paired-end reads, both mates are
+searched independently.
+
 

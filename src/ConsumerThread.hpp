@@ -43,6 +43,15 @@ class Fragment {
 		diff=d; 
 		pos_lastmm=p;
 	}
+	Fragment(string s, uint n, uint p, int d, IndexType arg_si0,IndexType arg_si1,int len) { 
+		seq = s;
+		num_mm=n;
+		diff=d; 
+		pos_lastmm=p;
+		si0 = arg_si0;
+		si1 = arg_si1;
+		matchlen=len;
+	}
 	Fragment(string s, uint n, uint p, int d, SI * si) { 
 		seq = s;
 		num_mm=n;
