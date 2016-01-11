@@ -4,7 +4,7 @@ LDLIBS = -lpthread
 INCLUDES	= -I./ProducerConsumerQueue/src
 
 all: makefile bwt/mkbwt bwt/mkfmi kaiju kaiju2krona mergeOutputs kaijuReport kaijux kaijup
-	mkdir -p ../bin && cp kaiju kaijux kaiju2krona mergeOutputs kaijuReport bwt/mkbwt bwt/mkfmi ../util/gbk2faa.pl ../bin/
+	mkdir -p ../bin && cp kaiju kaijup kaijux kaiju2krona mergeOutputs kaijuReport bwt/mkbwt bwt/mkfmi ../util/gbk2faa.pl ../bin/
 
 bwt/mkbwt bwt/mkfmi bwt/bwt.o bwt/compactfmi.o bwt/sequence.o bwt/suffixArray.o:
 	$(MAKE) -C bwt/
