@@ -308,6 +308,9 @@ void ConsumerThread::addAllMismatchVariantsAtPosSI(Fragment * f, uint pos, size_
 
 	//calc score for whole sequence, so we can substract the diff for each substitution
 	int score = calcScore(fragment,f->diff) - blosum62diag[aa2int[(uint8_t)origchar]]; 
+	IndexType siarray[2], siarrayupd[2];
+	siarray[0] = si->start;
+	siarray[1] = si->start+(IndexType)si->len;
 
 	for(auto itv : blosum_subst.at(origchar)) {
 		// we know the difference between score of original aa and substitution score, this 
@@ -315,16 +318,24 @@ void ConsumerThread::addAllMismatchVariantsAtPosSI(Fragment * f, uint pos, size_
 		// so we add this difference to the fragment
 		int score_after_subst = score + b62[aa2int[(uint8_t)origchar]][aa2int[(uint8_t)itv]];
 		if(score_after_subst >= best_match_score && score_after_subst >= config->min_score) { 
-			fragment[pos] = itv; 	        	         
-			int diff = b62[aa2int[(uint8_t)origchar]][aa2int[(uint8_t)itv]] - blosum62diag[aa2int[(uint8_t)itv]];
-			if(config->debug) cerr << "Adding fragment " << fragment << " mismatch at pos " << pos << " ,diff " << f->diff+diff << ", max score " << score_after_subst << "\n";
-			fragments.insert(std::pair<uint,Fragment *>(score_after_subst,new Fragment(fragment,f->num_mm+1, pos, f->diff + diff,si)));
+			if(UpdateSI(config->fmi, config->astruct->trans[itv], siarray, siarrayupd) != 0) {
+				fragment[pos] = itv;
+				int diff = b62[aa2int[(uint8_t)origchar]][aa2int[(uint8_t)itv]] - blosum62diag[aa2int[(uint8_t)itv]];
+				if(config->debug) cerr << "Adding fragment   " << fragment << " with mismatch at pos " << pos << " ,diff " << f->diff+diff << ", max score " << score_after_subst << "\n";
+				fragments.insert(std::pair<uint,Fragment *>(score_after_subst,new Fragment(fragment,f->num_mm+1, pos, f->diff + diff,siarrayupd[0],siarrayupd[1],si->ql+1)));
+			}
+			else if(config->debug) {
+				fragment[pos] = itv;
+				cerr << "Skipping fragment " << fragment << " mismatch at pos " << pos << ", because " << itv << " is not a valid extension\n";
+			}
+ 
 		}
 		else {
 			if(config->debug) { fragment[pos] = itv; cerr << "Skipping fragment "<< fragment <<" and following fragments, because score is too low: " << score_after_subst << " < " << max(best_match_score,config->min_score) << "\n"; }
 			break;
 		}
-	}   
+	}
+
 }
 
 
@@ -375,7 +386,7 @@ uint64_t ConsumerThread::classify_greedyblosum() {
 					si = maxMatches_withStart(config->fmi, seq, length, config->min_fragment_length, 1,t->si0,t->si1,t->matchlen); 
 				}
 				else { 
-					si = maxMatches_withStart(config->fmi, seq, length, t->matchlen+1, 1,t->si0,t->si1,t->matchlen); 
+					si = maxMatches_withStart(config->fmi, seq, length, t->matchlen, 1,t->si0,t->si1,t->matchlen); 
 				}
 			 	
 			}
@@ -446,7 +457,6 @@ uint64_t ConsumerThread::classify_greedyblosum() {
 		}
 
 		uint64_t lca = (match_ids.size()==1) ?  *(match_ids.begin()) : config->lca_from_ids(node2depth, match_ids);
-		//uint64_t lca = lca_fast2(node2depth, &match_ids, config->nodes);
 		return lca;
 
 }

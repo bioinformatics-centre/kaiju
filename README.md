@@ -15,7 +15,7 @@ The program is described in a [preprint paper available on bioRxiv](http://biorx
 
 ###License
 
-Copyright (c) 2015 Peter Menzel and Anders Krogh
+Copyright (c) 2015, 2016 Peter Menzel and Anders Krogh
 
 Kaiju is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -97,7 +97,7 @@ The file allproteins.fmi created by `mkfmi` and nodes.dmp are the only files nee
 The remaining protein files can be deleted.
 
 ##Running Kaiju
-Kaiju can be run in default mode using these four mandatory options:
+Kaiju requires at least three arguments:
 ```
 kaiju -t nodes.dmp -f allproteins.fmi -i inputfile.fastq
 ```

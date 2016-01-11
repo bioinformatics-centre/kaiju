@@ -1,8 +1,8 @@
 /* This file is part of Kaiju, Copyright 2015 Peter Menzel and Anders Krogh,
  * Kaiju is licensed under the GPLv3, see the file LICENSE. */
 
-#ifndef CONSUMERTHREADX_H
-#define CONSUMERTHREADX_H
+#ifndef CONSUMERTHREADP_H
+#define CONSUMERTHREADP_H
 
 #define NDEBUG
 
@@ -25,20 +25,14 @@
 #include "./ProducerConsumerQueue/src/ProducerConsumerQueue.hpp"
 #include "ReadItem.hpp"
 #include "Config.hpp"
-#include "ConsumerThread.hpp"
+#include "ConsumerThreadx.hpp"
 
 using namespace std;
 
-class ConsumerThreadx: public ConsumerThread  {
-	protected:
-	void classify_length();
-	void classify_greedyblosum();
-	void ids_from_SI(SI *);
-	void ids_from_SI_recursive(SI *);
-	set<char *> match_ids; 
+class ConsumerThreadp: public ConsumerThreadx  {
 
 	public:        
-	ConsumerThreadx(ProducerConsumerQueue<ReadItem*>* workQueue, Config * config) : ConsumerThread(workQueue, config) { };
+	ConsumerThreadp(ProducerConsumerQueue<ReadItem*>* workQueue, Config * config) : ConsumerThreadx(workQueue, config) { };
 	void doWork(); 
 
 	

@@ -1,26 +1,5 @@
-/*************************************************
-  Kaiju
-
-  Author: Peter Menzel <pmenzel@gmail.com> and
-          Anders Krogh <krogh@binf.ku.dk>
-
-  Copyright 2015 Peter Menzel and Anders Krogh
-
-  This program is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-  You should have received a copy of the GNU General Public License
-  along with this program, see file LICENSE.
-  If not, see <http://www.gnu.org/licenses/>.
-  
-  See the file README.md for documentation.
-**************************************************/
+/* This file is part of Kaiju, Copyright 2015 Peter Menzel and Anders Krogh,
+ * Kaiju is licensed under the GPLv3, see the file LICENSE. */
 
 #include <unistd.h>
 #include <stdio.h>
@@ -39,7 +18,7 @@ extern "C" {
 }
 
 #include "ReadItem.hpp"
-#include "ConsumerThread.hpp"
+#include "ConsumerThreadp.hpp"
 #include "Config.hpp"
 
 void usage(char *progname);
@@ -54,11 +33,7 @@ int main(int argc, char** argv) {
 
 	Config * config = new Config();
 
-	unordered_map<uint64_t,uint64_t> * nodes = new unordered_map<uint64_t,uint64_t>();
-
-	string nodes_filename = "";
 	string fmi_filename = "";
-	string sa_filename = "";
 	string in1_filename = "";
 	string in2_filename = "";
 	string output_filename;
@@ -78,7 +53,7 @@ int main(int argc, char** argv) {
 	// --------------------- START ------------------------------------------------------------------
 	// Read command line params
 	char c;
-	while ((c = getopt (argc, argv, "a:hdrvn:m:e:l:t:f:b:i:j:s:z:o:")) != -1) {
+	while ((c = getopt (argc, argv, "a:hdrvn:m:e:l:f:b:i:j:s:z:o:")) != -1) {
 		switch (c)  {
 			case 'a': {
 									if("mem" == string(optarg)) mode = MEM;					
@@ -97,8 +72,6 @@ int main(int argc, char** argv) {
 				output_filename = optarg; break;
 			case 'f':
 				fmi_filename = optarg; break;
-			case 't':
-				nodes_filename = optarg; break;
 			case 'i':
 				in1_filename = optarg; break;
 			case 'j':
@@ -172,7 +145,6 @@ int main(int argc, char** argv) {
 	if(min_fragment_length <= 0) { cerr << "Error: Min fragment length (-m) must be greater than 0."  << endl; usage(argv[0]); }
 	if(mismatches < 0) { cerr << "Error: Number of mismatches must be >= 0."  << endl; usage(argv[0]); }
 	if(seed_length < 7) { cerr << "Error: Seed length must be >= 7."  << endl; usage(argv[0]); }
-	if(nodes_filename.length() == 0) { cerr << "Error: Please specify the location of the nodes.dmp file, using the -t option."  << endl; usage(argv[0]); }
 	if(fmi_filename.length() == 0) { cerr << "Error: Please specify the location of the FMI file, using the -f option."  << endl; usage(argv[0]); }
 	if(in1_filename.length() == 0) { cerr << "Error: Please specify the location of the input file, using the -i option."  << endl; usage(argv[0]); }
 	
@@ -188,7 +160,6 @@ int main(int argc, char** argv) {
 	}
 
 	config->mode = mode;
-	config->nodes = nodes;
 	config->debug = debug;
 	config->verbose = verbose;
 	config->min_score = min_score;
@@ -197,30 +168,6 @@ int main(int argc, char** argv) {
 	config->mismatches = mismatches;
 
 	if(verbose) cerr << getCurrentTime() << " Reading database" << endl;
-
-	ifstream nodes_file;
-	nodes_file.open(nodes_filename.c_str());
-	if(!nodes_file.is_open()) { cerr << "Error: Could not open file " << nodes_filename << endl; usage(argv[0]); }
-	if(verbose) cerr << " Reading taxonomic tree from file " << nodes_filename << endl;
-	string line;
-	while(getline(nodes_file, line)) {
-		if(line.length() == 0) { continue; }
-		try {
-			size_t end = line.find_first_not_of("0123456789");
-			uint64_t node = stoul(line.substr(0,end));
-			size_t start = line.find_first_of("0123456789",end);
-			end = line.find_first_not_of("0123456789",start+1);
-			uint64_t parent = stoul(line.substr(start,end-start));
-			nodes->insert(make_pair(node,parent));  //maybe the nodes->at(node) = parent;  would be faster?!
-		}
-		catch(const std::invalid_argument& ia) {
-			cerr << "Found bad number in line: " << line << endl; 
-		}
-		catch (const std::out_of_range& oor) {
-			cerr << "Found bad number (out of range error) in line: " << line << endl; 
-		}
-	}
-	nodes_file.close();
 
 	if(verbose) cerr << " Reading FM Index from file " << fmi_filename << endl;
 	FILE * fp = fopen(fmi_filename.c_str(),"r");
@@ -247,11 +194,11 @@ int main(int argc, char** argv) {
 
 	ProducerConsumerQueue<ReadItem*>* myWorkQueue = new ProducerConsumerQueue<ReadItem*>(500);        
 	std::deque<std::thread> threads;
-	std::deque<ConsumerThread *> threadpointers;
+	std::deque<ConsumerThreadp *> threadpointers;
 	for(int i=0; i < num_threads; i++) {
-		ConsumerThread * p = new ConsumerThread(myWorkQueue, config);
+		ConsumerThreadp* p = new ConsumerThreadp(myWorkQueue, config);
 		threadpointers.push_back(p);
-		threads.push_back(std::thread(&ConsumerThread::doWork,p));
+		threads.push_back(std::thread(&ConsumerThreadp::doWork,p));
 	}
 
 	ifstream in1_file, in2_file;
@@ -266,7 +213,6 @@ int main(int argc, char** argv) {
 
 	
 	bool isFastQ = false;  
-	bool readNameSuffix = false;
 	string line_from_file;
 	line_from_file.reserve(2000);
 	{
@@ -278,26 +224,19 @@ int main(int argc, char** argv) {
 			cerr << "Auto-detection of file type for file " << in1_filename << " failed."  << endl; 
 			exit(EXIT_FAILURE); 
 		}
-		if(line_from_file.compare(line_from_file.size()-2,2,"/1")==0) 
-			readNameSuffix = true;
 		in1_file.seekg(0, ios::beg);//set pointer to file start again
 	}
 	
 	string name;
 	string sequence1;
-	string sequence2;
 	sequence1.reserve(2000);
-	if(paired) sequence2.reserve(2000);
 
-	if(verbose) cerr << getCurrentTime() << " Start classification using " << num_threads << " threads." << endl;
+	if(verbose) cerr << getCurrentTime() << " Start search using " << num_threads << " threads." << endl;
 
 	while(getline(in1_file,line_from_file)) {                		
 		if(isFastQ) {
 			// remove '@' from beginning of line
 			line_from_file.erase(line_from_file.begin());
-			// delete '/1' from end of read name
-			if(readNameSuffix)
-				line_from_file.erase(line_from_file.size()-2,2);
 			name = line_from_file;
 			// read sequence line
 			getline(in1_file,line_from_file);
@@ -308,45 +247,10 @@ int main(int argc, char** argv) {
 			in1_file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 			// skip quality score line
 			in1_file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-			
-			if(paired) {
-				if(!getline(in2_file,line_from_file)) {
-					//that's the border case where file1 has more entries than file2
-					cerr << "Error: File " << in1_filename <<" has more lines then file " << in2_filename  <<endl;
-					break; 
-				}
-				// remove '@' from beginning of line
-				line_from_file.erase(line_from_file.begin());
-				// delete '/2' from end of read name
-				if(readNameSuffix)
-					line_from_file.erase(line_from_file.size()-2,2);
-				if(name != line_from_file) {
-					cerr << "Error: Read names are not identical between the two input files" << endl;
-					in1_file.close();
-					in2_file.close();
-					break;
-				}
-				// read sequence line
-				getline(in2_file,line_from_file);
-				// remove non-alphabet chars
-				strip(line_from_file);
-				sequence2 = line_from_file;
-				// skip + line	
-				in2_file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-				// skip quality score line
-				in2_file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-				myWorkQueue->push(new ReadItem(name, sequence1, sequence2));
-			}
-			else {
-				myWorkQueue->push(new ReadItem(name, sequence1));
-			}
-
 		}
 		else { //Fasta
 			// remove '>' from beginning of line
 			line_from_file.erase(line_from_file.begin());
-			if(readNameSuffix)
-				line_from_file.erase(line_from_file.size()-2,2);
 			name = line_from_file;
 			// read lines until next entry starts or file terminates
 			sequence1.clear();
@@ -355,50 +259,51 @@ int main(int argc, char** argv) {
 				sequence1.append(line_from_file);
 			}
 			strip(sequence1);
-
-			if(paired) {
-				if(!getline(in2_file,line_from_file)) {
-					//that's the border case where file1 has more entries than file2
-					cerr << "Error: File " << in1_filename <<" has more lines then file " << in2_filename  <<endl;
-					break; 
-				}
-				// remove '>' from beginning of line
-				line_from_file.erase(line_from_file.begin());
-				// delete '/2' from end of read name
-				if(readNameSuffix)
-					line_from_file.erase(line_from_file.size()-2,2);
-				if(name != line_from_file) {
-					cerr << "Error: Read names are not identical between the two input files" << endl;
-					in1_file.close();
-					in2_file.close();
-					break;
-				}
-				sequence2.clear();
-				while(!(in2_file.peek()=='>' || in2_file.peek()==EOF)) {
-					getline(in2_file,line_from_file);
-					sequence2.append(line_from_file);
-				}
-				strip(sequence2);
-				myWorkQueue->push(new ReadItem(name, sequence1, sequence2));
-			}
-			else {
-				myWorkQueue->push(new ReadItem(name, sequence1));
-			}
-
 		} // end Fasta
+		myWorkQueue->push(new ReadItem(name, sequence1));
 
 	} // end main loop around file1
+
+	if(paired) {
+		//search second file
+		while(getline(in2_file,line_from_file)) {                		
+			if(isFastQ) {
+				// remove '@' from beginning of line
+				line_from_file.erase(line_from_file.begin());
+				name = line_from_file;
+				// read sequence line
+				getline(in1_file,line_from_file);
+				// remove non-alphabet chars
+				strip(line_from_file);
+				sequence1 = line_from_file;
+				// skip + line	
+				in1_file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+				// skip quality score line
+				in1_file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+			}
+			else { //Fasta
+				// remove '>' from beginning of line
+				line_from_file.erase(line_from_file.begin());
+				name = line_from_file;
+				// read lines until next entry starts or file terminates
+				sequence1.clear();
+				while(!(in1_file.peek()=='>' || in1_file.peek()==EOF)) {
+					getline(in1_file,line_from_file);
+					sequence1.append(line_from_file);
+				}
+				strip(sequence1);
+			} // end Fasta
+
+			myWorkQueue->push(new ReadItem(name, sequence1));
+
+		} // end main loop around file1
+
+	}
 
 	myWorkQueue->pushedLast();    	
 
 	if(in1_file.is_open()) in1_file.close();
-	
-	if(paired && in2_file.is_open()) {
-		if(getline(in2_file,line_from_file) && line_from_file.length()>0) {
-			cerr << "Warning: File " << in2_filename <<" has more reads then file " << in1_filename  <<endl;
-		}
-		in2_file.close();
-	}
+	if(paired && in2_file.is_open()) in2_file.close();
 
 	while(!threads.empty()) {
 		threads.front().join();
@@ -416,7 +321,6 @@ int main(int argc, char** argv) {
 
 	delete myWorkQueue;
 	delete config;
-	delete nodes;
 	return EXIT_SUCCESS;    
 }
 
@@ -434,10 +338,9 @@ void strip(string &s) {
 }
 
 void usage(char *progname) { 
-	fprintf(stderr, "Usage:\n   %s -t nodes.dmp -f allproteins.fmi -i reads.fastq [-j reads2.fastq]\n", progname);
+	fprintf(stderr, "Usage:\n   %s -f allproteins.fmi -i reads.fastq [-j reads2.fastq]\n", progname);
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Mandatory arguments:\n");
-	fprintf(stderr, "   -t FILENAME   Name of nodes.dmp file\n");
 	fprintf(stderr, "   -f FILENAME   Name of .fmi file\n");
 	fprintf(stderr, "   -i FILENAME   Name of input file containing reads in FASTA or FASTQ format\n");
 	fprintf(stderr, "\n");
