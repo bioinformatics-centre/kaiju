@@ -296,7 +296,7 @@ int main(int argc, char** argv) {
 			// remove '@' from beginning of line
 			line_from_file.erase(line_from_file.begin());
 			// delete '/1' from end of read name
-			if(readNameSuffix)
+			if(paired && readNameSuffix)
 				line_from_file.erase(line_from_file.size()-2,2);
 			name = line_from_file;
 			// read sequence line
@@ -345,7 +345,7 @@ int main(int argc, char** argv) {
 		else { //Fasta
 			// remove '>' from beginning of line
 			line_from_file.erase(line_from_file.begin());
-			if(readNameSuffix)
+			if(paired && readNameSuffix)
 				line_from_file.erase(line_from_file.size()-2,2);
 			name = line_from_file;
 			// read lines until next entry starts or file terminates
