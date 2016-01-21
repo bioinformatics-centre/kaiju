@@ -265,23 +265,11 @@ int main(int argc, char** argv) {
 	}
 
 	
+	bool firstline = true;
 	bool isFastQ = false;  
 	bool readNameSuffix = false;
 	string line_from_file;
 	line_from_file.reserve(2000);
-	{
-		getline(in1_file,line_from_file);
-		char fileTypeIdentifier = line_from_file.front();
-		if(fileTypeIdentifier == '@')
-			isFastQ = true;
-		else if(fileTypeIdentifier != '>') {
-			cerr << "Auto-detection of file type for file " << in1_filename << " failed."  << endl; 
-			exit(EXIT_FAILURE); 
-		}
-		if(line_from_file.compare(line_from_file.size()-2,2,"/1")==0) 
-			readNameSuffix = true;
-		in1_file.seekg(0, ios::beg);//set pointer to file start again
-	}
 	
 	string name;
 	string sequence1;
@@ -292,6 +280,18 @@ int main(int argc, char** argv) {
 	if(verbose) cerr << getCurrentTime() << " Start classification using " << num_threads << " threads." << endl;
 
 	while(getline(in1_file,line_from_file)) {                		
+		if(firstline) {
+			char fileTypeIdentifier = line_from_file[0];
+			if(fileTypeIdentifier == '@')
+				isFastQ = true;
+			else if(fileTypeIdentifier != '>') {
+				cerr << "Auto-detection of file type for file " << in1_filename << " failed."  << endl;
+				exit(EXIT_FAILURE);
+			}
+			if(line_from_file.compare(line_from_file.size()-2,2,"/1")==0)
+				readNameSuffix = true;
+			firstline=false;
+		}
 		if(isFastQ) {
 			// remove '@' from beginning of line
 			line_from_file.erase(line_from_file.begin());
