@@ -31,16 +31,19 @@ int main(int argc, char** argv) {
 	string out_filename;
 
 	bool verbose = false;
+	bool count_unclassified = false;
 
 	// --------------------- START ------------------------------------------------------------------
 	// Read command line params
 	char c;
-	while ((c = getopt (argc, argv, "hvn:t:i:o:")) != -1) {
+	while ((c = getopt (argc, argv, "huvn:t:i:o:")) != -1) {
 		switch (c)  {
 			case 'h':
 				usage(argv[0]);
 			case 'v':
 				verbose = true; break;
+			case 'u':
+				count_unclassified = true; break;
 			case 'o':
 				out_filename = optarg; break;
 			case 'n':
@@ -117,10 +120,14 @@ int main(int argc, char** argv) {
 	if(!in1_file.is_open()) {  cerr << "Could not open file " << in1_filename << endl; exit(EXIT_FAILURE); }
 	
 	map<uint64_t, uint64_t> node2hitcount;
+	long num_unclassified = 0;
 	
 	while(getline(in1_file,line)) {                		
 		if(line.length() == 0) { continue; }
-		if(line[0] != 'C') { continue; } // only use classified lines
+		if(line[0] != 'C') {
+			if(count_unclassified) num_unclassified++;
+			continue;
+		}
 
 		size_t found = line.find('\t');
 		found = line.find('\t',found+1);
@@ -173,7 +180,10 @@ int main(int argc, char** argv) {
 		}
 		krona_file << it.second ;
 		for(auto  itl : lineage) krona_file << "\t" << itl;
-		krona_file << endl;
+		krona_file << "\n";
+	}
+	if(count_unclassified && num_unclassified>0) {
+		krona_file << num_unclassified << "\tUnclassified" << endl;
 	}
 	krona_file.close();
 
@@ -192,6 +202,7 @@ void usage(char *progname) {
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Optional arguments:\n");
 	fprintf(stderr, "   -v            Enable verbose output.\n");
+	fprintf(stderr, "   -u            Include count for unclassified reads in output.\n");
 	exit(EXIT_FAILURE);
 }
 
