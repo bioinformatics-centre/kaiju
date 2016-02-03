@@ -44,7 +44,7 @@ static inline long uchar2long(uchar *c, int n) {
   For SA entry k, return seq no. (in *nseq) and position within (*pos)
   Entry consists of nbytes bytes starting at position sa+k*nbytes.
 */
-static inline void suffixArray_decode_number(int *nseq, long *pos, int k, suffixArray *s) {
+static inline void suffixArray_decode_number(int *nseq, long *pos, long k, suffixArray *s) {
   long val = uchar2long( (s->sa + k * s->nbytes), s->nbytes);
   *nseq = val>>s->pbits;
   *pos = val & s->mask;
