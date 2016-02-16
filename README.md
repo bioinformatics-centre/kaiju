@@ -33,7 +33,8 @@ along with the source code.  If not, see <http://www.gnu.org/licenses/>.
 
 
 ##Downloading and compiling Kaiju
-Kaiju can be downloaded directly from GitHub either as a compressed archive or 
+Kaiju can be downloaded directly from GitHub either as a
+[compressed archive](https://github.com/bioinformatics-centre/kaiju/archive/master.tar.gz) or
 using the git command line client:
 ```
 git clone https://github.com/bioinformatics-centre/kaiju.git
@@ -55,7 +56,7 @@ You can add this directory to your shell's PATH variable or copy the files to a 
 Before classification of reads, Kaiju's database index needs to be built from the reference protein database.
 The program `makeDB.sh` in the `bin/` directory will download the complete
 genome and taxonomy files from the NCBI FTP server, convert them to the protein
-database and construct the BWT and FMI-index in one go.
+database and construct Kaiju's index (the Borrows-Wheeler-transform and the FM-index) in one go.
 
 It is recommended to create a new folder for the download and run the program from there, e.g.:
 ```
@@ -66,12 +67,13 @@ makeDB.sh
 The downloaded files are several GB in size. Therefore, the program should be
 run in a directory with at least 50 GB free space.
 
-`makeDB.sh` can additionally also add viral genomes to the database by using the option `-v`.
+Additional to archaeal and bacterial genomes, `makeDB.sh` can also add viral genomes to the database by using the option `-v`.
 
-By default `makeDB` downloads and extracts 5 files in parallel. This number can
+By default, `makeDB` downloads and extracts 5 files in parallel. This number can
 be changed by modifying the appropriate variables at the beginning of the
-script.  The program also uses 5 parallel threads for construction the BWT,
-which can be changed by using the option `-t`.
+script.  The program also uses 5 parallel threads for construction the index,
+which can be changed by using the option `-t`. Note that a higher number of threads
+increases the memory usage during index construction.
 
 After `makeDB.sh` is finished, only the files `allproteins.fmi`, `nodes.dmp`,
 and `names.dmp` are needed to run Kaiju.  The remaining files and the `genomes`
