@@ -1,4 +1,3 @@
-
 #Kaiju
 
 Authors:  
@@ -12,6 +11,8 @@ metagenomic DNA. Reads are directly assigned to taxa using the NCBI taxonomy and
 reference database of protein sequences from bacterial and archaeal genomes.
 
 The program is described in a [preprint paper available on bioRxiv](http://biorxiv.org/content/early/2015/11/16/031229).
+
+Kaiju can be installed locally (see below) or used via a [web server](http://kaiju.binf.ku.dk/).
 
 ###License
 
@@ -39,62 +40,42 @@ git clone https://github.com/bioinformatics-centre/kaiju.git
 ```
 This will create the directory `kaiju` in the current directory.
 
-Kaiju is written in C and C++ for Linux and does not depend on additional libraries.   
+Kaiju is written in C/C++ for Linux and does not depend on additional libraries.
 For compiling Kaiju and its associated programs, type:
 ```
 cd kaiju/src
 make
 ```
 This will create the executable files `mkfmi`, `mkbwt`, `kaiju`, `kaijux`, `kaijup`, `mergeOutputs`, `kaijuReport`, 
-`kaiju2krona`, and `gbk2faa.pl` in the `kaiju/bin` directory.
+`kaiju2krona`, and `makeDB.sh` in the `kaiju/bin` directory.
 You can add this directory to your shell's PATH variable or copy the files to a directory in your PATH.
 
-##Creating the reference database
-###Download files
-The first step is to download the GenBank files for microbial genomes
-and the taxonomy information from the NCBI FTP server. 
-The files are several GB in size and need to be decompressed. Therefore, these steps
-need to be done in a directory with at least 50 GB free space.
-```
-wget ftp://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Bacteria/all.gbk.tar.gz
-wget ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz
-```
-Note that the location of the files on the server might change in the future.
+##Creating the reference database and index
 
-Then the GenBank files are extracted into a subdirectory `genomes` and 
-the needed taxonomy files are extracted to the current directory:
-```
-mkdir genomes
-tar -C genomes -xf all.gbk.tar.gz
-tar xf taxdump.tar.gz nodes.dmp names.dmp
-```
-###Convert gbk files
-The Perl script `gbk2faa.pl` converts
-`.gbk` files into `.faa` files, which have the taxon id in the FASTA header lines.
+Before classification of reads, Kaiju's database index needs to be built from the reference protein database.
+The program `makeDB.sh` in the `bin/` directory will download the complete
+genome and taxonomy files from the NCBI FTP server, convert them to the protein
+database and construct the BWT and FMI-index in one go.
 
-Run this script for each of the GenBank files and finally paste all sequences
-into one file `allproteins.faa`:
-
+It is recommended to create a new folder for the download and run the program from there, e.g.:
 ```
-find ./genomes -name "*.gbk" | xargs -i gbk2faa.pl '{}' '{}'.faa
-cat all/*/*.faa >allproteins.faa
+mkdir kaijudb
+cd kaijudb
+makeDB.sh
 ```
-Several files can be converted simultaneously by using the option `-P` for `xargs`.
+The downloaded files are several GB in size. Therefore, the program should be
+run in a directory with at least 50 GB free space.
 
-###Create Borrows-Wheeler-transform and FM-index
-The last step creates the database index (FM-index and suffix array) that is used by Kaiju from `allproteins.faa`:
-```
-mkbwt -e 3 -n 5 -a ACDEFGHIKLMNPQRSTVWY -o allproteins allproteins.faa
-mkfmi -i allproteins
-```
-The `-n` option of `mkbwt` specifies the number of parallel CPU threads to use. The more threads are used, the higher the memory consumption is.
-For example, 5 parallel threads require around 7.5 GB memory with the current NCBI database comprising 2785 genomes.
+`makeDB.sh` can additionally also add viral genomes to the database by using the option `-v`.
 
-The `-e` option specifies the exponent of the suffix array checkpoint distances and therefore influences the size of the suffix array and
-the speed of the search. A value of 3 translates roughly to a database size of ca. 5 GB and increasing the number will decrease the size.
+By default `makeDB` downloads and extracts 5 files in parallel. This number can
+be changed by modifying the appropriate variables at the beginning of the
+script.  The program also uses 5 parallel threads for construction the BWT,
+which can be changed by using the option `-t`.
 
-The file allproteins.fmi created by `mkfmi` and nodes.dmp are the only files needed to run Kaiju.
-The remaining protein files can be deleted.
+After `makeDB.sh` is finished, only the files `allproteins.fmi`, `nodes.dmp`,
+and `names.dmp` are needed to run Kaiju.  The remaining files and the `genomes`
+folder containing the downloaded genomes can be deleted.
 
 ##Running Kaiju
 Kaiju requires at least three arguments:
@@ -117,12 +98,18 @@ The output can also be written to a file using the `-o` option:
 kaiju -t nodes.dmp -f allproteins.fmi -i inputfile.fastq -o kaiju.out
 ```
 
+Kaiju can use multiple parallel threads, which can be specified with the `-z` option, e.g. for using 25 parallel threads:
+```
+kaiju -z 25 -t nodes.dmp -f allproteins.fmi -i inputfile.fastq -o kaiju.out
+```
+
 The default run mode is MEM. For using Greedy mode, set the mode via the option `-a` and the number 
 of allowed substitutions using option `-e`:
 ```
 kaiju -t nodes.dmp -f allproteins.fmi -i inputfile.fastq -a greedy -e 5
 ```
 The cutoffs for minimum required match length and match score can be changed using the options `-m` and `-s`.
+
 
 
 ###Output format
