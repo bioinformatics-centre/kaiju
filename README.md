@@ -53,10 +53,15 @@ You can add this directory to your shell's PATH variable or copy the files to a 
 
 ##Creating the reference database and index
 
-Before classification of reads, Kaiju's database index needs to be built from the reference protein database.
-The program `makeDB.sh` in the `bin/` directory will download the complete
-genome and taxonomy files from the NCBI FTP server, convert them to the protein
-database and construct Kaiju's index (the Borrows-Wheeler-transform and the FM-index) in one go.
+Before classification of reads, Kaiju's database index needs to be built from
+the reference protein database.  You can either create a local index based on
+the currently available genomes from NCBI, or download the index currently used
+by the [Kaiju web server](http://kaiju.binf.ku.dk/).
+
+For creating a local index, the program `makeDB.sh` in the `bin/` directory
+will download the complete genome and taxonomy files from the NCBI FTP server,
+convert them to the protein database and construct Kaiju's index (the
+Borrows-Wheeler-transform and the FM-index) in one go.
 
 It is recommended to create a new folder for the download and run the program from there, e.g.:
 ```

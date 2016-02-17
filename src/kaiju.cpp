@@ -222,12 +222,12 @@ int main(int argc, char** argv) {
 	}
 	nodes_file.close();
 
-	if(verbose) cerr << " Reading FM Index from file " << fmi_filename << endl;
+	if(verbose) cerr << " Reading index from file " << fmi_filename << endl;
 	FILE * fp = fopen(fmi_filename.c_str(),"r");
 	if (!fp) { cerr << "Could not open file " << fmi_filename << endl; usage(argv[0]); }
   BWT * b = readIndexes(fp);
 	fclose(fp);
-	if(debug) fprintf(stderr,"BWT of length %ld has been read with %d sequencs, alphabet=%s\n", b->len,b->nseq, b->alphabet); 
+	if(debug) fprintf(stderr,"BWT of length %ld has been read with %d sequences, alphabet=%s\n", b->len,b->nseq, b->alphabet);
 
 	config->bwt = b;
 	config->fmi = b->f;
@@ -265,9 +265,12 @@ int main(int argc, char** argv) {
 	}
 
 	
-	bool firstline = true;
-	bool isFastQ = false;  
-	bool readNameSuffix = false;
+	bool firstline_file1 = true;
+	bool firstline_file2 = true;
+	bool isFastQ_file1 = false;
+	bool isFastQ_file2 = false;
+	bool readNameSuffix_file1 = false;
+	bool readNameSuffix_file2 = false;
 	string line_from_file;
 	line_from_file.reserve(2000);
 	
@@ -280,23 +283,23 @@ int main(int argc, char** argv) {
 	if(verbose) cerr << getCurrentTime() << " Start classification using " << num_threads << " threads." << endl;
 
 	while(getline(in1_file,line_from_file)) {                		
-		if(firstline) {
+		if(firstline_file1) {
 			char fileTypeIdentifier = line_from_file[0];
 			if(fileTypeIdentifier == '@')
-				isFastQ = true;
+				isFastQ_file1 = true;
 			else if(fileTypeIdentifier != '>') {
 				cerr << "Auto-detection of file type for file " << in1_filename << " failed."  << endl;
 				exit(EXIT_FAILURE);
 			}
-			if(line_from_file.compare(line_from_file.size()-2,2,"/1")==0)
-				readNameSuffix = true;
-			firstline=false;
+			if(line_from_file.compare(line_from_file.size()-2,1,"/")==0)
+				readNameSuffix_file1 = true;
+			firstline_file1 = false;
 		}
-		if(isFastQ) {
+		if(isFastQ_file1) {
 			// remove '@' from beginning of line
 			line_from_file.erase(line_from_file.begin());
 			// delete '/1' from end of read name
-			if(paired && readNameSuffix)
+			if(paired && readNameSuffix_file1)
 				line_from_file.erase(line_from_file.size()-2,2);
 			name = line_from_file;
 			// read sequence line
@@ -304,48 +307,15 @@ int main(int argc, char** argv) {
 			// remove non-alphabet chars
 			strip(line_from_file);
 			sequence1 = line_from_file;
-			// skip + line	
+			// skip + lin
 			in1_file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 			// skip quality score line
 			in1_file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-			
-			if(paired) {
-				if(!getline(in2_file,line_from_file)) {
-					//that's the border case where file1 has more entries than file2
-					cerr << "Error: File " << in1_filename <<" has more lines then file " << in2_filename  <<endl;
-					break; 
-				}
-				// remove '@' from beginning of line
-				line_from_file.erase(line_from_file.begin());
-				// delete '/2' from end of read name
-				if(readNameSuffix)
-					line_from_file.erase(line_from_file.size()-2,2);
-				if(name != line_from_file) {
-					cerr << "Error: Read names are not identical between the two input files" << endl;
-					in1_file.close();
-					in2_file.close();
-					break;
-				}
-				// read sequence line
-				getline(in2_file,line_from_file);
-				// remove non-alphabet chars
-				strip(line_from_file);
-				sequence2 = line_from_file;
-				// skip + line	
-				in2_file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-				// skip quality score line
-				in2_file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-				myWorkQueue->push(new ReadItem(name, sequence1, sequence2));
-			}
-			else {
-				myWorkQueue->push(new ReadItem(name, sequence1));
-			}
-
 		}
-		else { //Fasta
+		else { //FASTA
 			// remove '>' from beginning of line
 			line_from_file.erase(line_from_file.begin());
-			if(paired && readNameSuffix)
+			if(paired && readNameSuffix_file1)
 				line_from_file.erase(line_from_file.size()-2,2);
 			name = line_from_file;
 			// read lines until next entry starts or file terminates
@@ -354,38 +324,74 @@ int main(int argc, char** argv) {
 				getline(in1_file,line_from_file);
 				sequence1.append(line_from_file);
 			}
-			strip(sequence1);
+		} // end FASTA
 
-			if(paired) {
-				if(!getline(in2_file,line_from_file)) {
-					//that's the border case where file1 has more entries than file2
-					cerr << "Error: File " << in1_filename <<" has more lines then file " << in2_filename  <<endl;
-					break; 
+		strip(sequence1); // remove non-alphabet chars
+
+		if(paired) {
+			if(!getline(in2_file,line_from_file)) {
+				//that's the border case where file1 has more entries than file2
+				cerr << "Error: File " << in1_filename <<" contains more reads then file " << in2_filename  <<endl;
+				in1_file.close();
+				in2_file.close();
+				exit(EXIT_FAILURE);
+			}
+			if(firstline_file2) {
+				char fileTypeIdentifier = line_from_file[0];
+				if(fileTypeIdentifier == '@')
+					isFastQ_file2 = true;
+				else if(fileTypeIdentifier != '>') {
+					cerr << "Auto-detection of file type for file " << in2_filename << " failed."  << endl;
+					exit(EXIT_FAILURE);
 				}
-				// remove '>' from beginning of line
+				if(line_from_file.compare(line_from_file.size()-2,1,"/")==0)
+					readNameSuffix_file2 = true;
+				firstline_file2 = false;
+			}
+			if(isFastQ_file2) {
+				// remove '@' from beginning of line
 				line_from_file.erase(line_from_file.begin());
 				// delete '/2' from end of read name
-				if(readNameSuffix)
+				if(readNameSuffix_file2)
 					line_from_file.erase(line_from_file.size()-2,2);
 				if(name != line_from_file) {
 					cerr << "Error: Read names are not identical between the two input files" << endl;
 					in1_file.close();
 					in2_file.close();
-					break;
+					exit(EXIT_FAILURE);
 				}
-				sequence2.clear();
-				while(!(in2_file.peek()=='>' || in2_file.peek()==EOF)) {
-					getline(in2_file,line_from_file);
-					sequence2.append(line_from_file);
+				// read sequence line
+				getline(in2_file,line_from_file);
+				sequence2 = line_from_file;
+				// skip + line
+				in2_file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+				// skip quality score line
+				in2_file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 				}
-				strip(sequence2);
+				else { // FASTA
+					// remove '>' from beginning of line
+					line_from_file.erase(line_from_file.begin());
+					// delete '/2' from end of read name
+					if(readNameSuffix_file2)
+						line_from_file.erase(line_from_file.size()-2,2);
+					if(name != line_from_file) {
+						cerr << "Error: Read names are not identical between the two input files" << endl;
+						in1_file.close();
+						in2_file.close();
+						exit(EXIT_FAILURE);
+					}
+					sequence2.clear();
+					while(!(in2_file.peek()=='>' || in2_file.peek()==EOF)) {
+						getline(in2_file,line_from_file);
+						sequence2.append(line_from_file);
+					}
+				}
+				strip(sequence2); // remove non-alphabet chars
 				myWorkQueue->push(new ReadItem(name, sequence1, sequence2));
-			}
+			} // not paired
 			else {
 				myWorkQueue->push(new ReadItem(name, sequence1));
 			}
-
-		} // end Fasta
 
 	} // end main loop around file1
 
