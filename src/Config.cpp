@@ -32,7 +32,7 @@ uint64_t Config::lca_from_ids(unordered_map<uint64_t,unsigned int> & node2depth,
 		uint64_t id = *it;	
 
 		if(nodes->count(id)==0) {
-			cerr << "Warning: Taxon ID " << id << " in database is not contained in taxonomic tree.\n"; 
+			if(verbose) cerr << "Warning: Taxon ID " << id << " in database is not contained in taxonomic tree.\n";
 			num_ids--;
 			continue;
 		}
