@@ -235,7 +235,7 @@ int main(int argc, char** argv) {
 	config->init();
 
 	if(output_filename.length()>0) {
-		cerr << "Output file: " << output_filename << endl;
+		if(verbose) cerr << "Output file: " << output_filename << endl;
 		ofstream * read2id_file = new ofstream();
 		read2id_file->open(output_filename);    
 		if(!read2id_file->is_open()) {  cerr << "Could not open file " << output_filename << " for writing" << endl; exit(EXIT_FAILURE); }
@@ -456,8 +456,8 @@ void usage(char *progname) {
 	fprintf(stderr, "   -m INT        Minimum match length in MEM mode (default: 11)\n");
 	fprintf(stderr, "   -s INT        Minimum match score in Greedy mode (default: 65)\n");
 	fprintf(stderr, "   -v            Enable verbose output.\n");
-	fprintf(stderr, "   -d            Enable debug output.\n");
-//fprintf(stderr, "   -l <UINT> Seed length for finding matches in smartfast mode (default: 7)\n");
+	//fprintf(stderr, "   -d            Enable debug output.\n");
+	//fprintf(stderr, "   -l <UINT> Seed length for finding matches in smartfast mode (default: 7)\n");
 	exit(EXIT_FAILURE);
 }
 

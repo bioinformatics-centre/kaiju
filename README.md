@@ -47,21 +47,20 @@ For compiling Kaiju and its associated programs, type:
 cd kaiju/src
 make
 ```
-This will create the executable files `mkfmi`, `mkbwt`, `kaiju`, `kaijux`, `kaijup`, `mergeOutputs`, `kaijuReport`, 
-`kaiju2krona`, and `makeDB.sh` in the `kaiju/bin` directory.
-You can add this directory to your shell's PATH variable or copy the files to a directory in your PATH.
+Afterwards, Kaiju's executable files will located in the `kaiju/bin` directory.
+You can add this directory to your shell's `$PATH` variable or copy the files to a directory in your PATH.
 
 ##Creating the reference database and index
 
 Before classification of reads, Kaiju's database index needs to be built from
 the reference protein database.  You can either create a local index based on
-the currently available genomes from NCBI, or download the index currently used
+the currently available data from GenBank, or download the current index used
 by the [Kaiju web server](http://kaiju.binf.ku.dk/).
 
 For creating a local index, the program `makeDB.sh` in the `bin/` directory
 will download the complete genome and taxonomy files from the NCBI FTP server,
 convert them to the protein database and construct Kaiju's index (the
-Borrows-Wheeler-transform and the FM-index) in one go.
+Burrows-Wheeler-transform and the FM-index) in one go.
 
 It is recommended to create a new folder for the download and run the program from there, e.g.:
 ```
@@ -72,7 +71,13 @@ makeDB.sh
 The downloaded files are several GB in size. Therefore, the program should be
 run in a directory with at least 50 GB free space.
 
+There are two options for the reference database:
+###1. Complete Genomes
+The first option is to use only completely assembled and annotated reference genomes
+from the RefSeq database in GenBank. This is the default behaviour of `makeDB.sh`.
 Additional to archaeal and bacterial genomes, `makeDB.sh` can also add viral genomes to the database by using the option `-v`.
+As of Feb 2015, this database contains ca. 15m protein sequences, which amounts to ca. 9GB memory
+required by Kaiju.
 
 By default, `makeDB` downloads and extracts 5 files in parallel. This number can
 be changed by modifying the appropriate variables at the beginning of the
@@ -80,15 +85,33 @@ script.  The program also uses 5 parallel threads for construction the index,
 which can be changed by using the option `-t`. Note that a higher number of threads
 increases the memory usage during index construction.
 
-After `makeDB.sh` is finished, only the files `allproteins.fmi`, `nodes.dmp`,
+After `makeDB.sh` is finished, only the files `kaiju_db.fmi`, `nodes.dmp`,
 and `names.dmp` are needed to run Kaiju.  The remaining files and the `genomes`
 folder containing the downloaded genomes can be deleted.
+
+###2. Non-redundant protein database
+The second option is to use the complete protein database (NR) from GenBank
+as a refererence database. Use the option `-n` for `makeDB.sh`.
+The program will download the `nr.gz` file from GenBank's FTP server and convert it into
+a database by excluding all proteins that are not assigned to Bacteria, Archaea, or Viruses
+in the NCBI taxonomy. 
+Since NR contains many more proteins, more memory is
+needed for index construction and for running Kaiju.
+As of Feb 2015, this database contains ca. 61m protein sequences, which amounts to ca. 31GB memory
+required by Kaiju.
+
+After `makeDB.sh` is finished, only the files `kaiju_db_nr.fmi`, `nodes.dmp`,
+and `names.dmp` are needed to run Kaiju.  The remaining files and the `genomes`
+folder containing the downloaded genomes can be deleted.
+
 
 ##Running Kaiju
 Kaiju requires at least three arguments:
 ```
-kaiju -t nodes.dmp -f allproteins.fmi -i inputfile.fastq
+kaiju -t nodes.dmp -f kaiju_db.fmi -i inputfile.fastq
 ```
+If you choose to use the NR database, then use `-f kaiju_db_nr.fmi`.
+
 For paired-end reads use `-i firstfile.fastq` and `-j secondfile.fastq`.
 The reads must be in the same order in both files.
 
@@ -96,24 +119,24 @@ Kaiju can read input files in FASTQ and FASTA format.
 If the files are compressed, the shell's process substitution can be used to decompress them on the fly.
 For example for GZIP compressed files:
 ```
-kaiju ... -i <(gunzip -c firstfile.fastq.gz) -j <(gunzip -c secondfile.fastq.gz) ... 
+kaiju ... -i <(gunzip -c firstfile.fastq.gz) -j <(gunzip -c secondfile.fastq.gz) ...
 ```
 
 By default, Kaiju will print the output to the terminal (STDOUT).
 The output can also be written to a file using the `-o` option:
 ```
-kaiju -t nodes.dmp -f allproteins.fmi -i inputfile.fastq -o kaiju.out
+kaiju -t nodes.dmp -f kaiju_db.fmi -i inputfile.fastq -o kaiju.out
 ```
 
 Kaiju can use multiple parallel threads, which can be specified with the `-z` option, e.g. for using 25 parallel threads:
 ```
-kaiju -z 25 -t nodes.dmp -f allproteins.fmi -i inputfile.fastq -o kaiju.out
+kaiju -z 25 -t nodes.dmp -f kaiju_db.fmi -i inputfile.fastq -o kaiju.out
 ```
 
-The default run mode is MEM. For using Greedy mode, set the mode via the option `-a` and the number 
+The default run mode is MEM. For using Greedy mode, set the mode via the option `-a` and the number
 of allowed substitutions using option `-e`:
 ```
-kaiju -t nodes.dmp -f allproteins.fmi -i inputfile.fastq -a greedy -e 5
+kaiju -t nodes.dmp -f kaiju_db.fmi -i inputfile.fastq -a greedy -e 5
 ```
 The cutoffs for minimum required match length and match score can be changed using the options `-m` and `-s`.
 
@@ -124,7 +147,7 @@ Kaiju will print one line for each read or read pair.
 The default output format contains three columns separated by tabs.
 Using the option `-v` enables the verbose output, which will print additional three columns:
 
-1. either C or U, indicating whether the read is classified or unclassified. 
+1. either C or U, indicating whether the read is classified or unclassified.
 2. name of the read
 3. NCBI taxon identifier of the assigned taxon
 4. the length or score of the best match used for classification
@@ -143,7 +166,7 @@ kaiju2krona -t nodes.dmp -n names.dmp -i kaiju.out -o kaiju.out.krona
 The file `kaiju.out.krona` can then be imported into Krona and converted into an HTML file using
 Krona's `ktImportText` program:
 ```
-ktImportText -o kaiju.out.html kaiju.out.krona 
+ktImportText -o kaiju.out.html kaiju.out.krona
 ```
 
 ###Creating summary
@@ -153,6 +176,15 @@ and names.dmp files from the NCBI taxonomy in order to map the taxon identifiers
 output to the taxon names.
 ```
 kaijuReport -t nodes.dmp -n names.dmp -i kaiju.out -r genus -o kaiju.out.summary
+```
+The program can also filter out taxa with low abundances, e.g. for only showing genera that
+comprise at least 1 percent of the total reads:
+```
+kaijuReport -t nodes.dmp -n names.dmp -i kaiju.out -r genus -m 1 -o kaiju.out.summary
+```
+or for showing genera comprising at least 1 percent of all classified reads:
+```
+kaijuReport -t nodes.dmp -n names.dmp -i kaiju.out -r genus -m 1 -u -o kaiju.out.summary
 ```
 
 ###Merging outputs
