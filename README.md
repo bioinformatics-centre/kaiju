@@ -81,7 +81,7 @@ required by Kaiju.
 
 By default, `makeDB` downloads and extracts 5 files in parallel. This number can
 be changed by modifying the appropriate variables at the beginning of the
-script.  The program also uses 5 parallel threads for construction the index,
+script.  The program also uses 5 parallel threads for constructing the index,
 which can be changed by using the option `-t`. Note that a higher number of threads
 increases the memory usage during index construction.
 
@@ -90,15 +90,15 @@ and `names.dmp` are needed to run Kaiju.  The remaining files and the `genomes`
 folder containing the downloaded genomes can be deleted.
 
 ###2. Non-redundant protein database
-The second option is to use the complete protein database (NR) from GenBank
-as a refererence database. Use the option `-n` for `makeDB.sh`.
-The program will download the `nr.gz` file from GenBank's FTP server and convert it into
-a database by excluding all proteins that are not assigned to Bacteria, Archaea, or Viruses
-in the NCBI taxonomy. 
-Since NR contains many more proteins, more memory is
-needed for index construction and for running Kaiju.
-As of Feb 2015, this database contains ca. 61m protein sequences, which amounts to ca. 31GB memory
-required by Kaiju.
+The second option is to use the complete non-redundant protein database (NR)
+that is used by NCBI BLAST by setting the option `-n` for `makeDB.sh`.  This
+database contains all available protein sequences, including those from not
+completely assembled genomes.  `makeDB.sh` will download the `nr.gz` file from
+GenBank's FTP server and convert it into a database by excluding all proteins
+that are not assigned to Bacteria, Archaea, or Viruses in the NCBI taxonomy.
+Since NR contains many more proteins, more memory is needed for index
+construction and for running Kaiju.  As of Feb 2015, this database contains ca.
+61m protein sequences, which amounts to ca. 31GB memory required by Kaiju.
 
 After `makeDB.sh` is finished, only the files `kaiju_db_nr.fmi`, `nodes.dmp`,
 and `names.dmp` are needed to run Kaiju.  The remaining files and the `genomes`
@@ -208,7 +208,7 @@ The output file will be in the same column format as the input files (but only
 contain the first three columns) and it will have the same length as the input
 files (which have to be of same length).  In the case of conflicting taxon identifiers in both files,
 `mergeOutputs` will by default use the identifier found in the first input file (specified by `-i`).
-This behavior can be changed by the `-c` option, which can take the values
+This behaviour can be changed by the `-c` option, which can take the values
 `1` (default), `2` (use identifier from the second file) or `lca`, which determines and prints
 the least common ancestor of the taxon identifiers from both files. Option `lca`
 requires to specify the nodes.dmp file using the `-t` option.
