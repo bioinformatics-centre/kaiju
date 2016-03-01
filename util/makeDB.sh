@@ -10,29 +10,29 @@ exponentSA=3
 exponentSA_NR=5
 
 usage() {
-	echo This programs downloads the complete bacterial and archaeal genomes from
-	echo the GenBank FTP server and makes a database index for Kaiju.
+	echo This program downloads all complete bacterial and archaeal genomes from
+	echo the GenBank FTP server and builds a database index for Kaiju.
 	echo
-	echo Alternatively, one could also downdload the non-redundant protein database
-	echo from GenBank, which contains all proteins. This file is then reduced to 
-	echo bacterial, archaeal, and viral proteins for constructing Kaiju\'s database.
+	echo Alternatively, makeDB.sh can download the non-redundant protein database NR
+	echo from GenBank, which contains all proteins. This file is then reduced to
+	echo bacterial, archaeal, and viral proteins for Kaiju\'s database.
 	echo
-  echo By default, this program uses 5 parallel threads for downloading and for 
-  echo index construction.
-  echo 
-  echo Optional arguments are:
-  echo   -t\|--threads X   for using X parallel threads for index construction.
-  echo   -v\|--viruses     for also downloading viral genomes  
-  echo   -n\|--nr          download GenBank non-redundant protein database instead
+	echo By default, this program uses 5 parallel threads for downloading and for
+	echo index construction.
+	echo
+	echo Optional arguments are:
+	echo "  -t|--threads X   for using X parallel threads for index construction"
+	echo "  -v|--viruses     for also downloading viral genomes"
+	echo "  -n|--nr          download GenBank non-redundant protein database instead"
 }
 
 while :; do
     case $1 in
-        -h|-\?|--help)   # Call a "show_help" function to display a synopsis, then exit.
+        -h|-\?|--help)
             usage
             exit
             ;;
-        -t|--threads)       # Takes an option argument, ensuring it has been specified.
+        -t|--threads)
             if [ -n "$2" ]; then
                 threadsBWT=$2
                 shift
@@ -48,14 +48,14 @@ while :; do
         -v|--viruses)
             viruses=1
             ;;
-        --)              # End of all options.
+        --)# End of all options.
             shift
             break
             ;;
         -?*)
             printf 'WARN: Unknown option (ignored): %s\n' "$1" >&2
             ;;
-        *)               # Default case: If no more options then break out of the loop.
+        *)# Default case: If no more options then break out of the loop.
             break
     esac
     shift
