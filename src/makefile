@@ -3,8 +3,8 @@ CXXFLAGS = -ansi -pedantic -O3 -pthread -std=c++11 -g
 LDLIBS = -lpthread
 INCLUDES	= -I./ProducerConsumerQueue/src
 
-all: makefile bwt/mkbwt bwt/mkfmi kaiju kaiju2krona mergeOutputs kaijuReport kaijux kaijup
-	mkdir -p ../bin && cp kaiju kaijux kaiju2krona mergeOutputs kaijuReport bwt/mkbwt bwt/mkfmi ../util/gbk2faa.pl ../util/makeDB.sh ../bin/
+all: makefile bwt/mkbwt bwt/mkfmi kaiju kaiju2krona mergeOutputs kaijuReport kaijux kaijup convertNR
+	mkdir -p ../bin && cp kaiju kaijux kaiju2krona mergeOutputs kaijuReport convertNR bwt/mkbwt bwt/mkfmi ../util/gbk2faa.pl ../util/makeDB.sh ../bin/
 
 bwt/mkbwt bwt/mkfmi bwt/bwt.o bwt/compactfmi.o bwt/sequence.o bwt/suffixArray.o:
 	$(MAKE) -C bwt/
@@ -26,6 +26,9 @@ mergeOutputs: makefile mergeOutputs.o
 
 kaijuReport: makefile kaijuReport.o
 	$(CXX) -o kaijuReport kaijuReport.o
+
+convertNR: makefile Config.o convertNR.o ./bwt/sequence.o
+	$(CXX) -o convertNR convertNR.o Config.o ./bwt/sequence.o
 
 Config.o: Config.cpp Config.hpp
 	$(CXX) $(CXXFLAGS) -c Config.cpp
@@ -57,8 +60,11 @@ mergeOutputs.o: mergeOutputs.cpp makefile
 kaijuReport.o: kaijuReport.cpp makefile
 	$(CXX) $(CXXFLAGS) -c kaijuReport.cpp
 
+convertNR.o: convertNR.cpp makefile
+	$(CXX) $(CXXFLAGS) -c convertNR.cpp
+
 clean: 
-	rm -f -v *.o kaiju kaijux kaijup kaiju2krona mergeOutputs kaijuReport ../bin/*
+	rm -f -v *.o kaiju kaijux kaijup kaiju2krona mergeOutputs kaijuReport convertNR ../bin/*
 	$(MAKE) -C bwt/ clean
 
 .PHONY: clean 
