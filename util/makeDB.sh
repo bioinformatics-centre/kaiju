@@ -65,6 +65,9 @@ done
 command -v awk >/dev/null 2>/dev/null || { echo Error: awk not found; exit;}
 command -v wget >/dev/null 2>/dev/null || { echo Error: wget not found; exit;}
 command -v xargs >/dev/null 2>/dev/null || { echo Error: xargs not found; exit;}
+command -v tar >/dev/null 2>/dev/null || { echo Error: tar not found; exit;}
+command -v gunzip >/dev/null 2>/dev/null || { echo Error: gunzip not found; exit;}
+command -v perl >/dev/null 2>/dev/null || { echo Error: perl not found; exit;}
 
 command -v $SCRIPTDIR/gbk2faa.pl >/dev/null 2>/dev/null || { echo Error: gbk2faa.pl not found in $SCRIPTDIR; exit;}
 command -v $SCRIPTDIR/mkfmi >/dev/null 2>/dev/null || { echo Error: mkfmi not found in $SCRIPTDIR; exit;}

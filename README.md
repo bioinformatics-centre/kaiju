@@ -47,22 +47,22 @@ For compiling Kaiju and its associated programs, type:
 cd kaiju/src
 make
 ```
-Afterwards, Kaiju's executable files will located in the `kaiju/bin` directory.
+Afterwards, Kaiju's executable files are available in the `kaiju/bin` directory.
 You can add this directory to your shell's `$PATH` variable or copy the files to a directory in your PATH.
 
 ##Creating the reference database and index
 
 Before classification of reads, Kaiju's database index needs to be built from
 the reference protein database.  You can either create a local index based on
-the currently available data from GenBank, or download the current index used
+the currently available data from GenBank, or download the index used
 by the [Kaiju web server](http://kaiju.binf.ku.dk/).
 
 For creating a local index, the program `makeDB.sh` in the `bin/` directory
 will download the complete genome and taxonomy files from the NCBI FTP server,
 convert them to the protein database and construct Kaiju's index (the
-Burrows-Wheeler-transform and the FM-index) in one go.
+Burrows-Wheeler transform and the FM-index) in one go.
 
-It is recommended to create a new folder for the download and run the program from there, e.g.:
+It is recommended to create a new directory for the download and run the program from there, for example:
 ```
 mkdir kaijudb
 cd kaijudb
@@ -87,11 +87,11 @@ increases the memory usage during index construction.
 
 After `makeDB.sh` is finished, only the files `kaiju_db.fmi`, `nodes.dmp`,
 and `names.dmp` are needed to run Kaiju.  The remaining files and the `genomes`
-folder containing the downloaded genomes can be deleted.
+directory containing the downloaded genomes can be deleted.
 
 ###2. Non-redundant protein database
 The second option is to use the complete non-redundant protein database (NR)
-that is used by NCBI BLAST by setting the option `-n` for `makeDB.sh`.  This
+that is used by NCBI BLAST by using the option `-n` for `makeDB.sh`.  This
 database contains all available protein sequences, including those from not
 completely assembled genomes.  `makeDB.sh` will download the `nr.gz` file from
 GenBank's FTP server and convert it into a database by excluding all proteins
@@ -102,7 +102,7 @@ construction and for running Kaiju.  As of Feb 2015, this database contains ca.
 
 After `makeDB.sh` is finished, only the files `kaiju_db_nr.fmi`, `nodes.dmp`,
 and `names.dmp` are needed to run Kaiju.  The remaining files and the `genomes`
-folder containing the downloaded genomes can be deleted.
+directory containing the downloaded genomes can be deleted.
 
 
 ##Running Kaiju
@@ -152,14 +152,14 @@ Using the option `-v` enables the verbose output, which will print additional th
 3. NCBI taxon identifier of the assigned taxon
 4. the length or score of the best match used for classification
 5. the taxon identifiers of all database sequences with the best match
-6. matching fragment(s) sequence
+6. matching fragment sequence(s)
 
 ##Helper programs
 ###Creating input file for Krona
 The program `kaiju2krona` can be used to convert Kaiju's tab-separated output file
-into a tab-separated text file, which can be imported into [Krona](https://github.com/marbl/Krona/wiki/KronaTools). It requires the nodes.dmp
-and names.dmp files from the NCBI taxonomy in order to map the taxon identifiers from Kaiju's
-output to the taxon names.
+into a tab-separated text file, which can be imported into [Krona](https://github.com/marbl/Krona/wiki/KronaTools). It requires the `nodes.dmp`
+and `names.dmp` files from the NCBI taxonomy for mapping the taxon identifiers from Kaiju's
+output to the corresponding taxon names.
 ```
 kaiju2krona -t nodes.dmp -n names.dmp -i kaiju.out -o kaiju.out.krona
 ```
@@ -171,9 +171,9 @@ ktImportText -o kaiju.out.html kaiju.out.krona
 
 ###Creating summary
 The program `kaijuReport` can convert Kaiju's tab-separated output file
-into a summary report file for a given taxonomic rank, e.g., genus. It requires the nodes.dmp
-and names.dmp files from the NCBI taxonomy in order to map the taxon identifiers from Kaiju's
-output to the taxon names.
+into a summary report file for a given taxonomic rank, e.g., genus. It requires the `nodes.dmp`
+and `names.dmp` files for mapping the taxon identifiers from Kaiju's
+output to the corresponding taxon names.
 ```
 kaijuReport -t nodes.dmp -n names.dmp -i kaiju.out -r genus -o kaiju.out.summary
 ```
@@ -207,16 +207,16 @@ mergeOutputs -i <(sort -k2,2 kaiju.out) -j <(sort -k2,2 kraken.out) -o combined.
 The output file will be in the same column format as the input files (but only
 contain the first three columns) and it will have the same length as the input
 files (which have to be of same length).  In the case of conflicting taxon identifiers in both files,
-`mergeOutputs` will by default use the identifier found in the first input file (specified by `-i`).
-This behaviour can be changed by the `-c` option, which can take the values
+`mergeOutputs` will use the identifier found in the first input file (specified by `-i`).
+This behaviour can be changed using the `-c` option, which can take the values
 `1` (default), `2` (use identifier from the second file) or `lca`, which determines and prints
 the least common ancestor of the taxon identifiers from both files. Option `lca`
 requires to specify the nodes.dmp file using the `-t` option.
 
 ###KaijuX and KaijuP
 
-The programs `kaijux` and `kaijup` can be used for finding the best matches for a query sequence
-in a protein database without taxonomic classification, i.e., they will just print the identifier
+The programs `kaijux` and `kaijup` can be used for finding the best matching database sequence for each query sequence
+without taxonomic classification, i.e., they will just print the identifier
 of the database sequence. Thus, these programs do not use the nodes.dmp file containing the taxonomy,
 but only need the `.fmi` database file. While `kaijux` takes nucleotide sequences as input and translates
 them into the six reading frames, just like standard `kaiju`, `kaijup` takes protein sequences as input,
