@@ -1,19 +1,6 @@
 /* This file is part of Kaiju, Copyright 2015 Peter Menzel and Anders Krogh,
  * Kaiju is licensed under the GPLv3, see the file LICENSE. */
 
-/* Output format
- *
- *   kaijuReport   -l genus -m 1.0
- *
- * 12.0	1200	unclassified
- *  0.2	200	classified above level genus
- *  6.2 620 below threshold
- * 40.3	4030  Bacillus
- * 12.4 1240  Streptococcus
- * 8.9  890  Staphylococcus 
- * ...
- */
-
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -100,11 +87,11 @@ int main(int argc, char** argv) {
 				usage(argv[0]);
 		}
 	}
-	if(names_filename.length() == 0) { cerr << "Error: Please specify the location of the names.dmp file, using the -n option."  << endl; usage(argv[0]); }
-	if(nodes_filename.length() == 0) { cerr << "Error: Please specify the location of the nodes.dmp file, using the -t option."  << endl; usage(argv[0]); }
-	if(out_filename.length() == 0) { cerr << "Error: Please specify the name of the output file, using the -o option."  << endl; usage(argv[0]); }
-	if(in_filename.length() == 0) { cerr << "Error: Please specify the location of the input file, using the -i option."  << endl; usage(argv[0]); }
-	if(rank.length() == 0) { cerr << "Error: Please specify the location of the input file, using the -i option."  << endl; usage(argv[0]); }
+	if(names_filename.length() == 0) { cerr << "Error: Please specify the location of the names.dmp file with the -n option."  << endl; usage(argv[0]); }
+	if(nodes_filename.length() == 0) { cerr << "Error: Please specify the location of the nodes.dmp file with the -t option."  << endl; usage(argv[0]); }
+	if(out_filename.length() == 0) { cerr << "Error: Please specify the name of the output file with the -o option."  << endl; usage(argv[0]); }
+	if(in_filename.length() == 0) { cerr << "Error: Please specify the location of the input file with the -i option."  << endl; usage(argv[0]); }
+	if(rank.length() == 0) { cerr << "Error: Please specify the rank (phylum, class, order, family, genus, or species) with the -r option."  << endl; usage(argv[0]); }
 	if(!(rank.compare("phylum")==0 || rank.compare("class")==0 || rank.compare("order")==0 || rank.compare("family")==0 || rank.compare("genus")==0 || rank.compare("species")==0)) {
 		cerr << "Error: Rank must be one of: phylum, class, order, family, genus, species."  << endl; usage(argv[0]);
 	}
@@ -312,6 +299,7 @@ void usage(char *progname) {
 	fprintf(stderr, "   -u            Unclassified reads are not counted for the total reads when calculating percentages.\n");
 	fprintf(stderr, "   -v            Enable verbose output.\n");
 	fprintf(stderr, "\n");
+	fprintf(stderr, "Only one of the options -m and -c may be used at a time.\n");
 	exit(EXIT_FAILURE);
 }
 
