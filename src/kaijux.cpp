@@ -52,7 +52,7 @@ int main(int argc, char** argv) {
 
 	// --------------------- START ------------------------------------------------------------------
 	// Read command line params
-	char c;
+	int c;
 	while ((c = getopt (argc, argv, "a:hdrvn:m:e:l:f:b:i:j:s:z:o:")) != -1) {
 		switch (c)  {
 			case 'a': {

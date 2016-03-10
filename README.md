@@ -215,13 +215,30 @@ requires to specify the nodes.dmp file using the `-t` option.
 
 ###KaijuX and KaijuP
 
-The programs `kaijux` and `kaijup` can be used for finding the best matching database sequence for each query sequence
-without taxonomic classification, i.e., they will just print the identifier
-of the database sequence. Thus, these programs do not use the nodes.dmp file containing the taxonomy,
-but only need the `.fmi` database file. While `kaijux` takes nucleotide sequences as input and translates
-them into the six reading frames, just like standard `kaiju`, `kaijup` takes protein sequences as input,
-which are directly searched in the database.
-All other parameters remain the same as in standard `kaiju`. In case of paired-end reads, both mates are
-searched independently.
+The programs `kaijux` and `kaijup` can be used for finding the best matching
+database sequence for each query sequence without taxonomic classification,
+i.e., they will just print the identifier of the database sequence. Thus, these
+programs do not use the nodes.dmp file containing the taxonomy, but only need
+the `.fmi` database file. While `kaijux` takes nucleotide sequences as input
+and translates them into the six reading frames, just like standard `kaiju`,
+`kaijup` takes protein sequences as input, which are directly searched in the
+database.  All other parameters remain the same as in standard `kaiju`. In case
+of paired-end reads, both mates are searched independently.
 
+To build a an index for a custom database, all sequences need to be in a single
+FASTA file and may only contain the 20 letters from the standard protein
+alphabet `ACDEFGHIKLMNPQRSTVWY`.
+
+Building Kaiju's index (the Burrows-Wheeler transform and FM-index) from the
+file with the protein sequences `proteins.faa` is done in two steps by the
+programs `mkbwt` and `mkfmi`:
+```
+mkbwt -n 5 -a ACDEFGHIKLMNPQRSTVWY -o proteins proteins.faa
+mkfmi -i proteins
+```
+The option `-n` for `mkbwt` specifies the number of parallel threads. The more
+threads are used, the higher the memory consumption becomes.  The option `-e`
+for `mkbwt` specifies the exponent of the suffix array checkpoint distances and
+therefore determines the trade-off between the size of the suffix array and the
+speed of the search. The default value is 5.
 

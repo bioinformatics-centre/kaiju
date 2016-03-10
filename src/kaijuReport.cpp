@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
 
 	// --------------------- START ------------------------------------------------------------------
 	// Read command line params
-	char c;
+	int c;
 	while ((c = getopt (argc, argv, "hvur:n:t:i:o:m:c:")) != -1) {
 		switch (c)  {
 			case 'h':
@@ -223,9 +223,9 @@ int main(int argc, char** argv) {
 		totalreads -= unclassified;
 
 	// go through node2summarizedhits and for each node check if rank is right, then print count
-	unsigned int sum = 0;
-	unsigned int below_percent = 0;
-	unsigned int below_reads = 0;
+	uint64_t sum = 0;
+	uint64_t below_percent = 0;
+	uint64_t below_reads = 0;
 	if(verbose) cerr << "Writing to file " << out_filename << endl;
 	FILE * report_file = fopen(out_filename.c_str(),"w");
 	if(report_file==NULL) {  cerr << "Could not open file " << out_filename << " for writing" << endl; exit(EXIT_FAILURE); }
@@ -256,7 +256,7 @@ int main(int argc, char** argv) {
 		assert(totalreads >= unclassified + sum);
 
 
-	unsigned int above = (filter_unclassified) ? totalreads - sum  : totalreads - unclassified - sum;
+	uint64_t above = (filter_unclassified) ? totalreads - sum  : totalreads - unclassified - sum;
 				
 	for(auto it : sorted_count2ids) {
 			string name;
