@@ -30,7 +30,7 @@ while :; do
     case $1 in
         -h|-\?|--help)
             usage
-            exit
+            exit 1
             ;;
         -t|--threads)
             if [ -n "$2" ]; then
@@ -62,25 +62,21 @@ while :; do
 done
 
 #check if necessary programs are in the PATH
-command -v awk >/dev/null 2>/dev/null || { echo Error: awk not found; exit;}
-command -v wget >/dev/null 2>/dev/null || { echo Error: wget not found; exit;}
-command -v xargs >/dev/null 2>/dev/null || { echo Error: xargs not found; exit;}
-command -v tar >/dev/null 2>/dev/null || { echo Error: tar not found; exit;}
-command -v gunzip >/dev/null 2>/dev/null || { echo Error: gunzip not found; exit;}
-command -v perl >/dev/null 2>/dev/null || { echo Error: perl not found; exit;}
+command -v awk >/dev/null 2>/dev/null || { echo Error: awk not found; exit 1; }
+command -v wget >/dev/null 2>/dev/null || { echo Error: wget not found; exit 1; }
+command -v xargs >/dev/null 2>/dev/null || { echo Error: xargs not found; exit 1; }
+command -v tar >/dev/null 2>/dev/null || { echo Error: tar not found; exit 1; }
+command -v gunzip >/dev/null 2>/dev/null || { echo Error: gunzip not found; exit 1; }
+command -v perl >/dev/null 2>/dev/null || { echo Error: perl not found; exit 1; }
 
-command -v $SCRIPTDIR/gbk2faa.pl >/dev/null 2>/dev/null || { echo Error: gbk2faa.pl not found in $SCRIPTDIR; exit;}
-command -v $SCRIPTDIR/mkfmi >/dev/null 2>/dev/null || { echo Error: mkfmi not found in $SCRIPTDIR; exit;}
-command -v $SCRIPTDIR/mkbwt >/dev/null 2>/dev/null || { echo Error: mkbwt not found in $SCRIPTDIR; exit;}
-command -v $SCRIPTDIR/convertNR >/dev/null 2>/dev/null || { echo Error: convertNR not found in $SCRIPTDIR; exit;}
+command -v $SCRIPTDIR/gbk2faa.pl >/dev/null 2>/dev/null || { echo Error: gbk2faa.pl not found in $SCRIPTDIR; exit 1; }
+command -v $SCRIPTDIR/mkfmi >/dev/null 2>/dev/null || { echo Error: mkfmi not found in $SCRIPTDIR; exit 1; }
+command -v $SCRIPTDIR/mkbwt >/dev/null 2>/dev/null || { echo Error: mkbwt not found in $SCRIPTDIR; exit 1; }
+command -v $SCRIPTDIR/convertNR >/dev/null 2>/dev/null || { echo Error: convertNR not found in $SCRIPTDIR; exit 1; }
 
 #test AnyUncompress usable in perl
 `perl -e 'use IO::Uncompress::AnyUncompress qw(anyuncompress $AnyUncompressError);'`
-if [ $? -ne 0 ]
-then
-	echo Error: Perl IO::Uncompress::AnyUncompress library not found
-	exit
-fi
+[ $? -ne 0 ] && { echo Error: Perl IO::Uncompress::AnyUncompress library not found; exit 1; }
 
 #good to go
 set -e
@@ -93,7 +89,7 @@ then
 	tar xf taxdump.tar.gz nodes.dmp names.dmp
 else 
 	echo Error: File taxdump.tar.gz was not downloaded
-	exit
+	exit 1
 fi
 
 if [ "$use_nr" -eq 1 ]
@@ -136,14 +132,14 @@ else
 
 	echo Extracting protein sequences from downloaded files...
 	find ./genomes -name "*.gbff.gz" | xargs -n 1 -P $parallelConversions -i $SCRIPTDIR/gbk2faa.pl '{}' '{}'.faa
-	cat genomes/*.gz.faa >allproteins.faa
+	cat genomes/*.gz.faa >kaiju_db.faa
 
 	echo Creating Borrows-Wheeler transform...
-	$SCRIPTDIR/mkbwt -n $threadsBWT -e $exponentSA -a ACDEFGHIKLMNPQRSTVWY -o kaiju_db allproteins.faa
+	$SCRIPTDIR/mkbwt -n $threadsBWT -e $exponentSA -a ACDEFGHIKLMNPQRSTVWY -o kaiju_db kaiju_db.faa
 	echo Creating FM-Index...
 	$SCRIPTDIR/mkfmi kaiju_db
 	echo Done!
-	echo You can delete the folder genomes/ as well as the files allproteins.faa, kaiju_db.bwt, and kaiju_db.sa
+	echo You can delete the folder genomes/ as well as the files taxdump.tar.gz, kaiju_db.faa, kaiju_db.bwt, and kaiju_db.sa
 	echo Kaiju only needs the files kaiju_db.fmi, nodes.dmp, and names.dmp.
 fi
 

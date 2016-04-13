@@ -10,7 +10,7 @@ reads, e.g., Illumina or Roche/454, from whole-genome sequencing of
 metagenomic DNA. Reads are directly assigned to taxa using the NCBI taxonomy and a 
 reference database of protein sequences from bacterial and archaeal genomes.
 
-The program is described in a [preprint paper available on bioRxiv](http://biorxiv.org/content/early/2015/11/16/031229).
+The program is described in [Menzel, P. et al. (2016) Fast and sensitive taxonomic classification for metagenomics with Kaiju. *Nat. Commun.* 7:11257](http://www.nature.com/ncomms/2016/160413/ncomms11257/full/ncomms11257.html) (open access).
 
 Kaiju can be installed locally (see below) or used via a [web server](http://kaiju.binf.ku.dk/).
 
@@ -76,10 +76,10 @@ There are two options for the reference database:
 The first option is to use only completely assembled and annotated reference genomes
 from the RefSeq database in GenBank. This is the default behaviour of `makeDB.sh`.
 Additional to archaeal and bacterial genomes, `makeDB.sh` can also add viral genomes to the database by using the option `-v`.
-As of Feb 2015, this database contains ca. 15m protein sequences, which amounts to ca. 9GB memory
+As of April 2016, this database contains ca. 16.2m protein sequences, which amounts to ca. 10GB RAM
 required by Kaiju.
 
-By default, `makeDB` downloads and extracts 5 files in parallel. This number can
+By default, `makeDB.sh` downloads and extracts 5 genomes from the NCBI FTP server in parallel. This number can
 be changed by modifying the appropriate variables at the beginning of the
 script.  The program also uses 5 parallel threads for constructing the index,
 which can be changed by using the option `-t`. Note that a higher number of threads
@@ -90,15 +90,15 @@ and `names.dmp` are needed to run Kaiju.  The remaining files and the `genomes`
 directory containing the downloaded genomes can be deleted.
 
 ###2. Non-redundant protein database
-The second option is to use the complete non-redundant protein database (NR)
+The second option is to use the complete non-redundant protein database (nr)
 that is used by NCBI BLAST by using the option `-n` for `makeDB.sh`.  This
 database contains all available protein sequences, including those from not
 completely assembled genomes.  `makeDB.sh` will download the `nr.gz` file from
 GenBank's FTP server and convert it into a database by excluding all proteins
 that are not assigned to Bacteria, Archaea, or Viruses in the NCBI taxonomy.
-Since NR contains many more proteins, more memory is needed for index
-construction and for running Kaiju.  As of Feb 2015, this database contains ca.
-61m protein sequences, which amounts to ca. 31GB memory required by Kaiju.
+Because the nr database contains more proteins, more RAM is needed for index
+construction and for running Kaiju.  As of April 2016, this database contains ca.
+63m protein sequences, which amounts to ca. 33GB RAM.
 
 After `makeDB.sh` is finished, only the files `kaiju_db_nr.fmi`, `nodes.dmp`,
 and `names.dmp` are needed to run Kaiju.  The remaining files and the `genomes`
@@ -217,25 +217,27 @@ requires to specify the nodes.dmp file using the `-t` option.
 
 The programs `kaijux` and `kaijup` can be used for finding the best matching
 database sequence for each query sequence without taxonomic classification,
-i.e., they will just print the identifier of the database sequence. Thus, these
-programs do not use the nodes.dmp file containing the taxonomy, but only need
+i.e., they will just print the name of the database sequence. Thus, both
+programs do not use the `nodes.dmp` file containing the taxonomy, but only need
 the `.fmi` database file. While `kaijux` takes nucleotide sequences as input
-and translates them into the six reading frames, just like standard `kaiju`,
+and translates them into the six reading frames like standard `kaiju`,
 `kaijup` takes protein sequences as input, which are directly searched in the
 database.  All other parameters remain the same as in standard `kaiju`. In case
 of paired-end reads, both mates are searched independently.
 
-To build a an index for a custom database, all sequences need to be in a single
+To build an index for a custom database, all sequences need to be in a single
 FASTA file and may only contain the 20 letters from the standard protein
 alphabet `ACDEFGHIKLMNPQRSTVWY`.
 
-Building Kaiju's index (the Burrows-Wheeler transform and FM-index) from the
+For example, building the index (the Burrows-Wheeler transform and FM-index) from the
 file with the protein sequences `proteins.faa` is done in two steps by the
 programs `mkbwt` and `mkfmi`:
 ```
 mkbwt -n 5 -a ACDEFGHIKLMNPQRSTVWY -o proteins proteins.faa
 mkfmi -i proteins
 ```
+This will create two intermediate files `proteins.bwt` and `proteins.sa`, and finally
+the file `proteins.fmi`, which is used by Kaiju.
 The option `-n` for `mkbwt` specifies the number of parallel threads. The more
 threads are used, the higher the memory consumption becomes.  The option `-e`
 for `mkbwt` specifies the exponent of the suffix array checkpoint distances and

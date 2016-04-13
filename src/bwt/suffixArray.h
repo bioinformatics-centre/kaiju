@@ -46,7 +46,7 @@ static inline long uchar2long(uchar *c, int n) {
 */
 static inline void suffixArray_decode_number(int *nseq, long *pos, long k, suffixArray *s) {
   long val = uchar2long( (s->sa + k * s->nbytes), s->nbytes);
-  *nseq = val>>s->pbits;
+  *nseq = (int)(val>>s->pbits);
   *pos = val & s->mask;
 }
 

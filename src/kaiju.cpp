@@ -225,7 +225,7 @@ int main(int argc, char** argv) {
 	if(verbose) cerr << " Reading index from file " << fmi_filename << endl;
 	FILE * fp = fopen(fmi_filename.c_str(),"r");
 	if (!fp) { cerr << "Could not open file " << fmi_filename << endl; usage(argv[0]); }
-  BWT * b = readIndexes(fp);
+	BWT * b = readIndexes(fp);
 	fclose(fp);
 	if(debug) fprintf(stderr,"BWT of length %ld has been read with %d sequences, alphabet=%s\n", b->len,b->nseq, b->alphabet);
 
@@ -431,12 +431,12 @@ inline bool isalpha(char & c) {
 }
 
 void strip(string &s) {
-		for(auto it = s.begin(); it!=s.end(); ++it) {
-			if(!isalpha(*it)) {
-				s.erase(it);
-				it--;
-			}
+	for(auto it = s.begin(); it!=s.end(); ++it) {
+		if(!isalpha(*it)) {
+			s.erase(it);
+			it--;
 		}
+	}
 }
 
 void usage(char *progname) { 
