@@ -1,19 +1,20 @@
 /* This file is part of Kaiju, Copyright 2015 Peter Menzel and Anders Krogh,
  * Kaiju is licensed under the GPLv3, see the file LICENSE. */
 
+#include <getopt.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
+#include <stdint.h>
 #include <iostream>
 #include <fstream>
-#include <time.h>
 #include <unordered_map>
 #include <map>
-#include <assert.h>
 #include <algorithm>
-#include <locale>
 #include <string>
 #include <functional>
+#include <utility>
 
 
 void usage(char *progname);
@@ -176,8 +177,8 @@ int main(int argc, char** argv) {
 	if(verbose) cerr << "Processing " << in_filename <<"..." << "\n";
 	
 	map<uint64_t, uint64_t> node2hitcount;
-	unsigned int unclassified = 0;
-	unsigned int totalreads = 0;
+	uint64_t unclassified = 0;
+	uint64_t totalreads = 0;
 	
 	while(getline(in_file,line)) {                		
 
@@ -271,12 +272,12 @@ int main(int argc, char** argv) {
 	}
 
 	fprintf(report_file,"---------------------------------\n");
-	fprintf(report_file,"%5.2f\t%9u\tclassified above rank %s \n", (float)above/(float)totalreads*100.0, above, rank.c_str());
+	fprintf(report_file,"%5.2f\t%9lu\tclassified above rank %s \n", (float)above/(float)totalreads*100.0, above, rank.c_str());
 	if(min_read_count > 0)
-		fprintf(report_file,"%5.2f\t%9u\tbelong to a %s having less than %i reads\n", (float)below_reads/(float)totalreads*100.0, below_reads, rank.c_str(), min_read_count);
+		fprintf(report_file,"%5.2f\t%9lu\tbelong to a %s having less than %i reads\n", (float)below_reads/(float)totalreads*100.0, below_reads, rank.c_str(), min_read_count);
 	if(min_percent > 0.0)
-		fprintf(report_file,"%5.2f\t%9u\tbelong to a %s with less than %g%% of all reads\n", (float)below_percent/(float)totalreads*100.0, below_percent, rank.c_str(), min_percent);
-	fprintf(report_file,"%5.2f\t%9u\tunclassified\n", (float)unclassified/(float)(totalreads+unclassified)*100.0, unclassified );
+		fprintf(report_file,"%5.2f\t%9lu\tbelong to a %s with less than %g%% of all reads\n", (float)below_percent/(float)totalreads*100.0, below_percent, rank.c_str(), min_percent);
+	fprintf(report_file,"%5.2f\t%9lu\tunclassified\n", (float)unclassified/(float)(totalreads+unclassified)*100.0, unclassified );
 	fclose(report_file);
 
 	return EXIT_SUCCESS;    

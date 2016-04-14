@@ -1,25 +1,26 @@
 /* This file is part of Kaiju, Copyright 2015 Peter Menzel and Anders Krogh,
  * Kaiju is licensed under the GPLv3, see the file LICENSE. */
 
+#include <getopt.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <iostream>
 #include <fstream>
-#include <time.h>
-#include <unordered_map>
 #include <algorithm>
 #include <string>
+#include <deque>
 
 #include "./ProducerConsumerQueue/src/ProducerConsumerQueue.hpp"
+#include "ReadItem.hpp"
+#include "ConsumerThreadx.hpp"
+#include "Config.hpp"
 
 extern "C" {
 #include "./bwt/bwt.h"
 }
 
-#include "ReadItem.hpp"
-#include "ConsumerThreadx.hpp"
-#include "Config.hpp"
 
 void usage(char *progname);
 void strip(string &s);

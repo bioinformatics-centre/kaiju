@@ -41,7 +41,7 @@ git clone https://github.com/bioinformatics-centre/kaiju.git
 ```
 This will create the directory `kaiju` in the current directory.
 
-Kaiju is written in C/C++ for Linux and does not depend on additional libraries.
+Kaiju is written in C/C++11 for Linux and does not depend on additional libraries.
 For compiling Kaiju and its associated programs, type:
 ```
 cd kaiju/src

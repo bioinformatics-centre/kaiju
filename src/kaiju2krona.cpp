@@ -1,18 +1,16 @@
 /* This file is part of Kaiju, Copyright 2015 Peter Menzel and Anders Krogh,
  * Kaiju is licensed under the GPLv3, see the file LICENSE. */
 
-#include <unistd.h>
+#include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <iostream>
 #include <fstream>
-#include <time.h>
 #include <unordered_map>
 #include <map>
-#include <algorithm>
-#include <locale>
 #include <string>
-#include <functional>
+#include <vector>
 
 
 void usage(char *progname);
