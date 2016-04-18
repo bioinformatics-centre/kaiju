@@ -15,6 +15,7 @@
 #include <string>
 #include <functional>
 #include <utility>
+#include <stdexcept>
 
 
 void usage(char *progname);

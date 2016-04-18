@@ -11,6 +11,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <stdexcept>
 
 
 void usage(char *progname);

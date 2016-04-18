@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <string>
 #include <deque>
+#include <stdexcept>
 
 #include "./ProducerConsumerQueue/src/ProducerConsumerQueue.hpp"
 #include "ReadItem.hpp"

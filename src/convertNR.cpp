@@ -9,6 +9,7 @@
 #include <getopt.h>
 #include <vector>
 #include <iterator>
+#include <stdexcept>
 
 #include "Config.hpp"
 

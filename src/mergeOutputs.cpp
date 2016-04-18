@@ -13,6 +13,7 @@
 #include <locale>
 #include <string>
 #include <functional>
+#include <stdexcept>
 
 #include "ConsumerThread.hpp"
 
