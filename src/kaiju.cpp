@@ -273,11 +273,9 @@ int main(int argc, char** argv) {
 	bool firstline_file2 = true;
 	bool isFastQ_file1 = false;
 	bool isFastQ_file2 = false;
-	bool readNameSuffix_file1 = false;
-	bool readNameSuffix_file2 = false;
 	string line_from_file;
 	line_from_file.reserve(2000);
-	
+	string suffixStartCharacters = " /";
 	string name;
 	string sequence1;
 	string sequence2;
@@ -295,16 +293,16 @@ int main(int argc, char** argv) {
 				cerr << "Auto-detection of file type for file " << in1_filename << " failed."  << endl;
 				exit(EXIT_FAILURE);
 			}
-			if(line_from_file.compare(line_from_file.size()-2,1,"/")==0)
-				readNameSuffix_file1 = true;
 			firstline_file1 = false;
 		}
 		if(isFastQ_file1) {
 			// remove '@' from beginning of line
 			line_from_file.erase(line_from_file.begin());
-			// delete '/1' from end of read name
-			if(paired && readNameSuffix_file1)
-				line_from_file.erase(line_from_file.size()-2,2);
+			// delete suffixes like '/1' or ' 1:N:0:TAAGGCGA' from end of read name
+			if(paired) {
+				size_t n = line_from_file.find_first_of(suffixStartCharacters);
+				if(n != string::npos) { line_from_file.erase(n); }
+			}
 			name = line_from_file;
 			// read sequence line
 			getline(in1_file,line_from_file);
@@ -319,8 +317,11 @@ int main(int argc, char** argv) {
 		else { //FASTA
 			// remove '>' from beginning of line
 			line_from_file.erase(line_from_file.begin());
-			if(paired && readNameSuffix_file1)
-				line_from_file.erase(line_from_file.size()-2,2);
+			// delete suffixes like '/1' or ' 1:N:0:TAAGGCGA' from end of read name
+			if(paired) {
+				size_t n = line_from_file.find_first_of(suffixStartCharacters);
+				if(n != string::npos) { line_from_file.erase(n); }
+			}
 			name = line_from_file;
 			// read lines until next entry starts or file terminates
 			sequence1.clear();
@@ -348,18 +349,18 @@ int main(int argc, char** argv) {
 					cerr << "Auto-detection of file type for file " << in2_filename << " failed."  << endl;
 					exit(EXIT_FAILURE);
 				}
-				if(line_from_file.compare(line_from_file.size()-2,1,"/")==0)
-					readNameSuffix_file2 = true;
 				firstline_file2 = false;
 			}
 			if(isFastQ_file2) {
 				// remove '@' from beginning of line
 				line_from_file.erase(line_from_file.begin());
-				// delete '/2' from end of read name
-				if(readNameSuffix_file2)
-					line_from_file.erase(line_from_file.size()-2,2);
+				// delete suffixes like '/2' or ' 2:N:0:TAAGGCGA' from end of read name
+				if(paired) {
+					size_t n = line_from_file.find_first_of(suffixStartCharacters);
+					if(n != string::npos) { line_from_file.erase(n); }
+				}
 				if(name != line_from_file) {
-					cerr << "Error: Read names are not identical between the two input files" << endl;
+					cerr << "Error: Read names are not identical between the two input files. Probably reads are not in the same order in both files." << endl;
 					in1_file.close();
 					in2_file.close();
 					exit(EXIT_FAILURE);
@@ -375,9 +376,11 @@ int main(int argc, char** argv) {
 				else { // FASTA
 					// remove '>' from beginning of line
 					line_from_file.erase(line_from_file.begin());
-					// delete '/2' from end of read name
-					if(readNameSuffix_file2)
-						line_from_file.erase(line_from_file.size()-2,2);
+					// delete suffixes like '/2' or ' 2:N:0:TAAGGCGA' from end of read name
+					if(paired) {
+						size_t n = line_from_file.find_first_of(suffixStartCharacters);
+						if(n != string::npos) { line_from_file.erase(n); }
+					}
 					if(name != line_from_file) {
 						cerr << "Error: Read names are not identical between the two input files" << endl;
 						in1_file.close();

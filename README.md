@@ -113,7 +113,11 @@ kaiju -t nodes.dmp -f kaiju_db.fmi -i inputfile.fastq
 If you choose to use the NR database, then use `-f kaiju_db_nr.fmi`.
 
 For paired-end reads use `-i firstfile.fastq` and `-j secondfile.fastq`.
-The reads must be in the same order in both files.
+
+The reads must be in the same order in both files. Kaiju will strip suffixes
+from the read names by deleting all characters after a `/` or space.  The read
+names are then compared between the first and second file and an error is
+issued if they are not identical.
 
 Kaiju can read input files in FASTQ and FASTA format.
 If the files are compressed, the shell's process substitution can be used to decompress them on the fly.
