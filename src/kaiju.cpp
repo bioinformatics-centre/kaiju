@@ -78,11 +78,12 @@ int main(int argc, char** argv) {
 	bool verbose = false;
 	bool debug = false;
 	bool paired  = false;
+	bool input_is_protein = false;
 
 	// --------------------- START ------------------------------------------------------------------
 	// Read command line params
 	int c;
-	while ((c = getopt (argc, argv, "a:hdrvn:m:e:l:t:f:b:i:j:s:z:o:")) != -1) {
+	while ((c = getopt (argc, argv, "a:hdprvn:m:e:l:t:f:b:i:j:s:z:o:")) != -1) {
 		switch (c)  {
 			case 'a': {
 									if("mem" == string(optarg)) mode = MEM;					
@@ -97,6 +98,8 @@ int main(int argc, char** argv) {
 				debug = true; break;
 			case 'v':
 				verbose = true; break;
+			case 'p':
+				input_is_protein = true; break;
 			case 'o':
 				output_filename = optarg; break;
 			case 'f':
@@ -105,8 +108,11 @@ int main(int argc, char** argv) {
 				nodes_filename = optarg; break;
 			case 'i':
 				in1_filename = optarg; break;
-			case 'j':
-				in2_filename = optarg; break;
+			case 'j': {
+									in2_filename = optarg;
+									paired = true;
+									break;
+								}
 			case 'l': {
 									try {
 										seed_length = stoi(optarg); 
@@ -179,6 +185,7 @@ int main(int argc, char** argv) {
 	if(nodes_filename.length() == 0) { cerr << "Error: Please specify the location of the nodes.dmp file, using the -t option."  << endl; usage(argv[0]); }
 	if(fmi_filename.length() == 0) { cerr << "Error: Please specify the location of the FMI file, using the -f option."  << endl; usage(argv[0]); }
 	if(in1_filename.length() == 0) { cerr << "Error: Please specify the location of the input file, using the -i option."  << endl; usage(argv[0]); }
+	if(paired && input_is_protein) { cerr << "Error: Protein input only supports one input file." << endl; usage(argv[0]); }
 	
 	if(debug) {
 		cerr << "Parameters: \n";
@@ -195,6 +202,7 @@ int main(int argc, char** argv) {
 	config->nodes = nodes;
 	config->debug = debug;
 	config->verbose = verbose;
+	config->input_is_protein = input_is_protein;
 	config->min_score = min_score;
 	config->min_fragment_length = min_fragment_length;
 	config->seed_length = seed_length;
@@ -265,7 +273,6 @@ int main(int argc, char** argv) {
 	if(in2_filename.length() > 0) {
 		in2_file.open(in2_filename.c_str());    
 		if(!in2_file.is_open()) {  cerr << "Could not open file " << in2_filename << endl; exit(EXIT_FAILURE); }
-		paired = true;
 	}
 
 	
@@ -462,7 +469,8 @@ void usage(char *progname) {
 	fprintf(stderr, "   -e INT        Number of mismatches allowed (default: 0)\n");
 	fprintf(stderr, "   -m INT        Minimum match length in MEM mode (default: 11)\n");
 	fprintf(stderr, "   -s INT        Minimum match score in Greedy mode (default: 65)\n");
-	fprintf(stderr, "   -v            Enable verbose output.\n");
+	fprintf(stderr, "   -p            Input sequences are protein sequences\n");
+	fprintf(stderr, "   -v            Enable verbose output\n");
 	//fprintf(stderr, "   -d            Enable debug output.\n");
 	//fprintf(stderr, "   -l <UINT> Seed length for finding matches in smartfast mode (default: 7)\n");
 	exit(EXIT_FAILURE);

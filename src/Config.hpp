@@ -30,6 +30,7 @@ class Config {
 		Mode mode;
 		bool debug;
 		bool verbose;
+		bool input_is_protein;
 		unsigned int mismatches;
 		unsigned int min_fragment_length;
 		int min_score; 

@@ -300,6 +300,7 @@ void ConsumerThread::addAllMismatchVariantsAtPosSI(Fragment * f, uint pos, size_
 	string fragment = f->seq;
 	assert(fragment.length() >= config->min_fragment_length);
 	char origchar = fragment[pos];
+	assert(blosum_subst.count(origchar) > 0);
 	
 	if(erase_pos != string::npos && erase_pos < fragment.length()) {
 		if(config->debug)	cerr << "Deleting from position " << erase_pos  << "\n";
@@ -548,23 +549,72 @@ void ConsumerThread::doWork() {
 	while(myWorkQueue->pop(&item)) {    	
 		assert(item != NULL);
 
-		if((!item->paired && item->sequence1.length() < config->min_fragment_length*3) || 
-			(item->paired && item->sequence1.length() < config->min_fragment_length*3 && item->sequence2.length() < config->min_fragment_length*3)) {
-			output << "U\t" << item->name << "\t0\n";
-			delete item;
-			continue;
-		}		
+		if(config->input_is_protein) {
+			if(item->sequence1.length() < config->min_fragment_length) {
+				output << "U\t" << item->name << "\t0\n";
+				delete item;
+				continue;
+			}
+		}
+		else {
+			if((!item->paired && item->sequence1.length() < config->min_fragment_length*3) ||
+				(item->paired && item->sequence1.length() < config->min_fragment_length*3 && item->sequence2.length() < config->min_fragment_length*3)) {
+				output << "U\t" << item->name << "\t0\n";
+				delete item;
+				continue;
+			}
+		}
 		count++;
 
 		uint64_t lca = 0;
 		extraoutput = "";
 
-		if(config->debug) cerr << "Getting fragments for read: "<< item->sequence1 << "\n"; 
-		getAllFragmentsBits(item->sequence1);
-		if(item->paired) {
-			if(config->debug) cerr << "Getting fragments for 2nd read: " << item->sequence2 << "\n";
-			getAllFragmentsBits(item->sequence2);
+		if(config->input_is_protein) {
+			for(uint i=0; i < item->sequence1.length(); i++) {
+				item->sequence1[i] = toupper(item->sequence1[i]);
+			}
+			size_t start = 0;
+			size_t pos = item->sequence1.find_first_not_of("ACDEFGHIKLMNPQRSTVWY");
+			while(pos != string::npos) {
+				if(pos-start >= config->min_fragment_length) {
+					string subseq =  item->sequence1.substr(start,pos-start);
+					//cerr << "subseq=" << subseq << endl;
+					if(config->mode==GREEDYBLOSUM) {
+						int score = calcScore(subseq,0);
+						if(score >= config->min_score) {
+							fragments.insert(std::pair<uint,Fragment *>(score,new Fragment(subseq)));
+						}
+					}
+					else {
+						fragments.insert(std::pair<uint,Fragment *>(subseq.length(),new Fragment(subseq)));
+					}
+				}
+				start = pos+1;
+				pos = item->sequence1.find_first_not_of("ACDEFGHIKLMNPQRSTVWY", pos + 1);
+			}
+			//add remaining sequence, which corresponds to the whole sequence if no invalid char was found
+			string subseq = item->sequence1.substr(start,item->sequence1.length()-start);
+			if(subseq.length() >= config->min_fragment_length) {
+				if(config->mode==GREEDYBLOSUM) {
+					int score = calcScore(subseq,0);
+					if(score >= config->min_score) {
+						fragments.insert(std::pair<uint,Fragment *>(score,new Fragment(subseq)));
+					}
+				}
+				else {
+					fragments.insert(std::pair<uint,Fragment *>(subseq.length(),new Fragment(subseq)));
+				}
+			}
 		}
+		else { // normal mode with DNA input
+			if(config->debug) cerr << "Getting fragments for read: "<< item->sequence1 << "\n";
+			getAllFragmentsBits(item->sequence1);
+			if(item->paired) {
+				if(config->debug) cerr << "Getting fragments for 2nd read: " << item->sequence2 << "\n";
+				getAllFragmentsBits(item->sequence2);
+			}
+		}
+
 		if(config->debug) cerr << fragments.size()  << " fragments found in the read."<< "\n"; 
 
 		if(config->mode == MEM) {

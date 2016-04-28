@@ -10,7 +10,7 @@ using namespace std;
 class ReadItem {
     public:
         string name;
-        bool paired;
+        bool paired = false;
         string sequence1;
         string sequence2;    
         ReadItem(string name, string sequence1);

@@ -25,6 +25,7 @@
 #include <map>
 #include <utility>
 #include <functional>
+#include <locale>
 
 #include "./ProducerConsumerQueue/src/ProducerConsumerQueue.hpp"
 #include "ReadItem.hpp"
