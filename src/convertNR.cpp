@@ -8,8 +8,8 @@
 #include <unordered_map>
 #include <getopt.h>
 #include <vector>
+#include <unordered_set>
 #include <iterator>
-#include <stdexcept>
 
 #include "Config.hpp"
 
@@ -25,11 +25,13 @@ int main(int argc, char **argv) {
 	unordered_map<uint64_t,uint64_t> gi2taxid;
 
 	string nodes_filename;
+	string list_filename;
 	string gi_taxid_filename;
 	string nr_filename;
 	string out_filename;
 
-	uint64_t include_ids [3] = { 2, 2157, 10239 };  //Bacteria, Archaea, Viruses
+	//uint64_t include_ids [3] = { 2, 2157, 10239 };  //Bacteria, Archaea, Viruses
+	unordered_set<uint64_t> include_ids;
 	bool verbose = false;
 	bool debug = false;
 	bool addcount = false;
@@ -38,7 +40,7 @@ int main(int argc, char **argv) {
 	// --------------------- START ------------------------------------------------------------------
 	// Read command line params
 	int c;
-	while ((c = getopt (argc, argv, "hcdvrg:t:i:o:")) != -1) {
+	while ((c = getopt (argc, argv, "hcdvrl:g:t:i:o:")) != -1) {
 		switch (c)  {
 			case 'h':
 				usage(argv[0]);
@@ -48,6 +50,8 @@ int main(int argc, char **argv) {
 				verbose = true; break;
 			case 'c':
 				addcount = true; break;
+			case 'l':
+				list_filename = optarg; break;
 			case 't':
 				nodes_filename = optarg; break;
 			case 'g':
@@ -69,10 +73,9 @@ int main(int argc, char **argv) {
 	config->verbose = verbose;
 
 	ifstream mapfile;
-	mapfile.open(nodes_filename.c_str());
+	mapfile.open(nodes_filename);
 	if(!mapfile.is_open()) { cerr << "Error: Could not open file " << nodes_filename << endl; usage(argv[0]); }
-	cerr << "1/3 Reading taxonomic tree from file " << nodes_filename << endl;
-
+	cerr << "Reading taxonomic tree from file " << nodes_filename << endl;
 	string line;
 	while(getline(mapfile, line)) {
 		if(line.length() == 0) { continue; } 
@@ -82,7 +85,7 @@ int main(int argc, char **argv) {
 			size_t start = line.find_first_of("0123456789",end);
 			end = line.find_first_not_of("0123456789",start+1);
 			uint64_t parent = stoul(line.substr(start,end-start));
-			nodes.insert(make_pair(node,parent));  //maybe the nodes->at(node) = parent;  would be faster?!
+			nodes.emplace(node,parent);
 		}
 		catch(const std::invalid_argument& ia) {
 			cerr << "Found bad number in line: " << line << endl; 
@@ -93,10 +96,54 @@ int main(int argc, char **argv) {
 	}
 	mapfile.close();
 
+	if(list_filename.length()==0) {
+		cerr << "No taxa list specified, using Archaea, Bacteria, and Viruses." << endl;
+		include_ids.insert((uint64_t)2);
+		include_ids.insert((uint64_t)2157);
+		include_ids.insert((uint64_t)10239);
+	}
+	else {
+		ifstream list_file;
+		list_file.open(list_filename);
+		if(!list_file.is_open()) { cerr << "Error: Could not open file " << list_filename << endl; usage(argv[0]); }
+		cerr << "Reading taxa from file " << list_filename << endl;
+		string line;
+		while(getline(list_file, line)) {
+			if(line.length() == 0) { continue; }
+			size_t start = line.find_first_of("0123456789");
+			if(start == string::npos) {
+				continue;
+			}
+			size_t end = line.find_first_not_of("0123456789",start+1);
+			if(end == string::npos) {
+				end = start + line.length()-start;
+			}
+			try {
+				uint64_t taxid = stoul(line.substr(start,end-start));
+				if(debug)	cerr << "Found taxon id " << taxid << ", start=" << start << " end = " <<end<< endl;
+				if(nodes.count(taxid) > 0) {
+					include_ids.insert(taxid);
+				}
+				else {
+					cerr << "Warning: Taxon ID " << taxid << " was not found in taxonomic tree. Skipping." << endl;
+				}
+			}
+			catch(const std::invalid_argument& ia) {
+				cerr << "Error: Found bad taxon id in line: " << line << endl;
+			}
+			catch (const std::out_of_range& oor) {
+				cerr << "Error: Found bad number (out of range error) in line: " << line << endl;
+			}
+		}
+		list_file.close();
+	}
+
+
+
 	ifstream gi_taxid_file;
-	gi_taxid_file.open(gi_taxid_filename.c_str());
+	gi_taxid_file.open(gi_taxid_filename);
 	if(!gi_taxid_file.is_open()) { cerr << "Error: Could not open file " << gi_taxid_filename << endl; usage(argv[0]); }
-	cerr << "2/3 Reading gi to taxon id map from file " << gi_taxid_filename << endl;
+	cerr << "Reading gi to taxon id map from file " << gi_taxid_filename << endl;
 	while(getline(gi_taxid_file, line)) {
 		if(line.length() == 0) { continue; }
 		size_t end = line.find_first_not_of("0123456789");
@@ -105,7 +152,7 @@ int main(int argc, char **argv) {
 			size_t start = line.find_first_of("0123456789",end);
 			end = line.find_first_not_of("0123456789",start+1);
 			uint64_t taxid = stoul(line.substr(start,end-start));
-			gi2taxid.insert(make_pair(gi,taxid));  //maybe the nodes->at(node) = parent;  would be faster?!
+			gi2taxid.emplace(gi,taxid);
 		}
 		catch(const std::invalid_argument& ia) {
 			cerr << "Found bad identifier in line: " << line << endl; 
@@ -125,9 +172,9 @@ int main(int argc, char **argv) {
 	if(verbose) cerr << "Writing to file " << out_filename << endl;
 	ofstream out_file;
 	out_file.open(out_filename);    
-	if(!out_file.is_open()) {  cerr << "Could not open file " << out_filename << " for writing" << endl; exit(EXIT_FAILURE); }
+	if(!out_file.is_open()) {  cerr << "Error: Could not open file " << out_filename << " for writing!" << endl; usage(argv[0]); }
 
-	cerr << "3/3 Processing NR file " << nr_filename << endl;
+	cerr << "Processing NR file " << nr_filename << endl;
 
 	bool skip = true;
 	bool first = true;
@@ -169,13 +216,17 @@ int main(int argc, char **argv) {
 				start=start+3;
 			}
 			if(ids.size()>0) { 
-				uint64_t lca = (ids.size()==1) ?  *(ids.begin()) : config->lca_from_ids(node2depth, ids);
 				bool keep = false;
-				for(auto include_id : include_ids) {
-					if(has_parent(lca,include_id,nodes)) {
+				uint64_t lca = (ids.size()==1) ?  *(ids.begin()) : config->lca_from_ids(node2depth, ids);
+				if(debug) cerr << "LCA=" << lca << endl;
+				if(nodes.count(lca)==0) { cerr << "Taxon ID " << lca << " not found in taxonomy!" << endl; continue; }
+				uint64_t id = lca;
+				while(nodes.count(id)>0 && id != 1) {
+					if(include_ids.count(id) > 0) {
 						keep = true;
 						break;
 					}
+					id = nodes.at(id);
 				}
 				if(keep) {
 					if(!first) { output << "\n";  } else { first = false; }
@@ -233,6 +284,7 @@ void usage(char *progname) {
 	fprintf(stderr, "   -o FILENAME   Name of output file.\n");
 	fprintf(stderr, "Optional arguments:\n");
 	fprintf(stderr, "   -i FILENAME   Name of NR file. If this option is not used, then the program will read from STDIN.\n");
+	fprintf(stderr, "   -l FILENAME   Name of file with taxon IDs. These IDs must be contained in nodes.dmp and denote the extracted clades from the NR file.\n");
 	exit(EXIT_FAILURE);
 }
 
