@@ -4,8 +4,6 @@
 #ifndef CONSUMERTHREADX_H
 #define CONSUMERTHREADX_H
 
-#define NDEBUG
-
 #include <stdint.h>
 #include <assert.h>
 #include <unordered_map>
@@ -26,7 +24,7 @@
 #include <utility>
 #include <functional>
 
-#include "./ProducerConsumerQueue/src/ProducerConsumerQueue.hpp"
+#include "include/ProducerConsumerQueue/src/ProducerConsumerQueue.hpp"
 #include "ReadItem.hpp"
 #include "Config.hpp"
 #include "ConsumerThread.hpp"

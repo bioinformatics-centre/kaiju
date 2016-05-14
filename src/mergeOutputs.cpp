@@ -1,28 +1,26 @@
 /* This file is part of Kaiju, Copyright 2015 Peter Menzel and Anders Krogh,
  * Kaiju is licensed under the GPLv3, see the file LICENSE. */
 
+#include <getopt.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <assert.h>
 #include <stdlib.h>
 #include <iostream>
 #include <fstream>
-#include <time.h>
 #include <unordered_map>
 #include <unordered_set>
-#include <algorithm>
 #include <locale>
 #include <string>
-#include <functional>
 #include <stdexcept>
 
-#include "ConsumerThread.hpp"
-
-void usage(char *progname);
-string strip(const string &s);
-bool isalpha(char & c);
-string calc_lca(unordered_map<uint64_t,uint64_t> *, string, string);
-
 using namespace std;
+
+void usage(const char * progname);
+string strip(const string & s);
+bool isalpha(const char & c);
+string calc_lca(unordered_map<uint64_t,uint64_t> *, const string &, const string &);
+
 
 int main(int argc, char** argv) {
 
@@ -248,11 +246,11 @@ int main(int argc, char** argv) {
 	return EXIT_SUCCESS;    
 }
 
-inline bool isalpha(char & c) { 
+inline bool isalpha(const char & c) {
 	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
 }
 
-string strip(const string &s) {
+string strip(const string & s) {
 		string result;
 		result.reserve(s.length());
 		for(auto it=s.cbegin(); it!=s.cend(); ++it) {
@@ -262,7 +260,7 @@ string strip(const string &s) {
 		return result;
 }
 
-void usage(char *progname) { 
+void usage(const char * progname) {
 	fprintf(stderr, "Usage:\n   %s -i in1.tsv -j in2.tsv [-o outfile.tsv] [-c 1|2|lca] [-t nodes.dmp] [-v] [-d]\n", progname);
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Mandatory arguments:\n");
@@ -285,7 +283,7 @@ void usage(char *progname) {
 	exit(EXIT_FAILURE);
 }
 
-string calc_lca(unordered_map<uint64_t,uint64_t> * nodes, string id1, string id2) {
+string calc_lca(unordered_map<uint64_t,uint64_t> * nodes, const string & id1, const string & id2) {
 
 		uint64_t node1;
 		uint64_t node2; 

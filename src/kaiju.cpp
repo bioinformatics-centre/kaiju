@@ -36,7 +36,7 @@
 #include <deque>
 #include <stdexcept>
 
-#include "./ProducerConsumerQueue/src/ProducerConsumerQueue.hpp"
+#include "include/ProducerConsumerQueue/src/ProducerConsumerQueue.hpp"
 #include "ReadItem.hpp"
 #include "ConsumerThread.hpp"
 #include "Config.hpp"
@@ -45,13 +45,13 @@ extern "C" {
 #include "./bwt/bwt.h"
 }
 
+using namespace std;
 
 void usage(char *progname);
 void strip(string &s);
 bool isalpha(char & c);
 string getCurrentTime();
 
-using namespace std;
 
 int main(int argc, char** argv) {
 
@@ -79,11 +79,12 @@ int main(int argc, char** argv) {
 	bool debug = false;
 	bool paired  = false;
 	bool input_is_protein = false;
+	bool SEG_check = false;
 
 	// --------------------- START ------------------------------------------------------------------
 	// Read command line params
 	int c;
-	while ((c = getopt (argc, argv, "a:hdprvn:m:e:l:t:f:b:i:j:s:z:o:")) != -1) {
+	while ((c = getopt (argc, argv, "a:hdpxvn:m:e:l:t:f:i:j:s:z:o:")) != -1) {
 		switch (c)  {
 			case 'a': {
 									if("mem" == string(optarg)) mode = MEM;					
@@ -100,6 +101,8 @@ int main(int argc, char** argv) {
 				verbose = true; break;
 			case 'p':
 				input_is_protein = true; break;
+			case 'x':
+				SEG_check = true; break;
 			case 'o':
 				output_filename = optarg; break;
 			case 'f':
@@ -207,6 +210,7 @@ int main(int argc, char** argv) {
 	config->min_fragment_length = min_fragment_length;
 	config->seed_length = seed_length;
 	config->mismatches = mismatches;
+	config->SEG = SEG_check;
 
 	if(verbose) cerr << getCurrentTime() << " Reading database" << endl;
 
@@ -454,7 +458,7 @@ void strip(string &s) {
 }
 
 void usage(char *progname) { 
-	fprintf(stderr, "Usage:\n   %s -t nodes.dmp -f allproteins.fmi -i reads.fastq [-j reads2.fastq]\n", progname);
+	fprintf(stderr, "Usage:\n   %s -t nodes.dmp -f kaiju_db.fmi -i reads.fastq [-j reads2.fastq]\n", progname);
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Mandatory arguments:\n");
 	fprintf(stderr, "   -t FILENAME   Name of nodes.dmp file\n");
@@ -472,7 +476,6 @@ void usage(char *progname) {
 	fprintf(stderr, "   -p            Input sequences are protein sequences\n");
 	fprintf(stderr, "   -v            Enable verbose output\n");
 	//fprintf(stderr, "   -d            Enable debug output.\n");
-	//fprintf(stderr, "   -l <UINT> Seed length for finding matches in smartfast mode (default: 7)\n");
 	exit(EXIT_FAILURE);
 }
 

@@ -12,10 +12,17 @@ Config::~Config() { // Destructor
 	free(astruct->trans);
 	free(astruct->a);
 	free(astruct);
+	if(SEG) {
+		SegParametersFree(blast_seg_params);
+	}
 }
 
 void Config::init() {
 	astruct = alloc_AlphabetStruct(bwt->alphabet,0,0);
+	if(SEG) {
+		blast_seg_params = SegParametersNewAa();
+		blast_seg_params->overlaps = TRUE;
+	}
 }
 
 
@@ -24,7 +31,7 @@ uint64_t Config::lca_from_ids(unordered_map<uint64_t,unsigned int> & node2depth,
 	if(ids.size() == 1) {
 		return *(ids.begin());
 	}
-	uint num_ids = ids.size();
+	size_t num_ids = ids.size();
 	uint64_t * leafs = (uint64_t *) calloc(num_ids,sizeof(uint64_t));
 	unsigned int shallowest_depth = 100000;
 	uint index = 0;
@@ -51,7 +58,9 @@ uint64_t Config::lca_from_ids(unordered_map<uint64_t,unsigned int> & node2depth,
 			//cerr << "Inserting to depth map: " << *it <<" -> " << depth << endl;
 			if(depth < shallowest_depth) { shallowest_depth = depth; }
 		}
-		else if(node2depth.at(*it) < shallowest_depth) { shallowest_depth = node2depth.at(*it); }
+		else if(node2depth.at(*it) < shallowest_depth) {
+			shallowest_depth = node2depth.at(*it);
+		}
 	}
 
 	if(num_ids<=0) {
@@ -68,7 +77,7 @@ uint64_t Config::lca_from_ids(unordered_map<uint64_t,unsigned int> & node2depth,
 			*it = nodes->at(*it);
 		}
 	}*/
-	for(uint index = 0; index < num_ids; ++index) {
+	for(size_t index = 0; index < num_ids; ++index) {
 		for(int i = node2depth.at(leafs[index]) - shallowest_depth; i > 0; i--) {
 			leafs[index]	= nodes->at(leafs[index]);
 		}
@@ -79,7 +88,7 @@ uint64_t Config::lca_from_ids(unordered_map<uint64_t,unsigned int> & node2depth,
 		uint64_t first = leafs[0];
 		bool found = true;
 		//for (auto it=leafs.begin(); it != leafs.end(); ++it) {
-		for(uint index = 0; index < num_ids; ++index) {
+		for(size_t index = 0; index < num_ids; ++index) {
 			if(first != leafs[index]) {
 				found = false;
 			}

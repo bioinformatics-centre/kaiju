@@ -15,7 +15,7 @@ void ConsumerThreadx::classify_greedyblosum() {
 			Fragment * t = getNextFragment(best_match_score);
 			if(!t) break; 
 			const string fragment = t->seq;
-			const uint length = fragment.length();
+			const uint length = (uint)fragment.length();
 			const uint num_mm = t->num_mm;
 
 			if(config->debug) { cerr << "Searching fragment "<< fragment <<  " (" << length << ","<< num_mm << "," << t->diff << ")" << "\n"; }
@@ -109,7 +109,7 @@ void ConsumerThreadx::classify_length() {
 			Fragment * t = getNextFragment(longest_match_length);
 			if(!t) break;// searched all fragments that are longer than best match length 
 			const string fragment = t->seq;
-			const uint length = fragment.length();
+			const uint length = (uint)fragment.length();
 
 			if(config->debug) { cerr << "Searching fragment "<< fragment <<  " (" << length << ")" << "\n"; }
 			char * seq = new char[length+1];

@@ -15,6 +15,10 @@
 #include <stdint.h>
 #include <mutex>
 
+#include "include/ncbi-blast+/algo/blast/core/blast_seg.h"
+#include "include/ncbi-blast+/algo/blast/core/blast_filter.h"
+#include "include/ncbi-blast+/algo/blast/core/blast_encoding.h"
+
 extern "C" {
 #include "./bwt/fmi.h"
 #include "./bwt/bwt.h"
@@ -29,6 +33,8 @@ class Config {
 	public:	
 		Mode mode;
 		bool debug;
+		bool SEG = false;
+		SegParameters * blast_seg_params;
 		bool verbose;
 		bool input_is_protein;
 		unsigned int mismatches;

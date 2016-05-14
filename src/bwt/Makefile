@@ -1,6 +1,6 @@
 CC      = gcc # -static -lm
 #CFLAGS  = -g
-CFLAGS  = -O3 -g
+CFLAGS  = -O3 -g -Wno-unused-result
 LDLIBS = -lpthread -lm
 
 ALL: mkbwt mkfmi
@@ -24,8 +24,5 @@ suffixArray.o: suffixArray.c suffixArray.h common.h sequence.h
 bwt.o: bwt.c bwt.h fmi.h common.h
 
 multikeyqsort.o: multikeyqsort.c multikeyqsort.h 
-
-clean:
-	rm -f *.o *.h.old *~ mkbwt mkfmi
 
 .PHONY: clean 

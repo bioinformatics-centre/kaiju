@@ -4,8 +4,6 @@
 #ifndef CONSUMERTHREAD_H
 #define CONSUMERTHREAD_H
 
-#define NDEBUG
-
 #include <stdint.h>
 #include <assert.h>
 #include <unordered_map>
@@ -27,9 +25,17 @@
 #include <functional>
 #include <locale>
 
-#include "./ProducerConsumerQueue/src/ProducerConsumerQueue.hpp"
+#include "include/ProducerConsumerQueue/src/ProducerConsumerQueue.hpp"
 #include "ReadItem.hpp"
 #include "Config.hpp"
+
+#include "include/ncbi-blast+/algo/blast/core/blast_seg.h"
+#include "include/ncbi-blast+/algo/blast/core/blast_filter.h"
+#include "include/ncbi-blast+/algo/blast/core/blast_encoding.h"
+
+extern "C" {
+#include "./bwt/bwt.h"
+}
 
 using namespace std;
 
@@ -38,10 +44,12 @@ class Fragment {
 	string seq = "";
 	uint num_mm = 0;
 	int diff = 0;
+	bool SEGchecked = false;
 	uint pos_lastmm = 0;
 	IndexType si0, si1;
 	int matchlen;
 	Fragment(string s) { seq = s; }
+	Fragment(string s, bool b) { seq = s; SEGchecked = true; }
 	Fragment(string s, uint n, uint p, int d) {
 		seq = s; 
 		num_mm=n; 
@@ -56,6 +64,7 @@ class Fragment {
 		si0 = arg_si0;
 		si1 = arg_si1;
 		matchlen=len;
+		SEGchecked = true; // fragments with substitutions have been checked before
 	}
 	Fragment(string s, uint n, uint p, int d, SI * si) { 
 		seq = s;
@@ -118,15 +127,16 @@ class ConsumerThread {
 
 	void clearFragments();
 	int calcScore(const string &, int);
-	int calcScore(const char *, uint, uint, int);
+	int calcScore(const char *, size_t, size_t, int);
+	int calcScore(const string &, size_t, size_t, int);
 
 	void addAllMismatchVariantsAtPosSI(Fragment *,uint,size_t,SI *); // to be used by greedyblosum
-	Fragment * getNextFragment(int);
+	Fragment * getNextFragment(const int);
 
 	void eval_match_scores(SI *si, Fragment *);
 	void ids_from_SI_recursive(SI *si);
 	void ids_from_SI(SI *si);
-	void getAllFragmentsBits(string & line);
+	void getAllFragmentsBits(const string & line);
 	void flush_output();
 
 	public:        

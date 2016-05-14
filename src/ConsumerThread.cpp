@@ -187,18 +187,18 @@ ConsumerThread::ConsumerThread(ProducerConsumerQueue<ReadItem*>* workQueue, Conf
 }
 
 
-void ConsumerThread::getAllFragmentsBits(string & line) {
+void ConsumerThread::getAllFragmentsBits(const string & line) {
 	
 	for(uint i = 0; i<=2; i++) {
 		translations[i].clear();
 	}
 	const char * c = line.c_str();
-	for(uint count = 0; count < line.length()-2; count++) {
+	for(size_t count = 0; count < line.length()-2; count++) {
 		//printf("%i.",nuc2int[(uint8_t)line[count]]);
 		//printf("=%i.",codon_to_int(codon));
 		char aa = codon2aa[codon_to_int(c++)];
 		if(aa == '*') {
-			uint index = count%3;
+			size_t index = count%3;
 			// finished one of the translations, so add it to fragments
 			if(translations[index].length() >= config->min_fragment_length) {
 				if(config->mode==GREEDYBLOSUM) {
@@ -231,11 +231,11 @@ void ConsumerThread::getAllFragmentsBits(string & line) {
 		translations[i].clear();
 	}
 //cerr << "\n";
-	for(int count=line.length()-2; count >=0; count--) {
+	for(int count=(int)line.length()-2; count >=0; count--) { // count needs to be an int here and not size_t
 	//	printf("=%i.",revcomp_codon_to_int(codon));
 		char aa = codon2aa[revcomp_codon_to_int(c--)];
 		if(aa == '*') {
-			uint index = count%3;
+			size_t index = count%3;
 			// finished one of the translations, so add it to fragments
 			if(translations[index].length() >= config->min_fragment_length) {
 				if(config->mode==GREEDYBLOSUM) {
@@ -269,23 +269,75 @@ void ConsumerThread::getAllFragmentsBits(string & line) {
 
 }
 
-Fragment * ConsumerThread::getNextFragment(int min_score) {
-	Fragment * f = NULL;
-	if(!fragments.empty()) {
-		auto it = fragments.begin();
- 		// in blosum mode, the first tuple element is the maximum obtainable score of the fragment
-		// since fragments are sorted by descendent score, all following fragments cannot get a better match
-		// in MEM|GREEDY, fragments are sorted by length, so shorter fragments than longest match so far (length is in best_score)
-		// are discarded
-		if(config->mode==MEM)
-			assert(it->first >= (int)config->min_fragment_length);
+Fragment * ConsumerThread::getNextFragment(const int min_score) {
+	if(fragments.empty()) {
+		return NULL;
+	}
+	auto it = fragments.begin();
+	if(config->debug) cerr << "max fragment score/length = " << it->first << "\n";
+	if(it->first < min_score) { //the highest scoring fragment in the sorted list is below threshold, then search stops
+		return NULL;
+	}
+	Fragment * f = it->second;
+	if(config->debug) cerr <<  "Fragment = " << f->seq << "\n";
+	fragments.erase(it);
 
-		if(it->first >= min_score) {
-			f = it->second;
-			if(config->debug) cerr << "max fragment score/length = " << it->first << "\n";
-			fragments.erase(it);
+	while(config->SEG && f != NULL && !f->SEGchecked) {
+		string convertedseq = f->seq;
+		for(size_t i = 0; i < convertedseq.length(); i++) {
+			convertedseq[i] = AMINOACID_TO_NCBISTDAA[(int)convertedseq[i]];
+		}
+		BlastSeqLoc *seg_locs = NULL;
+		SeqBufferSeg((Uint1*)(convertedseq.data()), (Int4)convertedseq.length(), 0, config->blast_seg_params, &seg_locs);
+		if(seg_locs) { // SEG found region(s)
+			BlastSeqLoc * curr_loc = seg_locs;
+			size_t start = 0; //start of non-SEGged piece
+			do {
+				size_t length = curr_loc->ssr->left - start;
+				if(config->debug) cerr << "SEG region: " << curr_loc->ssr->left << " - " << curr_loc->ssr->right << " = " << f->seq.substr(curr_loc->ssr->left,curr_loc->ssr->right - curr_loc->ssr->left + 1) << endl;
+				if(length > config->min_fragment_length) {
+					if(config->mode == GREEDYBLOSUM) {
+						int score = calcScore(f->seq,start,length,0);
+						if(score >= config->min_score) {
+							fragments.insert(std::pair<uint,Fragment *>(score,new Fragment(f->seq.substr(start,length),true)));
+						}
+					}
+					else {
+						fragments.insert(std::pair<uint,Fragment *>(length,new Fragment(f->seq.substr(start,length),true)));
+					}
+				}
+				start = curr_loc->ssr->right + 1;
+			} while((curr_loc=curr_loc->next) != NULL);
+			size_t len_last_piece = f->seq.length() - start;
+			if(len_last_piece > config->min_fragment_length) {
+				if(config->mode == GREEDYBLOSUM) {
+					int score = calcScore(f->seq,start,len_last_piece,0);
+					if(score >= config->min_score) {
+						fragments.insert(std::pair<uint,Fragment *>(score,new Fragment(f->seq.substr(start,len_last_piece),true)));
+					}
+				}
+				else {
+					fragments.insert(std::pair<uint,Fragment *>(len_last_piece,new Fragment(f->seq.substr(start,len_last_piece),true)));
+				}
+			}
+
+			BlastSeqLocFree(seg_locs);
+			delete f;
+			f = NULL;
+			if(!fragments.empty()) {
+				it = fragments.begin();
+				if(it->first >= min_score) {
+					f = it->second;
+					fragments.erase(it);
+					// next iteration of while loop
+				}
+			}
+		}
+		else { // no SEG regions found
+			return f;
 		}
 	}
+
 	return f;
 }
 
@@ -319,7 +371,7 @@ void ConsumerThread::addAllMismatchVariantsAtPosSI(Fragment * f, uint pos, size_
 		// so we add this difference to the fragment
 		int score_after_subst = score + b62[aa2int[(uint8_t)origchar]][aa2int[(uint8_t)itv]];
 		if(score_after_subst >= best_match_score && score_after_subst >= config->min_score) { 
-			if(UpdateSI(config->fmi, config->astruct->trans[itv], siarray, siarrayupd) != 0) {
+			if(UpdateSI(config->fmi, config->astruct->trans[(size_t)itv], siarray, siarrayupd) != 0) {
 				fragment[pos] = itv;
 				int diff = b62[aa2int[(uint8_t)origchar]][aa2int[(uint8_t)itv]] - blosum62diag[aa2int[(uint8_t)itv]];
 				if(config->debug) cerr << "Adding fragment   " << fragment << " with mismatch at pos " << pos << " ,diff " << f->diff+diff << ", max score " << score_after_subst << "\n";
@@ -340,13 +392,20 @@ void ConsumerThread::addAllMismatchVariantsAtPosSI(Fragment * f, uint pos, size_
 }
 
 
-int ConsumerThread::calcScore(const char * c, uint start, uint len, int diff) {
+int ConsumerThread::calcScore(const char * c, size_t start, size_t len, int diff) {
 	int score = 0;
-	for(uint i=start; i < start+len; i++) {
+	for(size_t i=start; i < start+len; i++) {
 		score += blosum62diag[aa2int[(uint8_t)c[i]]];
 	}
 	return score + diff;
+}
 
+int ConsumerThread::calcScore(const string & s, size_t start, size_t len, int diff) {
+	int score = 0;
+	for(size_t i=start; i < start+len; i++) {
+		score += blosum62diag[aa2int[(uint8_t)s[i]]];
+	}
+	return score + diff;
 }
 
 
@@ -354,7 +413,7 @@ int ConsumerThread::calcScore(const string & s, int diff) {
 
 	int score = 0;
 	//for (auto  c : s) {
-	for(uint i=0; i < s.length(); i++) {
+	for(size_t i=0; i < s.length(); i++) {
 		score += blosum62diag[aa2int[(uint8_t)s[i]]];
 	}
 	return score + diff;
@@ -372,27 +431,27 @@ uint64_t ConsumerThread::classify_greedyblosum() {
 			Fragment * t = getNextFragment(best_match_score);
 			if(!t) break; 
 			const string fragment = t->seq;
-			const uint length = fragment.length();
+			const size_t length = fragment.length();
 			const uint num_mm = t->num_mm;
 
 			if(config->debug) { cerr << "Searching fragment "<< fragment <<  " (" << length << ","<< num_mm << "," << t->diff << ")" << "\n"; }
 			char * seq = new char [length+1];
 			std::strcpy(seq, fragment.c_str());
 
-			translate2numbers((uchar *)seq, length, config->astruct);
+			translate2numbers((uchar *)seq, (uint)length, config->astruct);
 			
 			SI * si = NULL;
 			if(num_mm > 0) {
 				if(num_mm == config->mismatches) { //after last mm has been done, we need to have at least reached the min_length
-					si = maxMatches_withStart(config->fmi, seq, length, config->min_fragment_length, 1,t->si0,t->si1,t->matchlen); 
+					si = maxMatches_withStart(config->fmi, seq, (uint)length, config->min_fragment_length, 1,t->si0,t->si1,t->matchlen);
 				}
 				else { 
-					si = maxMatches_withStart(config->fmi, seq, length, t->matchlen, 1,t->si0,t->si1,t->matchlen); 
+					si = maxMatches_withStart(config->fmi, seq, (uint)length, t->matchlen, 1,t->si0,t->si1,t->matchlen);
 				}
 			 	
 			}
 			else {
-				si = maxMatches(config->fmi, seq, length, config->seed_length, 0); //initial matches
+				si = maxMatches(config->fmi, seq, (uint)length, config->seed_length, 0); //initial matches
 			}
 
 			if(!si) {// no match for this fragment
@@ -472,16 +531,16 @@ uint64_t ConsumerThread::classify_length() {
 			Fragment * t = getNextFragment(longest_match_length);
 			if(!t) break;// searched all fragments that are longer than best match length 
 			const string fragment = t->seq;
-			const uint length = fragment.length();
+			const size_t length = fragment.length();
 
 			if(config->debug) { cerr << "Searching fragment "<< fragment <<  " (" << length << ")" << "\n"; }
 			char * seq = new char[length+1];
 			std::strcpy(seq, fragment.c_str());
 
-			translate2numbers((uchar *)seq, length, config->astruct);
+			translate2numbers((uchar *)seq, (uint)length, config->astruct);
 			//use longest_match_length here too:
 			//SI * si = maxMatches(config->fmi, seq, length, max(config->min_fragment_length,longest_match_length),  1);
-			SI * si = greedyExact(config->fmi, seq, length, max(config->min_fragment_length,longest_match_length),  -1);
+			SI * si = greedyExact(config->fmi, seq, (uint)length, max(config->min_fragment_length,longest_match_length),  -1);
 
 			if(!si) {// no match for this fragment
 				if(config->debug) cerr << "No match for this fragment." << "\n";
@@ -570,9 +629,7 @@ void ConsumerThread::doWork() {
 		extraoutput = "";
 
 		if(config->input_is_protein) {
-			for(uint i=0; i < item->sequence1.length(); i++) {
-				item->sequence1[i] = toupper(item->sequence1[i]);
-			}
+			for (auto & c: item->sequence1) c = (char)toupper(c);
 			size_t start = 0;
 			size_t pos = item->sequence1.find_first_not_of("ACDEFGHIKLMNPQRSTVWY");
 			while(pos != string::npos) {
@@ -788,11 +845,11 @@ void ConsumerThread::clearFragments() {
 
 
 inline uint8_t ConsumerThread::codon_to_int(const char* codon)  {
- return nuc2int[(uint8_t)codon[0]] << 4 | nuc2int[(uint8_t)codon[1]]  << 2 | nuc2int[(uint8_t)codon[2]] ;
+ return (uint8_t)(nuc2int[(uint8_t)codon[0]] << 4 | nuc2int[(uint8_t)codon[1]]  << 2 | nuc2int[(uint8_t)codon[2]]);
 }
 
 inline uint8_t ConsumerThread::revcomp_codon_to_int(const char* codon)  {
- return compnuc2int[(uint8_t)codon[2]] << 4 | compnuc2int[(uint8_t)codon[1]]  << 2 | compnuc2int[(uint8_t)codon[0]] ;
+ return (uint8_t)(compnuc2int[(uint8_t)codon[2]] << 4 | compnuc2int[(uint8_t)codon[1]]  << 2 | compnuc2int[(uint8_t)codon[0]]);
 }
 
 

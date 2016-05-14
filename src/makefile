@@ -1,7 +1,29 @@
+CC = gcc
 CXX = g++
-CXXFLAGS = -ansi -pedantic -O3 -pthread -std=c++11 -g
+CFLAGS = -g -O3 -DNDEBUG -Wall -Wno-uninitialized
+CXXFLAGS = -ansi -pedantic -O3 -pthread -std=c++11 -DNDEBUG -g -Wall -Wconversion -Wno-unused-function
 LDLIBS = -lpthread
-INCLUDES	= -I./ProducerConsumerQueue/src
+INCLUDES	= -I./include/ProducerConsumerQueue/src -I./include/ncbi-blast+
+
+BLASTOBJS = include/ncbi-blast+/algo/blast/core/pattern.o \
+			 include/ncbi-blast+/algo/blast/core/blast_posit.o \
+			 include/ncbi-blast+/algo/blast/composition_adjustment/matrix_frequency_data.o \
+			 include/ncbi-blast+/algo/blast/core/blast_dynarray.o \
+			 include/ncbi-blast+/algo/blast/core/matrix_freq_ratios.o \
+			 include/ncbi-blast+/algo/blast/core/blast_encoding.o \
+			 include/ncbi-blast+/algo/blast/core/blast_stat.o \
+			 include/ncbi-blast+/algo/blast/core/blast_filter.o \
+			 include/ncbi-blast+/algo/blast/core/blast_util.o \
+			 include/ncbi-blast+/algo/blast/core/blast_message.o \
+			 include/ncbi-blast+/algo/blast/core/ncbi_erf.o \
+			 include/ncbi-blast+/algo/blast/core/blast_options.o \
+			 include/ncbi-blast+/algo/blast/core/ncbi_math.o \
+			 include/ncbi-blast+/algo/blast/core/blast_program.o \
+			 include/ncbi-blast+/algo/blast/core/ncbi_std.o \
+			 include/ncbi-blast+/algo/blast/core/blast_psi_priv.o \
+			 include/ncbi-blast+/util/tables/raw_scoremat.o \
+			 include/ncbi-blast+/algo/blast/core/blast_query_info.o \
+			 include/ncbi-blast+/algo/blast/core/blast_seg.o
 
 all: makefile bwt/mkbwt bwt/mkfmi kaiju kaiju2krona mergeOutputs kaijuReport kaijux kaijup convertNR
 	mkdir -p ../bin && cp kaiju kaijux kaiju2krona mergeOutputs kaijuReport convertNR bwt/mkbwt bwt/mkfmi ../util/gbk2faa.pl ../util/makeDB.sh ../util/taxonlist.tsv ../bin/
@@ -9,14 +31,14 @@ all: makefile bwt/mkbwt bwt/mkfmi kaiju kaiju2krona mergeOutputs kaijuReport kai
 bwt/mkbwt bwt/mkfmi bwt/bwt.o bwt/compactfmi.o bwt/sequence.o bwt/suffixArray.o:
 	$(MAKE) -C bwt/
 
-kaiju: makefile ./bwt/bwt.o ./bwt/compactfmi.o ./bwt/sequence.o ./bwt/suffixArray.o kaiju.o ReadItem.o Config.o ConsumerThread.o  
-	$(CXX) -o kaiju kaiju.o ReadItem.o Config.o ConsumerThread.o ./bwt/bwt.o ./bwt/compactfmi.o ./bwt/sequence.o ./bwt/suffixArray.o $(LDLIBS) 
+kaiju: makefile ./bwt/bwt.o ./bwt/compactfmi.o ./bwt/sequence.o ./bwt/suffixArray.o kaiju.o ReadItem.o Config.o ConsumerThread.o $(BLASTOBJS)
+	$(CXX) -o kaiju kaiju.o ReadItem.o Config.o ConsumerThread.o ./bwt/bwt.o ./bwt/compactfmi.o ./bwt/sequence.o ./bwt/suffixArray.o $(BLASTOBJS) $(LDLIBS)
 
-kaijux: makefile ./bwt/bwt.o ./bwt/compactfmi.o ./bwt/sequence.o ./bwt/suffixArray.o kaijux.o ReadItem.o Config.o ConsumerThread.o ConsumerThreadx.o 
-	$(CXX) -o kaijux kaijux.o ReadItem.o Config.o ConsumerThread.o ConsumerThreadx.o ./bwt/bwt.o ./bwt/compactfmi.o ./bwt/sequence.o ./bwt/suffixArray.o $(LDLIBS) 
+kaijux: makefile ./bwt/bwt.o ./bwt/compactfmi.o ./bwt/sequence.o ./bwt/suffixArray.o kaijux.o ReadItem.o Config.o ConsumerThread.o ConsumerThreadx.o $(BLASTOBJS)
+	$(CXX) -o kaijux kaijux.o ReadItem.o Config.o ConsumerThread.o ConsumerThreadx.o ./bwt/bwt.o ./bwt/compactfmi.o ./bwt/sequence.o ./bwt/suffixArray.o $(BLASTOBJS) $(LDLIBS)
 
 kaijup: makefile ./bwt/bwt.o ./bwt/compactfmi.o ./bwt/sequence.o ./bwt/suffixArray.o kaijup.o ReadItem.o Config.o ConsumerThread.o  ConsumerThreadx.o ConsumerThreadp.o
-	$(CXX) -o kaijup kaijup.o ReadItem.o Config.o ConsumerThread.o ConsumerThreadx.o ConsumerThreadp.o ./bwt/bwt.o ./bwt/compactfmi.o ./bwt/sequence.o ./bwt/suffixArray.o $(LDLIBS) 
+	$(CXX) -o kaijup kaijup.o ReadItem.o Config.o ConsumerThread.o ConsumerThreadx.o ConsumerThreadp.o ./bwt/bwt.o ./bwt/compactfmi.o ./bwt/sequence.o ./bwt/suffixArray.o $(BLASTOBJS) $(LDLIBS)
 
 kaiju2krona: makefile kaiju2krona.o
 	$(CXX) -o kaiju2krona kaiju2krona.o
@@ -28,43 +50,17 @@ kaijuReport: makefile kaijuReport.o
 	$(CXX) -o kaijuReport kaijuReport.o
 
 convertNR: makefile Config.o convertNR.o ./bwt/sequence.o
-	$(CXX) -o convertNR convertNR.o Config.o ./bwt/sequence.o
+	$(CXX) -o convertNR convertNR.o Config.o ./bwt/sequence.o $(BLASTOBJS)
 
-Config.o: Config.cpp Config.hpp
-	$(CXX) $(CXXFLAGS) -c Config.cpp
 
-ConsumerThread.o: ConsumerThread.cpp ConsumerThread.hpp
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c ConsumerThread.cpp
-
-ConsumerThreadx.o: ConsumerThreadx.cpp ConsumerThreadx.hpp
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c ConsumerThreadx.cpp
-
-ReadItem.o: ReadItem.cpp makefile
-	$(CXX) $(CXXFLAGS) -c ReadItem.cpp
-
-kaiju.o: kaiju.cpp makefile ProducerConsumerQueue/src/ProducerConsumerQueue.hpp ProducerConsumerQueue/src/ProducerConsumerQueue.tpp
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c kaiju.cpp
-
-kaijux.o: kaijux.cpp makefile ProducerConsumerQueue/src/ProducerConsumerQueue.hpp ProducerConsumerQueue/src/ProducerConsumerQueue.tpp
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c kaijux.cpp
-
-kaijup.o: kaijup.cpp makefile ProducerConsumerQueue/src/ProducerConsumerQueue.hpp ProducerConsumerQueue/src/ProducerConsumerQueue.tpp
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c kaijup.cpp
-
-kaiju2krona.o: kaiju2krona.cpp makefile
-	$(CXX) $(CXXFLAGS) -c kaiju2krona.cpp
-
-mergeOutputs.o: mergeOutputs.cpp makefile
-	$(CXX) $(CXXFLAGS) -c mergeOutputs.cpp
-
-kaijuReport.o: kaijuReport.cpp makefile
-	$(CXX) $(CXXFLAGS) -c kaijuReport.cpp
-
-convertNR.o: convertNR.cpp makefile
-	$(CXX) $(CXXFLAGS) -c convertNR.cpp
+%.o : %.c
+	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
+%.o : %.cpp
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
 
 clean: 
-	rm -f -v *.o kaiju kaijux kaijup kaiju2krona mergeOutputs kaijuReport convertNR ../bin/*
+	rm -f -v bwt/mkbwt bwt/mkfmi kaiju kaijux kaijup kaiju2krona mergeOutputs kaijuReport convertNR ../bin/*
+	find . -name "*.o" -delete
 	$(MAKE) -C bwt/ clean
 
 .PHONY: clean 

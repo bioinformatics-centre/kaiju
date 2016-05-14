@@ -144,7 +144,11 @@ kaiju -t nodes.dmp -f kaiju_db.fmi -i inputfile.fastq -a greedy -e 5
 ```
 The cutoffs for minimum required match length and match score can be changed using the options `-m` and `-s`.
 
+If the input sequences are already protein sequences, use option `-p` to disable translation of the input.
 
+Option `-x` can be used to enable filtering of query sequences containing low-complexity regions by using the 
+SEG algorithm from the blast+ package. This is useful for noisy reads and to avoid spurious matches caused by
+simple repeat patterns.
 
 ###Output format
 Kaiju will print one line for each read or read pair.

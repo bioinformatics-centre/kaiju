@@ -196,8 +196,8 @@ void usage(char *progname) {
 	fprintf(stderr, "Mandatory arguments:\n");
 	fprintf(stderr, "   -i FILENAME   Name of input file\n");
 	fprintf(stderr, "   -o FILENAME   Name of output file.\n");
-	fprintf(stderr, "   -t FILENAME   Name of nodes.dmp file, only required of -c is set to lca\n");
-	fprintf(stderr, "   -n FILENAME   Name of names.dmp file.\n");
+	fprintf(stderr, "   -t FILENAME   Name of nodes.dmp file\n");
+	fprintf(stderr, "   -n FILENAME   Name of names.dmp file\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Optional arguments:\n");
 	fprintf(stderr, "   -v            Enable verbose output.\n");

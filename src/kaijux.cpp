@@ -13,7 +13,7 @@
 #include <deque>
 #include <stdexcept>
 
-#include "./ProducerConsumerQueue/src/ProducerConsumerQueue.hpp"
+#include "include/ProducerConsumerQueue/src/ProducerConsumerQueue.hpp"
 #include "ReadItem.hpp"
 #include "ConsumerThreadx.hpp"
 #include "Config.hpp"
@@ -22,13 +22,13 @@ extern "C" {
 #include "./bwt/bwt.h"
 }
 
+using namespace std;
 
 void usage(char *progname);
 void strip(string &s);
 bool isalpha(char & c);
 string getCurrentTime();
 
-using namespace std;
 
 int main(int argc, char** argv) {
 
@@ -51,11 +51,12 @@ int main(int argc, char** argv) {
 	bool verbose = false;
 	bool debug = false;
 	bool paired  = false;
+	bool SEG_check = false;
 
 	// --------------------- START ------------------------------------------------------------------
 	// Read command line params
 	int c;
-	while ((c = getopt (argc, argv, "a:hdrvn:m:e:l:f:b:i:j:s:z:o:")) != -1) {
+	while ((c = getopt (argc, argv, "a:hdxvn:m:e:l:f:i:j:s:z:o:")) != -1) {
 		switch (c)  {
 			case 'a': {
 									if("mem" == string(optarg)) mode = MEM;					
@@ -70,6 +71,8 @@ int main(int argc, char** argv) {
 				debug = true; break;
 			case 'v':
 				verbose = true; break;
+			case 'x':
+				SEG_check = true; break;
 			case 'o':
 				output_filename = optarg; break;
 			case 'f':
@@ -168,6 +171,7 @@ int main(int argc, char** argv) {
 	config->min_fragment_length = min_fragment_length;
 	config->seed_length = seed_length;
 	config->mismatches = mismatches;
+	config->SEG = SEG_check;
 
 	if(verbose) cerr << getCurrentTime() << " Reading database" << endl;
 
@@ -340,7 +344,7 @@ void strip(string &s) {
 }
 
 void usage(char *progname) { 
-	fprintf(stderr, "Usage:\n   %s -f allproteins.fmi -i reads.fastq [-j reads2.fastq]\n", progname);
+	fprintf(stderr, "Usage:\n   %s -f proteins.fmi -i reads.fastq [-j reads2.fastq]\n", progname);
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Mandatory arguments:\n");
 	fprintf(stderr, "   -f FILENAME   Name of .fmi file\n");
@@ -356,7 +360,6 @@ void usage(char *progname) {
 	fprintf(stderr, "   -s INT        Minimum match score in Greedy mode (default: 65)\n");
 	fprintf(stderr, "   -v            Enable verbose output.\n");
 	fprintf(stderr, "   -d            Enable debug output.\n");
-//fprintf(stderr, "   -l <UINT> Seed length for finding matches in smartfast mode (default: 7)\n");
 	exit(EXIT_FAILURE);
 }
 
