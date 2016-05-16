@@ -25,4 +25,7 @@ bwt.o: bwt.c bwt.h fmi.h common.h
 
 multikeyqsort.o: multikeyqsort.c multikeyqsort.h 
 
+clean:
+	rm -f mkfmi mkbwt
+
 .PHONY: clean 
