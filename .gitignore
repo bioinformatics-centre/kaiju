@@ -7,6 +7,7 @@ kaiju2krona
 kaijuReport
 mergeOutputs
 convertNR
+addTaxonNames
 mkbwt
 mkfmi
 bin/

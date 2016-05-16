@@ -195,6 +195,13 @@ or for showing genera comprising at least 1 percent of all classified reads:
 kaijuReport -t nodes.dmp -n names.dmp -i kaiju.out -r genus -m 1 -u -o kaiju.out.summary
 ```
 
+###Adding taxa names
+The program `addTaxonNames` adds the name that corresponds to the taxon id in Kaiju's output
+file as a last column to the output. Option `-u` will omit unclassified reads.
+```
+addTaxonNames -t nodes.dmp -n names.dmp -i kaiju.out -o kaiju-names.out
+```
+
 ###Merging outputs
 The program `mergeOutputs` can merge two tab-separated output files in the
 column format (see above) used by Kaiju and Kraken. Only the first three columns are used.

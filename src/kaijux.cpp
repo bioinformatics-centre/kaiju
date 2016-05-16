@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
 	// --------------------- START ------------------------------------------------------------------
 	// Read command line params
 	int c;
-	while ((c = getopt (argc, argv, "a:hdxvn:m:e:l:f:i:j:s:z:o:")) != -1) {
+	while ((c = getopt(argc, argv, "a:hdxvn:m:e:l:f:i:j:s:z:o:")) != -1) {
 		switch (c)  {
 			case 'a': {
 									if("mem" == string(optarg)) mode = MEM;					

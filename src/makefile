@@ -25,8 +25,8 @@ BLASTOBJS = include/ncbi-blast+/algo/blast/core/pattern.o \
 			 include/ncbi-blast+/algo/blast/core/blast_query_info.o \
 			 include/ncbi-blast+/algo/blast/core/blast_seg.o
 
-all: makefile kaiju kaiju2krona mergeOutputs kaijuReport kaijux kaijup convertNR bwt/mkbwt
-	mkdir -p ../bin && cp kaiju kaijux kaijup kaiju2krona mergeOutputs kaijuReport convertNR bwt/mkbwt bwt/mkfmi ../util/gbk2faa.pl ../util/makeDB.sh ../util/taxonlist.tsv ../bin/
+all: makefile kaiju kaiju2krona mergeOutputs kaijuReport kaijux kaijup convertNR addTaxonNames bwt/mkbwt
+	mkdir -p ../bin && cp kaiju kaijux kaijup kaiju2krona mergeOutputs kaijuReport convertNR addTaxonNames bwt/mkbwt bwt/mkfmi ../util/gbk2faa.pl ../util/makeDB.sh ../util/taxonlist.tsv ../bin/
 
 # use bwt/mkbwt as target for compiling everything in the bwt folder first
 bwt/mkbwt:
@@ -49,6 +49,9 @@ mergeOutputs: makefile mergeOutputs.o
 
 kaijuReport: makefile kaijuReport.o
 	$(CXX) -o kaijuReport kaijuReport.o
+
+addTaxonNames: makefile addTaxonNames.o
+	$(CXX) -o addTaxonNames addTaxonNames.o
 
 convertNR: makefile Config.o convertNR.o bwt/mkbwt $(BLASTOBJS)
 	$(CXX) -o convertNR convertNR.o Config.o ./bwt/sequence.o $(BLASTOBJS)
