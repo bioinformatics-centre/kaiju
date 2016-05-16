@@ -15,27 +15,27 @@ void ConsumerThreadx::classify_greedyblosum() {
 			Fragment * t = getNextFragment(best_match_score);
 			if(!t) break; 
 			const string fragment = t->seq;
-			const unsigned int length = (unsigned int)fragment.length();
+			const size_t length = fragment.length();
 			const unsigned int num_mm = t->num_mm;
 
 			if(config->debug) { cerr << "Searching fragment "<< fragment <<  " (" << length << ","<< num_mm << "," << t->diff << ")" << "\n"; }
-			char * seq = new char [length+1];
+			char * seq = new char[length+1];
 			std::strcpy(seq, fragment.c_str());
 
-			translate2numbers((uchar *)seq, length, config->astruct);
+			translate2numbers((uchar *)seq, (unsigned int)length, config->astruct);
 			
 			SI * si = NULL;
 			if(num_mm > 0) {
 				if(num_mm == config->mismatches) { //after last mm has been done, we need to have at least reached the min_length
-					si = maxMatches_withStart(config->fmi, seq, length, config->min_fragment_length, 1,t->si0,t->si1,t->matchlen); 
+					si = maxMatches_withStart(config->fmi, seq, (unsigned int)length, config->min_fragment_length, 1,t->si0,t->si1,t->matchlen);
 				}
 				else { 
-					si = maxMatches_withStart(config->fmi, seq, length, length - t->pos_lastmm, 1,t->si0,t->si1,t->matchlen); 
+					si = maxMatches_withStart(config->fmi, seq, (unsigned int)length, t->matchlen, 1,t->si0,t->si1,t->matchlen);
 				}
 			 	
 			}
 			else {
-				si = maxMatches(config->fmi, seq, length, config->seed_length, 0); //initial matches
+				si = maxMatches(config->fmi, seq, (unsigned int)length, config->seed_length, 0); //initial matches
 			}
 
 			if(!si) {// no match for this fragment
@@ -44,7 +44,7 @@ void ConsumerThreadx::classify_greedyblosum() {
 				delete t;
 				continue; // continue with the next fragment
 			}
-			if(config->debug) cerr << "Longest match is length " << (unsigned int)si->ql <<  "\n";
+			if(config->debug) cerr << "Longest match has length " << (unsigned int)si->ql <<  "\n";
 			
 			if(config->mismatches > 0 && num_mm < config->mismatches) {  
 				SI * si_it = si;
@@ -52,16 +52,15 @@ void ConsumerThreadx::classify_greedyblosum() {
 					unsigned int match_right_end = si_it->qi + si_it->ql - 1;
 					if(num_mm > 0) assert(match_right_end  == length - 1); // greedy matches end always at the end
 					if(config->debug) cerr << "Match from " << si_it->qi << " to " << match_right_end << ": " << fragment.substr(si_it->qi, match_right_end -  si_it->qi +1)  << " (" << si_it->ql << ")\n";
-						if(si_it->qi > 0 && match_right_end + 1 >= config->min_fragment_length) {
-							//1. match must end before beginning of fragment, i.e. it is extendable
-							//2. remaining fragment, from zero to end of current match, must be longer than minimum length of accepted matches
-							const size_t erase_pos = (match_right_end < length - 1) ? match_right_end + 1 : string::npos;
-							addAllMismatchVariantsAtPosSI(t,(unsigned int)(si_it->qi - 1),erase_pos,si_it);
-						}
+					if(si_it->qi > 0 && match_right_end + 1 >= config->min_fragment_length) {
+						//1. match must end before beginning of fragment, i.e. it is extendable
+						//2. remaining fragment, from zero to end of current match, must be longer than minimum length of accepted matches
+						const size_t erase_pos = (match_right_end < length - 1) ? match_right_end + 1 : string::npos;
+						addAllMismatchVariantsAtPosSI(t,(unsigned int)(si_it->qi - 1),erase_pos,si_it);
+					}
 					si_it = si_it->samelen ? si_it->samelen : si_it->next;
 				}
 			}
-
 
 			if((unsigned int)si->ql < config->min_fragment_length) { // match was too short
 				if(config->debug) { cerr << "Match of length " << si->ql << " is too short\n"; }
@@ -72,6 +71,7 @@ void ConsumerThreadx::classify_greedyblosum() {
 			}
 
 			eval_match_scores(si, t);
+
 			delete[] seq;
 			delete t;
 

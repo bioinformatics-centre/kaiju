@@ -202,7 +202,7 @@ void ConsumerThread::getAllFragmentsBits(const string & line) {
 			// finished one of the translations, so add it to fragments
 			if(translations[index].length() >= config->min_fragment_length) {
 				if(config->mode==GREEDYBLOSUM) {
-					unsigned int score = calcScore(translations[index],0);
+					unsigned int score = calcScore(translations[index]);
 					if(score >= config->min_score)
 						fragments.insert(std::pair<unsigned int,Fragment *>(score,new Fragment(translations[index])));
 				}
@@ -220,7 +220,7 @@ void ConsumerThread::getAllFragmentsBits(const string & line) {
 		//add remaining stuff to fragments
 		if(translations[i].length() >= config->min_fragment_length) {
 			if(config->mode==GREEDYBLOSUM) {
-				unsigned int score = calcScore(translations[i],0);
+				unsigned int score = calcScore(translations[i]);
 				if(score >= config->min_score)
 					fragments.insert(std::pair<unsigned int,Fragment *>(score,new Fragment(translations[i])));
 			}
@@ -239,7 +239,7 @@ void ConsumerThread::getAllFragmentsBits(const string & line) {
 			// finished one of the translations, so add it to fragments
 			if(translations[index].length() >= config->min_fragment_length) {
 				if(config->mode==GREEDYBLOSUM) {
-					unsigned int score = calcScore(translations[index],0);
+					unsigned int score = calcScore(translations[index]);
 					if(score >= config->min_score)
 						fragments.insert(std::pair<unsigned int,Fragment *>(score,new Fragment(translations[index])));
 				}
@@ -257,7 +257,7 @@ void ConsumerThread::getAllFragmentsBits(const string & line) {
 		//add remaining stuff to fragments
 		if(translations[i].length() >= config->min_fragment_length) {
 			if(config->mode==GREEDYBLOSUM) {
-				unsigned int score = calcScore(translations[i],0);
+				unsigned int score = calcScore(translations[i]);
 				if(score >= config->min_score)
 					fragments.insert(std::pair<unsigned int,Fragment *>(score,new Fragment(translations[i])));
 			}
@@ -343,13 +343,13 @@ Fragment * ConsumerThread::getNextFragment(unsigned int min_score) {
 
 
 //to be used by greedyblosum
-void ConsumerThread::addAllMismatchVariantsAtPosSI(Fragment * f, unsigned int pos, size_t erase_pos = string::npos,SI * si = NULL) {
+void ConsumerThread::addAllMismatchVariantsAtPosSI(const Fragment * f, unsigned int pos, size_t erase_pos = string::npos,SI * si = NULL) {
 
 	assert(config->mode==GREEDYBLOSUM);
 	assert(pos < erase_pos);
 	assert(f->num_mm == 0 || pos < f->pos_lastmm);
 
-	string fragment = f->seq;
+	string fragment = f->seq; // make a copy to modify the sequence at pos
 	assert(fragment.length() >= config->min_fragment_length);
 	char origchar = fragment[pos];
 	assert(blosum_subst.count(origchar) > 0);
@@ -391,16 +391,6 @@ void ConsumerThread::addAllMismatchVariantsAtPosSI(Fragment * f, unsigned int po
 
 }
 
-
-unsigned int ConsumerThread::calcScore(const char * c, size_t start, size_t len, int diff) {
-	int score = 0;
-	for(size_t i=start; i < start+len; ++i) {
-		score += blosum62diag[aa2int[(uint8_t)c[i]]];
-	}
-	score += diff;
-	return score > 0 ? score : 0;
-}
-
 unsigned int ConsumerThread::calcScore(const string & s, size_t start, size_t len, int diff) {
 	int score = 0;
 	for(size_t i=start; i < start+len; ++i) {
@@ -410,7 +400,6 @@ unsigned int ConsumerThread::calcScore(const string & s, size_t start, size_t le
 	return score > 0 ? score : 0;
 }
 
-
 unsigned int ConsumerThread::calcScore(const string & s, int diff) {
 	int score = 0;
 	for(size_t i=0; i < s.length(); ++i) {
@@ -418,6 +407,14 @@ unsigned int ConsumerThread::calcScore(const string & s, int diff) {
 	}
 	score += diff;
 	return score > 0 ? score : 0;
+}
+
+unsigned int ConsumerThread::calcScore(const string & s) {
+	unsigned int score = 0;
+	for(size_t i=0; i < s.length(); ++i) {
+		score += blosum62diag[aa2int[(uint8_t)s[i]]];
+	}
+	return score;
 }
 
 
@@ -435,7 +432,7 @@ uint64_t ConsumerThread::classify_greedyblosum() {
 			const unsigned int num_mm = t->num_mm;
 
 			if(config->debug) { cerr << "Searching fragment "<< fragment <<  " (" << length << ","<< num_mm << "," << t->diff << ")" << "\n"; }
-			char * seq = new char [length+1];
+			char * seq = new char[length+1];
 			std::strcpy(seq, fragment.c_str());
 
 			translate2numbers((uchar *)seq, (unsigned int)length, config->astruct);
@@ -468,12 +465,12 @@ uint64_t ConsumerThread::classify_greedyblosum() {
 					unsigned int match_right_end = si_it->qi + si_it->ql - 1;
 					if(num_mm > 0) assert(match_right_end  == length - 1); // greedy matches end always at the end
 					if(config->debug) cerr << "Match from " << si_it->qi << " to " << match_right_end << ": " << fragment.substr(si_it->qi, match_right_end -  si_it->qi +1)  << " (" << si_it->ql << ")\n";
-						if(si_it->qi > 0 && match_right_end + 1 >= config->min_fragment_length) {
-							//1. match must end before beginning of fragment, i.e. it is extendable
-							//2. remaining fragment, from zero to end of current match, must be longer than minimum length of accepted matches
-							const size_t erase_pos = (match_right_end < length - 1) ? match_right_end + 1 : string::npos;
-							addAllMismatchVariantsAtPosSI(t,(unsigned int)(si_it->qi - 1),erase_pos,si_it);
-						}
+					if(si_it->qi > 0 && match_right_end + 1 >= config->min_fragment_length) {
+						//1. match must end before beginning of fragment, i.e. it is extendable
+						//2. remaining fragment, from zero to end of current match, must be longer than minimum length of accepted matches
+						const size_t erase_pos = (match_right_end < length - 1) ? match_right_end + 1 : string::npos;
+						addAllMismatchVariantsAtPosSI(t,(unsigned int)(si_it->qi - 1),erase_pos,si_it);
+					}
 					si_it = si_it->samelen ? si_it->samelen : si_it->next;
 				}
 			}
@@ -631,7 +628,9 @@ void ConsumerThread::doWork() {
 		extraoutput = "";
 
 		if(config->input_is_protein) {
-			for (auto & c: item->sequence1) c = (char)toupper(c);
+			for (auto & c: item->sequence1) {
+				c = (char)toupper(c);
+			}
 			size_t start = 0;
 			size_t pos = item->sequence1.find_first_not_of("ACDEFGHIKLMNPQRSTVWY");
 			while(pos != string::npos) {
@@ -639,13 +638,13 @@ void ConsumerThread::doWork() {
 					string subseq =  item->sequence1.substr(start,pos-start);
 					//cerr << "subseq=" << subseq << endl;
 					if(config->mode==GREEDYBLOSUM) {
-						unsigned int score = calcScore(subseq,0);
+						unsigned int score = calcScore(subseq);
 						if(score >= config->min_score) {
 							fragments.insert(std::pair<unsigned int,Fragment *>(score,new Fragment(subseq)));
 						}
 					}
 					else {
-						fragments.insert(std::pair<unsigned int,Fragment *>(subseq.length(),new Fragment(subseq)));
+						fragments.insert(std::pair<unsigned int,Fragment *>((unsigned int)subseq.length(),new Fragment(subseq)));
 					}
 				}
 				start = pos+1;
@@ -655,13 +654,13 @@ void ConsumerThread::doWork() {
 			string subseq = item->sequence1.substr(start,item->sequence1.length()-start);
 			if(subseq.length() >= config->min_fragment_length) {
 				if(config->mode==GREEDYBLOSUM) {
-					unsigned int score = calcScore(subseq,0);
+					unsigned int score = calcScore(subseq);
 					if(score >= config->min_score) {
 						fragments.insert(std::pair<unsigned int,Fragment *>(score,new Fragment(subseq)));
 					}
 				}
 				else {
-					fragments.insert(std::pair<unsigned int,Fragment *>(subseq.length(),new Fragment(subseq)));
+					fragments.insert(std::pair<unsigned int,Fragment *>((unsigned int)subseq.length(),new Fragment(subseq)));
 				}
 			}
 		}
@@ -729,7 +728,7 @@ void ConsumerThread::eval_match_scores(SI *si, Fragment * frag) {
 	
 	//string match = frag->seq.substr(si->qi,si->ql);
 	//int score = calcScore(match,frag->diff);
-	unsigned int score = calcScore(frag->seq.c_str(),si->qi,si->ql,frag->diff);
+	unsigned int score = calcScore(frag->seq,si->qi,si->ql,frag->diff);
 
 	if(config->debug) cerr << "Match " <<frag->seq.substr(si->qi,si->ql) << " (length=" << (unsigned int)si->ql << " score=" << score << " num_mm=" << frag->num_mm<< ")\n";
 

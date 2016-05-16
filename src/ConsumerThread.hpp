@@ -126,11 +126,11 @@ class ConsumerThread {
 	uint64_t classify_greedyblosum();
 
 	void clearFragments();
+	unsigned int calcScore(const string &);
 	unsigned int calcScore(const string &, int);
-	unsigned int calcScore(const char *, size_t, size_t, int);
 	unsigned int calcScore(const string &, size_t, size_t, int);
 
-	void addAllMismatchVariantsAtPosSI(Fragment *,unsigned int, size_t, SI *); // used in Greedy mode
+	void addAllMismatchVariantsAtPosSI(const Fragment *,unsigned int, size_t, SI *); // used in Greedy mode
 	Fragment * getNextFragment(unsigned int);
 
 	void eval_match_scores(SI *si, Fragment *);

@@ -9,22 +9,55 @@ void ConsumerThreadp::doWork() {
 		assert(item != NULL);
 		count++;
 
-		if((!item->paired && item->sequence1.length() < config->min_fragment_length) || 
-			(item->paired && item->sequence1.length() < config->min_fragment_length && item->sequence2.length() < config->min_fragment_length)) {
+		if(item->sequence1.length() < config->min_fragment_length) {
 			output << "U\t" << item->name << "\t0\n";
 			delete item;
 			continue;
 		}		
 
+		for (auto & c: item->sequence1) {
+			c = (char)toupper(c);
+		}
+		size_t start = 0;
+		size_t pos = item->sequence1.find_first_not_of("ACDEFGHIKLMNPQRSTVWY");
+		while(pos != string::npos) {
+			if(pos-start >= config->min_fragment_length) {
+				string subseq =  item->sequence1.substr(start,pos-start);
+				//cerr << "subseq=" << subseq << endl;
+				if(config->mode==GREEDYBLOSUM) {
+					const unsigned int score = calcScore(subseq);
+					if(score >= config->min_score) {
+						fragments.insert(std::pair<unsigned int,Fragment *>(score,new Fragment(subseq)));
+					}
+				}
+				else {
+					fragments.insert(std::pair<unsigned int,Fragment *>(subseq.length(),new Fragment(subseq)));
+				}
+			}
+			start = pos+1;
+			pos = item->sequence1.find_first_not_of("ACDEFGHIKLMNPQRSTVWY", pos + 1);
+		}
+		//add remaining sequence, which corresponds to the whole sequence if no invalid char was found
+		string subseq = item->sequence1.substr(start,item->sequence1.length()-start);
+		if(subseq.length() >= config->min_fragment_length) {
+			if(config->mode==GREEDYBLOSUM) {
+				const unsigned int score = calcScore(subseq);
+				if(score >= config->min_score) {
+					fragments.insert(std::pair<unsigned int,Fragment *>(score,new Fragment(subseq)));
+				}
+			}
+			else {
+				fragments.insert(std::pair<unsigned int,Fragment *>(subseq.length(),new Fragment(subseq)));
+			}
+		}
 
-		unsigned int score = calcScore(item->sequence1,0);
-		if(score < config->min_score) {
+		if(config->debug) cerr << fragments.size()  << " fragments found in the read."<< "\n";
+
+		if(fragments.empty()) {
 			output << "U\t" << item->name << "\t0\n";
 			delete item;
 			continue;
 		}
-
-		fragments.insert(std::pair<unsigned int,Fragment *>(score,new Fragment(item->sequence1)));
 
 		extraoutput = "";
 		if(config->mode == MEM) {

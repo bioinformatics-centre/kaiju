@@ -278,7 +278,6 @@ int main(int argc, char** argv) {
 		in2_file.open(in2_filename.c_str());    
 		if(!in2_file.is_open()) {  cerr << "Could not open file " << in2_filename << endl; exit(EXIT_FAILURE); }
 	}
-
 	
 	bool firstline_file1 = true;
 	bool firstline_file2 = true;
@@ -317,8 +316,6 @@ int main(int argc, char** argv) {
 			name = line_from_file;
 			// read sequence line
 			getline(in1_file,line_from_file);
-			// remove non-alphabet chars
-			strip(line_from_file);
 			sequence1 = line_from_file;
 			// skip + lin
 			in1_file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -462,16 +459,16 @@ void usage(char *progname) {
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Mandatory arguments:\n");
 	fprintf(stderr, "   -t FILENAME   Name of nodes.dmp file\n");
-	fprintf(stderr, "   -f FILENAME   Name of .fmi file\n");
+	fprintf(stderr, "   -f FILENAME   Name of database (.fmi) file\n");
 	fprintf(stderr, "   -i FILENAME   Name of input file containing reads in FASTA or FASTQ format\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Optional arguments:\n");
 	fprintf(stderr, "   -j FILENAME   Name of second input file for paired-end reads\n");
-	fprintf(stderr, "   -o FILENAME   Name of output file. If not used, then output will be printed to STDOUT\n");
+	fprintf(stderr, "   -o FILENAME   Name of output file. If not specified, output will be printed to STDOUT\n");
 	fprintf(stderr, "   -z INT        Number of parallel threads (default: 1)\n");
 	fprintf(stderr, "   -a STRING     Run mode, either \"mem\"  or \"greedy\" (default: mem)\n");
-	fprintf(stderr, "   -e INT        Number of mismatches allowed (default: 0)\n");
-	fprintf(stderr, "   -m INT        Minimum match length in MEM mode (default: 11)\n");
+	fprintf(stderr, "   -e INT        Number of mismatches allowed in Greedy mode (default: 0)\n");
+	fprintf(stderr, "   -m INT        Minimum match length (default: 11)\n");
 	fprintf(stderr, "   -s INT        Minimum match score in Greedy mode (default: 65)\n");
 	fprintf(stderr, "   -p            Input sequences are protein sequences\n");
 	fprintf(stderr, "   -v            Enable verbose output\n");

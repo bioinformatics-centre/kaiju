@@ -39,7 +39,6 @@ int main(int argc, char** argv) {
 
 	string fmi_filename = "";
 	string in1_filename = "";
-	string in2_filename = "";
 	string output_filename;
 
 	Mode mode = MEM;
@@ -52,13 +51,12 @@ int main(int argc, char** argv) {
 	int num_threads = 1;
 	bool verbose = false;
 	bool debug = false;
-	bool paired  = false;
 	bool SEG_check = false;
 
 	// --------------------- START ------------------------------------------------------------------
 	// Read command line params
 	int c;
-	while ((c = getopt (argc, argv, "a:hdxvn:m:e:l:f:i:j:s:z:o:")) != -1) {
+	while ((c = getopt (argc, argv, "a:hdxvn:m:e:l:f:i:s:z:o:")) != -1) {
 		switch (c)  {
 			case 'a': {
 									if("mem" == string(optarg)) mode = MEM;					
@@ -81,8 +79,6 @@ int main(int argc, char** argv) {
 				fmi_filename = optarg; break;
 			case 'i':
 				in1_filename = optarg; break;
-			case 'j':
-				in2_filename = optarg; break;
 			case 'l': {
 									try {
 										seed_length = stoi(optarg); 
@@ -162,8 +158,6 @@ int main(int argc, char** argv) {
 		cerr << "  max number of mismatches within a match: "  << mismatches << "\n";
 		cerr << "  run mode: "  << mode << "\n";
 		cerr << "  input file 1: " << in1_filename << "\n";
-		if(in2_filename.length() > 0)
-			cerr << "  input file 2: " << in2_filename << "\n";
 	}
 
 	config->mode = mode;
@@ -209,109 +203,66 @@ int main(int argc, char** argv) {
 		threads.push_back(std::thread(&ConsumerThreadp::doWork,p));
 	}
 
-	ifstream in1_file, in2_file;
+	ifstream in1_file;
 	in1_file.open(in1_filename.c_str());    
 	
 	if(!in1_file.is_open()) {  cerr << "Could not open file " << in1_filename << endl; exit(EXIT_FAILURE); }
-	if(in2_filename.length() > 0) {
-		in2_file.open(in2_filename.c_str());    
-		if(!in2_file.is_open()) {  cerr << "Could not open file " << in2_filename << endl; exit(EXIT_FAILURE); }
-		paired = true;
-	}
 
-	
 	bool isFastQ = false;  
+	bool firstline = true;
 	string line_from_file;
 	line_from_file.reserve(2000);
-	{
-		getline(in1_file,line_from_file);
-		char fileTypeIdentifier = line_from_file.front();
-		if(fileTypeIdentifier == '@')
-			isFastQ = true;
-		else if(fileTypeIdentifier != '>') {
-			cerr << "Auto-detection of file type for file " << in1_filename << " failed."  << endl; 
-			exit(EXIT_FAILURE); 
-		}
-		in1_file.seekg(0, ios::beg);//set pointer to file start again
-	}
-	
 	string name;
-	string sequence1;
-	sequence1.reserve(2000);
+	string sequence;
+	sequence.reserve(2000);
 
 	if(verbose) cerr << getCurrentTime() << " Start search using " << num_threads << " threads." << endl;
 
 	while(getline(in1_file,line_from_file)) {                		
+		if(firstline) {
+			char fileTypeIdentifier = line_from_file[0];
+			if(fileTypeIdentifier == '@') {
+				isFastQ = true;
+			}
+			else if(fileTypeIdentifier != '>') {
+				cerr << "Auto-detection of file type for file " << in1_filename << " failed."  << endl;
+				exit(EXIT_FAILURE);
+			}
+			firstline = false;
+		}
 		if(isFastQ) {
 			// remove '@' from beginning of line
 			line_from_file.erase(line_from_file.begin());
 			name = line_from_file;
 			// read sequence line
 			getline(in1_file,line_from_file);
-			// remove non-alphabet chars
-			strip(line_from_file);
-			sequence1 = line_from_file;
+			sequence = line_from_file;
 			// skip + line	
 			in1_file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 			// skip quality score line
 			in1_file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 		}
-		else { //Fasta
+		else { //FASTA
 			// remove '>' from beginning of line
 			line_from_file.erase(line_from_file.begin());
 			name = line_from_file;
 			// read lines until next entry starts or file terminates
-			sequence1.clear();
+			sequence.clear();
 			while(!(in1_file.peek()=='>' || in1_file.peek()==EOF)) {
 				getline(in1_file,line_from_file);
-				sequence1.append(line_from_file);
+				sequence.append(line_from_file);
 			}
-			strip(sequence1);
-		} // end Fasta
-		myWorkQueue->push(new ReadItem(name, sequence1));
+		} // end FASTA
+	
+		strip(sequence); // remove non-alphabet chars
+
+		myWorkQueue->push(new ReadItem(name, sequence));
 
 	} // end main loop around file1
-
-	if(paired) {
-		//search second file
-		while(getline(in2_file,line_from_file)) {                		
-			if(isFastQ) {
-				// remove '@' from beginning of line
-				line_from_file.erase(line_from_file.begin());
-				name = line_from_file;
-				// read sequence line
-				getline(in1_file,line_from_file);
-				// remove non-alphabet chars
-				strip(line_from_file);
-				sequence1 = line_from_file;
-				// skip + line	
-				in1_file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-				// skip quality score line
-				in1_file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-			}
-			else { //Fasta
-				// remove '>' from beginning of line
-				line_from_file.erase(line_from_file.begin());
-				name = line_from_file;
-				// read lines until next entry starts or file terminates
-				sequence1.clear();
-				while(!(in1_file.peek()=='>' || in1_file.peek()==EOF)) {
-					getline(in1_file,line_from_file);
-					sequence1.append(line_from_file);
-				}
-				strip(sequence1);
-			} // end Fasta
-
-			myWorkQueue->push(new ReadItem(name, sequence1));
-
-		} // end main loop around file1
-
-	}
 
 	myWorkQueue->pushedLast();    	
 
 	if(in1_file.is_open()) in1_file.close();
-	if(paired && in2_file.is_open()) in2_file.close();
 
 	while(!threads.empty()) {
 		threads.front().join();
@@ -346,22 +297,21 @@ void strip(string &s) {
 }
 
 void usage(char *progname) { 
-	fprintf(stderr, "Usage:\n   %s -f proteins.fmi -i reads.fastq [-j reads2.fastq]\n", progname);
+	fprintf(stderr, "Usage:\n   %s -f proteins.fmi -i reads.fastq\n", progname);
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Mandatory arguments:\n");
-	fprintf(stderr, "   -f FILENAME   Name of .fmi file\n");
+	fprintf(stderr, "   -f FILENAME   Name of database file (.fmi) file\n");
 	fprintf(stderr, "   -i FILENAME   Name of input file containing reads in FASTA or FASTQ format\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Optional arguments:\n");
-	fprintf(stderr, "   -j FILENAME   Name of second input file for paired-end reads\n");
-	fprintf(stderr, "   -o FILENAME   Name of output file. If not used, then output will be printed to STDOUT\n");
+	fprintf(stderr, "   -o FILENAME   Name of output file. If not specified, output will be printed to STDOUT\n");
 	fprintf(stderr, "   -z INT        Number of parallel threads (default: 1)\n");
 	fprintf(stderr, "   -a STRING     Run mode, either \"mem\"  or \"greedy\" (default: mem)\n");
-	fprintf(stderr, "   -e INT        Number of mismatches allowed (default: 0)\n");
-	fprintf(stderr, "   -m INT        Minimum match length in MEM mode (default: 11)\n");
+	fprintf(stderr, "   -e INT        Number of mismatches allowed in Greedy mode (default: 0)\n");
+	fprintf(stderr, "   -m INT        Minimum match length (default: 11)\n");
 	fprintf(stderr, "   -s INT        Minimum match score in Greedy mode (default: 65)\n");
 	fprintf(stderr, "   -v            Enable verbose output.\n");
-	fprintf(stderr, "   -d            Enable debug output.\n");
+	//fprintf(stderr, "   -d            Enable debug output.\n");
 	exit(EXIT_FAILURE);
 }
 
