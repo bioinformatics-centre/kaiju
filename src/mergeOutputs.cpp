@@ -2,6 +2,7 @@
  * Kaiju is licensed under the GPLv3, see the file LICENSE. */
 
 #include <getopt.h>
+#include <stdint.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <assert.h>
@@ -113,14 +114,14 @@ int main(int argc, char** argv) {
 	string line;
 	line.reserve(500);
 
-	uint count = 0;
+	unsigned int count = 0;
 
-	uint countC1 = 0;
-	uint countC2 = 0;
-	uint countC12 = 0;
-	uint countC3 = 0;
-	uint countC1notC2 = 0;
-	uint countC2notC1 = 0;
+	unsigned int countC1 = 0;
+	unsigned int countC2 = 0;
+	unsigned int countC12 = 0;
+	unsigned int countC3 = 0;
+	unsigned int countC1notC2 = 0;
+	unsigned int countC2notC1 = 0;
 
 
 	while(getline(in1_file,line)) {                		

@@ -39,7 +39,7 @@ class Config {
 		bool input_is_protein;
 		unsigned int mismatches;
 		unsigned int min_fragment_length;
-		int min_score; 
+		unsigned int min_score;
 		unsigned int seed_length;
 		ostream * out_stream;
 		unordered_map<uint64_t,uint64_t> * nodes;

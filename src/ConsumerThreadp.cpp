@@ -17,14 +17,14 @@ void ConsumerThreadp::doWork() {
 		}		
 
 
-		int score = calcScore(item->sequence1,0);
+		unsigned int score = calcScore(item->sequence1,0);
 		if(score < config->min_score) {
 			output << "U\t" << item->name << "\t0\n";
 			delete item;
 			continue;
 		}
 
-		fragments.insert(std::pair<uint,Fragment *>(score,new Fragment(item->sequence1)));
+		fragments.insert(std::pair<unsigned int,Fragment *>(score,new Fragment(item->sequence1)));
 
 		extraoutput = "";
 		if(config->mode == MEM) {

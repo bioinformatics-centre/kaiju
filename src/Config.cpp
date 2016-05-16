@@ -34,7 +34,7 @@ uint64_t Config::lca_from_ids(unordered_map<uint64_t,unsigned int> & node2depth,
 	size_t num_ids = ids.size();
 	uint64_t * leafs = (uint64_t *) calloc(num_ids,sizeof(uint64_t));
 	unsigned int shallowest_depth = 100000;
-	uint index = 0;
+	unsigned int index = 0;
 	for(auto it = ids.begin() ; it != ids.end(); ++it) {
 		uint64_t id = *it;	
 

@@ -42,48 +42,48 @@ using namespace std;
 class Fragment {
 	public:
 	string seq = "";
-	uint num_mm = 0;
+	unsigned int num_mm = 0;
 	int diff = 0;
 	bool SEGchecked = false;
-	uint pos_lastmm = 0;
+	unsigned int pos_lastmm = 0;
 	IndexType si0, si1;
 	int matchlen;
 	Fragment(string s) { seq = s; }
 	Fragment(string s, bool b) { seq = s; SEGchecked = true; }
-	Fragment(string s, uint n, uint p, int d) {
-		seq = s; 
-		num_mm=n; 
-		diff=d; 
-		pos_lastmm=p;
-	}
-	Fragment(string s, uint n, uint p, int d, IndexType arg_si0,IndexType arg_si1,int len) { 
+	Fragment(string s, unsigned int n, unsigned int p, int d) {
 		seq = s;
 		num_mm=n;
-		diff=d; 
+		diff=d;
+		pos_lastmm=p;
+	}
+	Fragment(string s, unsigned int n, unsigned int p, int d, IndexType arg_si0,IndexType arg_si1,int len) {
+		seq = s;
+		num_mm=n;
+		diff=d;
 		pos_lastmm=p;
 		si0 = arg_si0;
 		si1 = arg_si1;
 		matchlen=len;
 		SEGchecked = true; // fragments with substitutions have been checked before
 	}
-	Fragment(string s, uint n, uint p, int d, SI * si) { 
+	Fragment(string s, unsigned int n, unsigned int p, int d, SI * si) {
 		seq = s;
 		num_mm=n;
-		diff=d; 
+		diff=d;
 		pos_lastmm=p;
 		si0 = si->start;
 		si1 = si->start+(IndexType)si->len;
 		matchlen=si->ql;
 	}
-	Fragment(string s, uint n, uint p, SI * si) { 
-		seq = s; 
+	Fragment(string s, unsigned int n, unsigned int p, SI * si) {
+		seq = s;
 		num_mm=n;
 		pos_lastmm=p;
 		si0 = si->start;
 		si1 = si->start+(IndexType)si->len;
 		matchlen=si->ql;
 	}
-	Fragment(string s, uint n, uint p) { 
+	Fragment(string s, unsigned int n, unsigned int p) {
 		seq = s; 
 		num_mm=n; 
 		pos_lastmm=p;
@@ -109,14 +109,14 @@ class ConsumerThread {
 	int8_t b62[20][20];
 
 	string translations[6];
-	multimap<int,Fragment *,std::greater<uint>> fragments;
+	multimap<unsigned int,Fragment *,std::greater<unsigned int>> fragments;
 	vector<SI *> best_matches_SI; 
 	vector<SI *> longest_matches_SI; 
 	vector<string> best_matches; 
 	vector<string> longest_fragments; 
 	set<uint64_t> match_ids; 
 
-	int best_match_score = 0;
+	unsigned int best_match_score = 0;
 	string extraoutput = "";
 
 	Config * config;
@@ -126,12 +126,12 @@ class ConsumerThread {
 	uint64_t classify_greedyblosum();
 
 	void clearFragments();
-	int calcScore(const string &, int);
-	int calcScore(const char *, size_t, size_t, int);
-	int calcScore(const string &, size_t, size_t, int);
+	unsigned int calcScore(const string &, int);
+	unsigned int calcScore(const char *, size_t, size_t, int);
+	unsigned int calcScore(const string &, size_t, size_t, int);
 
-	void addAllMismatchVariantsAtPosSI(Fragment *,uint,size_t,SI *); // to be used by greedyblosum
-	Fragment * getNextFragment(const int);
+	void addAllMismatchVariantsAtPosSI(Fragment *,unsigned int, size_t, SI *); // used in Greedy mode
+	Fragment * getNextFragment(unsigned int);
 
 	void eval_match_scores(SI *si, Fragment *);
 	void ids_from_SI_recursive(SI *si);
