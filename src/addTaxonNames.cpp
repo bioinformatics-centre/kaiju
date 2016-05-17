@@ -14,6 +14,7 @@
 #include <string>
 #include <utility>
 #include <stdexcept>
+#include <deque>
 
 
 void usage(char *progname);
@@ -26,6 +27,7 @@ int main(int argc, char** argv) {
 	unordered_map<uint64_t,uint64_t> nodes;
 	unordered_map<uint64_t, string> node2name;
 	unordered_map<uint64_t, string> node2rank;
+	unordered_map<uint64_t, string> node2path;
 
 	string nodes_filename = "";
 	string names_filename = "";
@@ -33,13 +35,14 @@ int main(int argc, char** argv) {
 	string out_filename;
 
 	bool filter_unclassified = false;
+	bool full_path = false;
 	bool verbose = false;
 	string rank;
 
 	// --------------------- START ------------------------------------------------------------------
 	// Read command line params
 	int c;
-	while ((c = getopt(argc, argv, "hvun:t:i:o:")) != -1) {
+	while ((c = getopt(argc, argv, "hvpun:t:i:o:")) != -1) {
 		switch(c)  {
 			case 'h':
 				usage(argv[0]);
@@ -47,6 +50,8 @@ int main(int argc, char** argv) {
 				verbose = true; break;
 			case 'u':
 				filter_unclassified = true; break;
+			case 'p':
+				full_path = true; break;
 			case 'o':
 				out_filename = optarg; break;
 			case 'n':
@@ -162,10 +167,40 @@ int main(int argc, char** argv) {
 				continue;
 			}
 			if(node2name.count(taxonid)==0) {
-				cerr << "Warning: Taxon ID " << taxonid << " in output file is not contained in names file "<< names_filename << ".\n"; 
+				cerr << "Warning: Taxon ID " << taxonid << " in output file is not found in file "<< names_filename << ".\n";
 				continue;
 			}
-			*out_stream << line << '\t' << node2name.at(taxonid) << "\n";
+			if(full_path) {
+				if(node2path.count(taxonid)>0) { // look if path is already saved
+					*out_stream << line << '\t' << node2path.at(taxonid) << "\n";
+					continue;
+				}
+				deque<string> lineage;
+				uint64_t id = taxonid;
+				lineage.push_front(node2name.at(id));
+				while(nodes.count(id)>0 && id != nodes.at(id)) {
+					string name;
+					if(node2name.count(nodes.at(id))==0) {
+						cerr << "Warning: Taxon ID " << nodes.at(id) << " is not found in file "<< names_filename << ".\n";
+						name = "n/a";
+					}
+					else {
+						name = node2name.at(id);
+					}
+					id = nodes.at(id);
+					lineage.push_front(name);
+				}
+				string lineage_text;
+				for(auto  itl : lineage) {
+					lineage_text += itl;
+					lineage_text += "; ";
+				}
+				node2path.insert(make_pair(taxonid,lineage_text));
+				*out_stream << line << '\t' << lineage_text << "\n";
+			}
+			else {
+				*out_stream << line << '\t' << node2name.at(taxonid) << "\n";
+			}
 		}
 		catch(const std::invalid_argument& ia) {
 			cerr << "Found bad taxon id in line: " << line << endl; 
@@ -198,6 +233,7 @@ void usage(char *progname) {
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Optional arguments:\n");
 	fprintf(stderr, "   -u            Unclassified reads are not contained in the output.\n");
+	fprintf(stderr, "   -p            Print full taxon path.\n");
 	fprintf(stderr, "   -v            Enable verbose output.\n");
 	fprintf(stderr, "\n");
 	exit(EXIT_FAILURE);
