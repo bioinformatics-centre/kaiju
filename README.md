@@ -73,36 +73,47 @@ run in a directory with at least 50 GB free space.
 
 There are two options for the reference database:
 ###1. Complete Genomes
-The first option is to use only completely assembled and annotated reference genomes
-from the RefSeq database in GenBank. This is the default behaviour of `makeDB.sh`.
-Additional to archaeal and bacterial genomes, `makeDB.sh` can also add viral genomes to the database by using the option `-v`.
-As of April 2016, this database contains ca. 16.2m protein sequences, which amounts to ca. 10GB RAM
-required by Kaiju.
+The first option is to use only completely assembled and annotated reference
+genomes from the RefSeq database in GenBank. This is the default behaviour of
+`makeDB.sh`.  Additional to archaeal and bacterial genomes, `makeDB.sh` can
+also add viral genomes to the database by using the option `-v`.  As of April
+2016, this database contains ca. 16.2m protein sequences, which amounts to ca.
+10GB RAM for running Kaiju.
 
-By default, `makeDB.sh` downloads and extracts 5 genomes from the NCBI FTP server in parallel. This number can
-be changed by modifying the appropriate variables at the beginning of the
-script.  The program also uses 5 parallel threads for constructing the index,
-which can be changed by using the option `-t`. Note that a higher number of threads
-increases the memory usage during index construction.
+By default, `makeDB.sh` downloads and extracts 5 genomes from the NCBI FTP
+server in parallel. This number can be changed by modifying the appropriate
+variables at the beginning of the script.  The program also uses 5 parallel
+threads for constructing the index, which can be changed by using the option
+`-t`. Note that a higher number of threads increases the memory usage during
+index construction, while reducing the number of threads decreases memory
+usage.
 
 After `makeDB.sh` is finished, only the files `kaiju_db.fmi`, `nodes.dmp`,
 and `names.dmp` are needed to run Kaiju.  The remaining files and the `genomes`
 directory containing the downloaded genomes can be deleted.
 
 ###2. Non-redundant protein database
-The second option is to use the complete non-redundant protein database (nr)
-that is used by NCBI BLAST by using the option `-n` for `makeDB.sh`.  This
-database contains all available protein sequences, including those from not
+The second option is to use the the microbial subset of the complete
+non-redundant protein database (nr) that is used by NCBI BLAST.  This database
+contains all protein sequences from GenBank, including those from not
 completely assembled genomes.  `makeDB.sh` will download the `nr.gz` file from
-GenBank's FTP server and convert it into a database by excluding all proteins
-that are not assigned to Bacteria, Archaea, or Viruses in the NCBI taxonomy.
-Because the nr database contains more proteins, more RAM is needed for index
-construction and for running Kaiju.  As of April 2016, this database contains ca.
-63m protein sequences, which amounts to ca. 33GB RAM.
+GenBank's FTP server and create database and index for Kaiju.
 
-After `makeDB.sh` is finished, only the files `kaiju_db_nr.fmi`, `nodes.dmp`,
-and `names.dmp` are needed to run Kaiju.  The remaining files and the `genomes`
-directory containing the downloaded genomes can be deleted.
+There are two options:
+1. `makeDB.sh -n` will only use proteins that belong to Archaea, Bacteria and Viruses.
+2. `makeDB.sh -e` will additionally include proteins from fungi and microbial eukaryotes. The complete taxon list for this option is in the file `bin/taxonlist.tsv`.
+
+Because the nr database contains more proteins, more RAM is needed for index
+construction and for running Kaiju.  As of April 2016, the nr database with
+option `-n` contains ca. 63m protein sequences, which amounts to ca. 33GB
+memory usage for running kaiju.  The program also uses 5 parallel threads for
+constructing the index, which can be changed by using the option `-t`. Note
+that a higher number of threads increases the memory usage during index
+construction, while reducing the number of threads decreases memory usage.
+
+After `makeDB.sh` is finished, only the files `kaiju_db_nr.fmi` or
+`kaiju_db_nr_euk.fmi`, `nodes.dmp`, and `names.dmp` are needed to run Kaiju.
+The remaining files can be deleted.
 
 
 ##Running Kaiju
@@ -110,7 +121,7 @@ Kaiju requires at least three arguments:
 ```
 kaiju -t nodes.dmp -f kaiju_db.fmi -i inputfile.fastq
 ```
-If you choose to use the NR database, then use `-f kaiju_db_nr.fmi`.
+If you chose options `-n` or `-e` in `makeDB.sh`, then use `-f kaiju_db_nr.fmi` or `-f kaiju_db_nr_euk.fmi`.
 
 For paired-end reads use `-i firstfile.fastq` and `-j secondfile.fastq`.
 
@@ -178,10 +189,10 @@ ktImportText -o kaiju.out.html kaiju.out.krona
 ```
 
 ###Creating summary
-The program `kaijuReport` can convert Kaiju's tab-separated output file
-into a summary report file for a given taxonomic rank, e.g., genus. It requires the `nodes.dmp`
-and `names.dmp` files for mapping the taxon identifiers from Kaiju's
-output to the corresponding taxon names.
+The program `kaijuReport` can convert Kaiju's tab-separated output file into a
+summary report file for a given taxonomic rank, e.g., genus. It requires the
+`nodes.dmp` and `names.dmp` files for mapping the taxon identifiers from
+Kaiju's output to the corresponding taxon names.
 ```
 kaijuReport -t nodes.dmp -n names.dmp -i kaiju.out -r genus -o kaiju.out.summary
 ```
@@ -196,11 +207,13 @@ kaijuReport -t nodes.dmp -n names.dmp -i kaiju.out -r genus -m 1 -u -o kaiju.out
 ```
 
 ###Adding taxa names
-The program `addTaxonNames` adds the name that corresponds to the taxon id in Kaiju's output
-file as a last column to the output. Option `-u` will omit unclassified reads.
+The program `addTaxonNames` adds the name that corresponds to the taxon id in
+Kaiju's output file as a last column to the output.
 ```
 addTaxonNames -t nodes.dmp -n names.dmp -i kaiju.out -o kaiju-names.out
 ```
+Option `-u` will omit unclassified reads.
+Option `-p` will print the full taxon path instead of just the taxon name.
 
 ###Merging outputs
 The program `mergeOutputs` can merge two tab-separated output files in the
@@ -221,12 +234,13 @@ mergeOutputs -i <(sort -k2,2 kaiju.out) -j <(sort -k2,2 kraken.out) -o combined.
 ```
 The output file will be in the same column format as the input files (but only
 contain the first three columns) and it will have the same length as the input
-files (which have to be of same length).  In the case of conflicting taxon identifiers in both files,
-`mergeOutputs` will use the identifier found in the first input file (specified by `-i`).
-This behaviour can be changed using the `-c` option, which can take the values
-`1` (default), `2` (use identifier from the second file) or `lca`, which determines and prints
-the least common ancestor of the taxon identifiers from both files. Option `lca`
-requires to specify the nodes.dmp file using the `-t` option.
+files (which have to be of same length).  In the case of conflicting taxon
+identifiers in both files, `mergeOutputs` will use the identifier found in the
+first input file (specified by `-i`).  This behaviour can be changed using the
+`-c` option, which can take the values `1` (default), `2` (use identifier from
+the second file) or `lca`, which determines and prints the least common
+ancestor of the taxon identifiers from both files. Option `lca` requires to
+specify the nodes.dmp file using the `-t` option.
 
 ###KaijuX and KaijuP
 
@@ -253,6 +267,7 @@ mkfmi -i proteins
 ```
 This will create two intermediate files `proteins.bwt` and `proteins.sa`, and finally
 the file `proteins.fmi`, which is used by Kaiju.
+
 The option `-n` for `mkbwt` specifies the number of parallel threads. The more
 threads are used, the higher the memory consumption becomes.  The option `-e`
 for `mkbwt` specifies the exponent of the suffix array checkpoint distances and
