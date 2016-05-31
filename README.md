@@ -137,6 +137,8 @@ mkbwt -n 5 -a ACDEFGHIKLMNPQRSTVWY -o proteins proteins.faa
 mkfmi -i proteins
 ```
 which creates the file proteins.fmi that is used by Kaiju.
+Note that the protein sequences may only contain the uppercase characters of the standard 20 amino acids, all other
+characters need to be removed.
 
 ##Running Kaiju
 Kaiju requires at least three arguments:
