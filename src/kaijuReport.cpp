@@ -278,7 +278,12 @@ int main(int argc, char** argv) {
 		fprintf(report_file,"%5.2f\t%9lu\tbelong to a %s having less than %i reads\n", (float)below_reads/(float)totalreads*100.0, below_reads, rank.c_str(), min_read_count);
 	if(min_percent > 0.0)
 		fprintf(report_file,"%5.2f\t%9lu\tbelong to a %s with less than %g%% of all reads\n", (float)below_percent/(float)totalreads*100.0, below_percent, rank.c_str(), min_percent);
-	fprintf(report_file,"%5.2f\t%9lu\tunclassified\n", (float)unclassified/(float)(totalreads+unclassified)*100.0, unclassified );
+	fprintf(report_file,"---------------------------------\n");
+	if(filter_unclassified)
+		fprintf(report_file,"%5.2f\t%9lu\tunclassified\n", (float)unclassified/(float)(totalreads+unclassified)*100.0, unclassified );
+	else
+		fprintf(report_file,"%5.2f\t%9lu\tunclassified\n", (float)unclassified/(float)(totalreads)*100.0, unclassified );
+
 	fclose(report_file);
 
 	return EXIT_SUCCESS;    
@@ -298,7 +303,7 @@ void usage(char *progname) {
 	fprintf(stderr, "Optional arguments:\n");
 	fprintf(stderr, "   -m FLOAT      Number in [0, 100], denoting the minimum required percentage for the taxon to be reported (default: 0.0)\n");
 	fprintf(stderr, "   -c INT        Integer number > 0, denoting the minimum required number of reads for the taxon to be reported (default: 0)\n");
-	fprintf(stderr, "   -u            Unclassified reads are not counted for the total reads when calculating percentages.\n");
+	fprintf(stderr, "   -u            Unclassified reads are not counted for the total reads when calculating percentages for classified reads.\n");
 	fprintf(stderr, "   -v            Enable verbose output.\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Only one of the options -m and -c may be used at a time.\n");
