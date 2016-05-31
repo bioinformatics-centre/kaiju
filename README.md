@@ -71,7 +71,7 @@ makeDB.sh
 The downloaded files are several GB in size. Therefore, the program should be
 run in a directory with at least 50 GB free space.
 
-There are two options for the reference database:
+There are two major choices for making the reference database with `makeDB.sh`.
 ###1. Complete Genomes
 The first option is to use only completely assembled and annotated reference
 genomes from the RefSeq database in GenBank. This is the default behaviour of
@@ -115,6 +115,28 @@ After `makeDB.sh` is finished, only the files `kaiju_db_nr.fmi` or
 `kaiju_db_nr_euk.fmi`, `nodes.dmp`, and `names.dmp` are needed to run Kaiju.
 The remaining files can be deleted.
 
+###3. Custom database
+It is also possible to make a custom database from a collection of protein sequences.
+This only requires a FASTA file in which the headers are the numeric NCBI taxon identifiers of the protein sequences,
+which can optionally be prefixed by another identifier (e.g. a counter) followed by an underscore, for example:
+```
+>1_1358
+MAQQRRGGFKRRKKVDFIAANKIEVVDYKDTELLKRFISERGKILPRRVTGTSAKNQRKVVNAIKRARVMALLPFVAEDQN
+>2_44689
+MASTQNIVEEVQKMLDTYDTNKDGEITKAEAVEYFKGKKAFNPERSAIYLFQVYDKDNDGKITIKELAGDIDFDKALKEYKEKQAKSKQQEAEVEEDIEAFILRHNKDDNTDITKDELIQGFKETGAKDPEKSANFILTEMDTNKDGTITVKELRVYYQKVQKLLNPDQ
+>3_352472
+MKTKSSNNIKKIYYISSILVGIYLCWQIIIQIIFLMDNSIAILEAIGMVVFISVYSLAVAINGWILVGRMKKSSKKAQYEDFYKKMILKSKILLSTIIIVIIVVVVQDIVINFILPQNPQPYVYMIISNFIVGIADSFQMIMVIFVMGELSFKNYFKFKRIEKQKNHIVIGGSSLNSLPVSLPTVKSNESNESNTISINSENNNSKVSTDDTINNVM
+>4_91061
+MTNPFENDNYTYKVLKNEEGQYSLWPAFLDVPIGWNVVHKEASRNDCLQYVENNWEDLNPKSNQVGKKILVGKR
+...
+```
+The taxon identifiers must be contained in the [NCBI taxonomy files](ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz) nodes.dmp and names.dmp.
+Then, Kaiju's index is created using the programs `mkbwt` and `mkfmi`. For example, if the database FASTA file is called `proteins.faa`, then run:
+```
+mkbwt -n 5 -a ACDEFGHIKLMNPQRSTVWY -o proteins proteins.faa
+mkfmi -i proteins
+```
+which creates the file proteins.fmi that is used by Kaiju.
 
 ##Running Kaiju
 Kaiju requires at least three arguments:
