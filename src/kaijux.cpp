@@ -177,16 +177,17 @@ int main(int argc, char** argv) {
 	config->SEG = SEG_check;
 
 	if(verbose) cerr << getCurrentTime() << " Reading database" << endl;
-
+	
+	{
 	if(verbose) cerr << " Reading index from file " << fmi_filename << endl;
 	FILE * fp = fopen(fmi_filename.c_str(),"r");
 	if (!fp) { cerr << "Could not open file " << fmi_filename << endl; usage(argv[0]); }
   BWT * b = readIndexes(fp);
 	fclose(fp);
 	if(debug) fprintf(stderr,"BWT of length %ld has been read with %d sequencs, alphabet=%s\n", b->len,b->nseq, b->alphabet); 
-
 	config->bwt = b;
 	config->fmi = b->f;
+	}
 
 	config->init();
 
@@ -235,10 +236,12 @@ int main(int argc, char** argv) {
 	if(verbose) cerr << getCurrentTime() << " Start search using " << num_threads << " threads." << endl;
 
 	while(getline(in1_file,line_from_file)) {                		
+		if(line_from_file.length() == 0) { continue; }
 		if(firstline_file1) {
 			char fileTypeIdentifier = line_from_file[0];
-			if(fileTypeIdentifier == '@')
+			if(fileTypeIdentifier == '@') {
 				isFastQ_file1 = true;
+			}
 			else if(fileTypeIdentifier != '>') {
 				cerr << "Auto-detection of file type for file " << in1_filename << " failed."  << endl;
 				exit(EXIT_FAILURE);
@@ -282,17 +285,21 @@ int main(int argc, char** argv) {
 		strip(sequence1); // remove non-alphabet chars
 
 		if(paired) {
-			if(!getline(in2_file,line_from_file)) {
-				//that's the border case where file1 has more entries than file2
-				cerr << "Error: File " << in1_filename <<" contains more reads then file " << in2_filename  <<endl;
-				in1_file.close();
-				in2_file.close();
-				exit(EXIT_FAILURE);
+			line_from_file = "";
+			while(line_from_file.length() == 0) {
+				if(!getline(in2_file,line_from_file)) {
+					//that's the border case where file1 has more entries than file2
+					cerr << "Error: File " << in1_filename <<" contains more reads then file " << in2_filename  <<endl;
+					in1_file.close();
+					in2_file.close();
+					exit(EXIT_FAILURE);
+				}
 			}
 			if(firstline_file2) {
 				char fileTypeIdentifier = line_from_file[0];
-				if(fileTypeIdentifier == '@')
+				if(fileTypeIdentifier == '@') {
 					isFastQ_file2 = true;
+				}
 				else if(fileTypeIdentifier != '>') {
 					cerr << "Auto-detection of file type for file " << in2_filename << " failed."  << endl;
 					exit(EXIT_FAILURE);
