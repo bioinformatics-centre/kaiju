@@ -10,6 +10,7 @@
 #include <fstream>
 #include <unordered_map>
 #include <map>
+#include <set>
 #include <algorithm>
 #include <string>
 #include <utility>
@@ -35,14 +36,19 @@ int main(int argc, char** argv) {
 	string out_filename;
 
 	bool filter_unclassified = false;
-	bool full_path = false;
+
 	bool verbose = false;
-	string rank;
+
+	bool full_path = false;
+	bool specified_ranks = false;
+	string ranks;
+	set<string> ranks_set;
+
 
 	// --------------------- START ------------------------------------------------------------------
 	// Read command line params
 	int c;
-	while ((c = getopt(argc, argv, "hvpun:t:i:o:")) != -1) {
+	while ((c = getopt(argc, argv, "hvpur:n:t:i:o:")) != -1) {
 		switch(c)  {
 			case 'h':
 				usage(argv[0]);
@@ -60,6 +66,9 @@ int main(int argc, char** argv) {
 				nodes_filename = optarg; break;
 			case 'i':
 				in_filename = optarg; break;
+			case 'r': {
+				specified_ranks = true;
+				ranks = optarg; break; }
 			default:
 				usage(argv[0]);
 		}
@@ -67,6 +76,21 @@ int main(int argc, char** argv) {
 	if(names_filename.length() == 0) { cerr << "Error: Please specify the location of the names.dmp file with the -n option."  << endl; usage(argv[0]); }
 	if(nodes_filename.length() == 0) { cerr << "Error: Please specify the location of the nodes.dmp file with the -t option."  << endl; usage(argv[0]); }
 	if(in_filename.length() == 0) { cerr << "Error: Please specify the location of the input file with the -i option."  << endl; usage(argv[0]); }
+	if(ranks.length() > 0 && full_path) { cerr << "Error: Please use either option -r or -p, but not both of them."  << endl; usage(argv[0]); }
+
+	// parse ranks into set
+	if(ranks.length() > 0) {
+		size_t begin = 0;
+		size_t pos = -1;
+		string rankname;
+		while((pos = ranks.find(",",pos+1)) != string::npos) {
+			rankname = ranks.substr(begin,(pos - begin));
+			ranks_set.insert(rankname);
+			begin = pos+1;
+		}
+		rankname = ranks.substr(begin);
+		ranks_set.insert(rankname);
+	}
 
 	ifstream nodes_file;
 	nodes_file.open(nodes_filename);
@@ -170,16 +194,25 @@ int main(int argc, char** argv) {
 				cerr << "Warning: Taxon ID " << taxonid << " in output file is not found in file "<< names_filename << ".\n";
 				continue;
 			}
-			if(full_path) {
+			if(full_path || specified_ranks) {
 				if(node2path.count(taxonid)>0) { // look if path is already saved
 					*out_stream << line << '\t' << node2path.at(taxonid) << "\n";
 					continue;
 				}
 				deque<string> lineage;
 				uint64_t id = taxonid;
-				lineage.push_front(node2name.at(id));
 				while(nodes.count(id)>0 && id != nodes.at(id)) {
 					string name;
+					if(specified_ranks) {
+						if(node2rank.count(id)==0 || node2rank.at(id)=="no rank") {  // no rank name
+							id = nodes.at(id);
+							continue;
+						}
+						if(ranks_set.count(node2rank.at(id))==0) { // rank name is not in specified list of ranks
+							id = nodes.at(id);
+							continue;
+						}
+					}
 					if(node2name.count(nodes.at(id))==0) {
 						cerr << "Warning: Taxon ID " << nodes.at(id) << " is not found in file "<< names_filename << ".\n";
 						name = "n/a";
@@ -234,6 +267,7 @@ void usage(char *progname) {
 	fprintf(stderr, "Optional arguments:\n");
 	fprintf(stderr, "   -u            Unclassified reads are not contained in the output.\n");
 	fprintf(stderr, "   -p            Print full taxon path.\n");
+	fprintf(stderr, "   -r            Print taxon path with specified ranks, e.g. -r phylum,genus\n");
 	fprintf(stderr, "   -v            Enable verbose output.\n");
 	fprintf(stderr, "\n");
 	exit(EXIT_FAILURE);
