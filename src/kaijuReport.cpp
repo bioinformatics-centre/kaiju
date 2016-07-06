@@ -127,7 +127,7 @@ int main(int argc, char** argv) {
 			uint64_t parent = stoul(line.substr(start,end-start));
 			start = line.find_first_of("abcdefghijklmnopqrstuvwxyz",end);
 			//cerr << "start=" << start <<","<< line[start] << "\t";
-			end = line.find_first_not_of("abcdefghijklmnopqrstuvwxyz",start);
+			end = line.find_first_not_of("abcdefghijklmnopqrstuvwxyz ",start);
 			//cerr << "end=" << end << "\t";
 			string rank = line.substr(start,end-start);
 			nodes.insert(make_pair(node,parent));
