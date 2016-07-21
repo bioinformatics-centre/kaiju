@@ -63,7 +63,7 @@ convertNR: makefile Config.o convertNR.o bwt/mkbwt $(BLASTOBJS)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
 
 clean: 
-	rm -f -v bwt/mkbwt bwt/mkfmi kaiju kaijux kaijup kaiju2krona mergeOutputs kaijuReport convertNR ../bin/*
+	rm -f -v bwt/mkbwt bwt/mkfmi kaiju kaijux kaijup kaiju2krona mergeOutputs kaijuReport convertNR addTaxonNames ../bin/*
 	find . -name "*.o" -delete
 	$(MAKE) -C bwt/ clean
 
