@@ -310,6 +310,7 @@ void usage(char *progname) {
 	fprintf(stderr, "   -e INT        Number of mismatches allowed in Greedy mode (default: 0)\n");
 	fprintf(stderr, "   -m INT        Minimum match length (default: 11)\n");
 	fprintf(stderr, "   -s INT        Minimum match score in Greedy mode (default: 65)\n");
+	fprintf(stderr, "   -x            Enable SEG low complexity filter\n");
 	fprintf(stderr, "   -v            Enable verbose output.\n");
 	//fprintf(stderr, "   -d            Enable debug output.\n");
 	exit(EXIT_FAILURE);
