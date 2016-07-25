@@ -29,6 +29,8 @@ int main(int argc, char** argv) {
 	unordered_map<uint64_t, string> node2name;
 	unordered_map<uint64_t, string> node2rank;
 
+	uint64_t taxonid_viruses = 10239;
+
 	string nodes_filename = "";
 	string names_filename = "";
 	string in_filename = "";
@@ -257,8 +259,11 @@ int main(int argc, char** argv) {
 	else
 		assert(totalreads >= unclassified + sum);
 
-
 	uint64_t above = (filter_unclassified) ? totalreads - sum  : totalreads - unclassified - sum;
+
+	uint64_t viruses = (node2summarizedhits.count(taxonid_viruses) > 0) ?  node2summarizedhits[taxonid_viruses] : 0;
+
+	above -= viruses;
 				
 	for(auto it : sorted_count2ids) {
 			string name;
@@ -273,6 +278,7 @@ int main(int argc, char** argv) {
 	}
 
 	fprintf(report_file,"---------------------------------\n");
+	fprintf(report_file,"%5.2f\t%9lu\tViruses\n", (float)viruses/(float)totalreads*100.0, viruses);
 	fprintf(report_file,"%5.2f\t%9lu\tclassified above rank %s \n", (float)above/(float)totalreads*100.0, above, rank.c_str());
 	if(min_read_count > 0)
 		fprintf(report_file,"%5.2f\t%9lu\tbelong to a %s having less than %i reads\n", (float)below_reads/(float)totalreads*100.0, below_reads, rank.c_str(), min_read_count);
