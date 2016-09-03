@@ -92,8 +92,8 @@ fi
 #good to go
 set -e
 
-echo Downloading taxonomy files from NCBI
-wget -N -nv ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz
+echo Downloading file: taxdump.tar.gz
+wget --show-progress -N -nv ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz
 if [ -r taxdump.tar.gz ]
 then
 	echo Extracting nodes.dmp and names.dmp files
@@ -105,33 +105,33 @@ fi
 
 if [ "$use_nr" -eq 1 -o "$euk" -eq 1 ]
 then
-	echo Downloading NR file...
-	wget -N -c -nv ftp://ftp.ncbi.nih.gov/blast/db/FASTA/nr.gz
-	echo Downloading gi_taxid_prot.dmp file...
-	wget -N -c -nv ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/gi_taxid_prot.dmp.gz
-	if [ -r nr.gz -a -r gi_taxid_prot.dmp.gz ]
+	echo Downloading file: nr.gz
+	wget --show-progress -N -c -nv ftp://ftp.ncbi.nih.gov/blast/db/FASTA/nr.gz
+	echo Downloading file: prot.accession2taxid.gz
+	wget --show-progress -N -c -nv ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/prot.accession2taxid.gz
+	if [ -r nr.gz -a -r prot.accession2taxid.gz ]
 	then
-		echo Unpacking gi_taxid_prot.dmp.gz 
-		gunzip -f gi_taxid_prot.dmp.gz
+		echo Unpacking prot.accession2taxid.gz
+		gunzip -f prot.accession2taxid.gz
 		echo Converting NR file to Kaiju database
 		if [ "$euk" -eq 1 ]
 		then
-			gunzip -c nr.gz | $SCRIPTDIR/convertNR -t nodes.dmp -g gi_taxid_prot.dmp -c -o kaiju_db_nr_euk.faa -l $SCRIPTDIR/taxonlist.tsv
+			gunzip -c nr.gz | $SCRIPTDIR/convertNR -t nodes.dmp -g prot.accession2taxid -c -o kaiju_db_nr_euk.faa -l $SCRIPTDIR/taxonlist.tsv
 			echo Creating BWT from Kaiju database
 			$SCRIPTDIR/mkbwt -e $exponentSA_NR -n $threadsBWT -a ACDEFGHIKLMNPQRSTVWY -o kaiju_db_nr_euk kaiju_db_nr_euk.faa
 			echo Creating FM-index
 			$SCRIPTDIR/mkfmi kaiju_db_nr_euk
 			echo Done!
-			echo You can delete the files nr.gz, taxdump.tar.gz, gi_taxid_prot.dmp, kaiju_db_nr_euk.faa, kaiju_db_nr_euk.bwt, kaiju_db_nr_euk.sa
+			echo You can delete the files nr.gz, taxdump.tar.gz, prot.accession2taxid, kaiju_db_nr_euk.faa, kaiju_db_nr_euk.bwt, kaiju_db_nr_euk.sa
 			echo Kaiju only needs the files kaiju_db_nr_euk.fmi, nodes.dmp, and names.dmp.
 		else
-			gunzip -c nr.gz | $SCRIPTDIR/convertNR -t nodes.dmp -g gi_taxid_prot.dmp -c -o kaiju_db_nr.faa
+			gunzip -c nr.gz | $SCRIPTDIR/convertNR -t nodes.dmp -g prot.accession2taxid -c -o kaiju_db_nr.faa
 			echo Creating BWT from Kaiju database
 			$SCRIPTDIR/mkbwt -e $exponentSA_NR -n $threadsBWT -a ACDEFGHIKLMNPQRSTVWY -o kaiju_db_nr kaiju_db_nr.faa
 			echo Creating FM-index
 			$SCRIPTDIR/mkfmi kaiju_db_nr
 			echo Done!
-			echo You can delete the files nr.gz, taxdump.tar.gz, gi_taxid_prot.dmp, kaiju_db_nr.faa, kaiju_db_nr.bwt, kaiju_db_nr.sa
+			echo You can delete the files nr.gz, taxdump.tar.gz, prot.accession2taxid, kaiju_db_nr.faa, kaiju_db_nr.bwt, kaiju_db_nr.sa
 			echo Kaiju only needs the files kaiju_db_nr.fmi, nodes.dmp, and names.dmp.
 		fi
 	fi
