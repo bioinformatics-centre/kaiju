@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
 	bool verbose = false;
 	string rank;
 
-	// --------------------- START ------------------------------------------------------------------
+	// ------------------------------------------- START -------------------------------------------
 	// Read command line params
 	int c;
 	while ((c = getopt (argc, argv, "hvur:n:t:i:o:m:c:")) != -1) {
@@ -233,8 +233,8 @@ int main(int argc, char** argv) {
 	if(verbose) cerr << "Writing to file " << out_filename << endl;
 	FILE * report_file = fopen(out_filename.c_str(),"w");
 	if(report_file==NULL) {  cerr << "Could not open file " << out_filename << " for writing" << endl; exit(EXIT_FAILURE); }
-	fprintf(report_file,"    %%\t    reads\t%s\n",rank.c_str());
-	fprintf(report_file,"---------------------------------\n");
+	fprintf(report_file,"        %%\t    reads\t%s\n",rank.c_str());
+	fprintf(report_file,"-------------------------------------------\n");
 
 	multimap<uint64_t,uint64_t ,std::greater<uint64_t>> sorted_count2ids;
 	for(auto it : node2summarizedhits) {
@@ -274,21 +274,21 @@ int main(int argc, char** argv) {
 			else 
 				name = node2name[it.second];
 		float percent = (float)it.first/(float)totalreads*100;
-		fprintf(report_file,"%5.2f\t%9lu\t%s\n", percent, it.first, name.c_str() );
+		fprintf(report_file,"%9.6f\t%9lu\t%s\n", percent, it.first, name.c_str() );
 	}
 
-	fprintf(report_file,"---------------------------------\n");
-	fprintf(report_file,"%5.2f\t%9lu\tViruses\n", (float)viruses/(float)totalreads*100.0, viruses);
-	fprintf(report_file,"%5.2f\t%9lu\tclassified above rank %s \n", (float)above/(float)totalreads*100.0, above, rank.c_str());
+	fprintf(report_file,"-------------------------------------------\n");
+	fprintf(report_file,"%9.6f\t%9lu\tViruses\n", (float)viruses/(float)totalreads*100.0, viruses);
+	fprintf(report_file,"%9.6f\t%9lu\tclassified above rank %s \n", (float)above/(float)totalreads*100.0, above, rank.c_str());
 	if(min_read_count > 0)
-		fprintf(report_file,"%5.2f\t%9lu\tbelong to a %s having less than %i reads\n", (float)below_reads/(float)totalreads*100.0, below_reads, rank.c_str(), min_read_count);
+		fprintf(report_file,"%9.6f\t%9lu\tbelong to a %s having less than %i reads\n", (float)below_reads/(float)totalreads*100.0, below_reads, rank.c_str(), min_read_count);
 	if(min_percent > 0.0)
-		fprintf(report_file,"%5.2f\t%9lu\tbelong to a %s with less than %g%% of all reads\n", (float)below_percent/(float)totalreads*100.0, below_percent, rank.c_str(), min_percent);
-	fprintf(report_file,"---------------------------------\n");
+		fprintf(report_file,"%9.6f\t%9lu\tbelong to a %s with less than %g%% of all reads\n", (float)below_percent/(float)totalreads*100.0, below_percent, rank.c_str(), min_percent);
+	fprintf(report_file,"-------------------------------------------\n");
 	if(filter_unclassified)
-		fprintf(report_file,"%5.2f\t%9lu\tunclassified\n", (float)unclassified/(float)(totalreads+unclassified)*100.0, unclassified );
+		fprintf(report_file,"%9.6f\t%9lu\tunclassified\n", (float)unclassified/(float)(totalreads+unclassified)*100.0, unclassified );
 	else
-		fprintf(report_file,"%5.2f\t%9lu\tunclassified\n", (float)unclassified/(float)(totalreads)*100.0, unclassified );
+		fprintf(report_file,"%9.6f\t%9lu\tunclassified\n", (float)unclassified/(float)(totalreads)*100.0, unclassified );
 
 	fclose(report_file);
 
