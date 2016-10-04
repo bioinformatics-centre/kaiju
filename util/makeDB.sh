@@ -141,7 +141,7 @@ else
 	echo Downloading file list for full genomes...
 	wget -nv -O assembly_summary.archaea.txt ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/archaea/assembly_summary.txt
 	wget -nv -O assembly_summary.bacteria.txt ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/bacteria/assembly_summary.txt
-	awk 'BEGIN{FS="\t";OFS="/"}$12=="Complete Genome" && $11=="latest"{split($20,a,"/");print $20,a[6]"_genomic.gbff.gz"}' assembly_summary.bacteria.txt assembly_summary.archaea.txt > downloadlist.txt
+	awk 'BEGIN{FS="\t";OFS="/"}$12=="Complete Genome" && $11=="latest"{l=split($20,a,"/");print $20,a[l]"_genomic.gbff.gz"}' assembly_summary.bacteria.txt assembly_summary.archaea.txt > downloadlist.txt
 	nfiles=`cat downloadlist.txt| wc -l`
 	echo Downloading $nfiles genome files from GenBank FTP server. This may take a while...
 	cat downloadlist.txt | xargs -P $parallelDL -n 1 wget -P genomes -c -nv
