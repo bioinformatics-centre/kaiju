@@ -7,7 +7,7 @@ Anders Krogh <krogh@binf.ku.dk>
 
 Kaiju is a program for the taxonomic assignment of high-throughput sequencing
 reads, e.g., Illumina or Roche/454, from whole-genome sequencing of
-metagenomic DNA. Reads are directly assigned to taxa using the NCBI taxonomy and a 
+metagenomic DNA. Reads are directly assigned to taxa using the NCBI taxonomy and a
 reference database of protein sequences from bacterial and archaeal genomes.
 
 The program is described in [Menzel, P. et al. (2016) Fast and sensitive taxonomic classification for metagenomics with Kaiju. *Nat. Commun.* 7:11257](http://www.nature.com/ncomms/2016/160413/ncomms11257/full/ncomms11257.html) (open access).
@@ -25,7 +25,7 @@ the Free Software Foundation, either version 3 of the License, or
 
 Kaiju is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
 See the file LICENSE for more details.
 
 You should have received a copy of the GNU General Public License
@@ -69,16 +69,16 @@ cd kaijudb
 makeDB.sh
 ```
 The downloaded files are several GB in size. Therefore, the program should be
-run in a directory with at least 50 GB free space.
+run in a directory having at least 80 GB of free space.
 
-There are two major choices for making the reference database with `makeDB.sh`.
+There are two major options for creating the reference database with sequence data from the NCBI FTP server with `makeDB.sh`.
+
 ###1. Complete Genomes
 The first option is to use only completely assembled and annotated reference
-genomes from the RefSeq database in GenBank. This is the default behaviour of
+genomes from the NCBI RefSeq database, which is the default behaviour of
 `makeDB.sh`.  Additional to archaeal and bacterial genomes, `makeDB.sh` can
-also add viral genomes to the database by using the option `-v`.  As of April
-2016, this database contains ca. 16.2m protein sequences, which amounts to ca.
-10GB RAM for running Kaiju.
+also add viral genomes to the database by using the option `-v`.  As of October
+2016, this database contains ca. 20M protein sequences, which amounts to a requirement of 14GB RAM for running Kaiju.
 
 By default, `makeDB.sh` downloads and extracts 5 genomes from the NCBI FTP
 server in parallel. This number can be changed by modifying the appropriate
@@ -96,20 +96,17 @@ directory containing the downloaded genomes can be deleted.
 The second option is to use the the microbial subset of the complete
 non-redundant protein database (nr) that is used by NCBI BLAST.  This database
 contains all protein sequences from GenBank, including those from not
-completely assembled genomes.  `makeDB.sh` will download the `nr.gz` file from
-GenBank's FTP server and create database and index for Kaiju.
+completely assembled genomes. `makeDB.sh` will download the `nr.gz` file from
+GenBank's FTP server and create a database and index for Kaiju.
 
 There are two options:
 1. `makeDB.sh -n` will only use proteins that belong to Archaea, Bacteria and Viruses.
 2. `makeDB.sh -e` will additionally include proteins from fungi and microbial eukaryotes. The complete taxon list for this option is in the file `bin/taxonlist.tsv`.
 
 Because the nr database contains more proteins, more RAM is needed for index
-construction and for running Kaiju.  As of April 2016, the nr database with
-option `-n` contains ca. 63m protein sequences, which amounts to ca. 33GB
-memory usage for running kaiju.  The program also uses 5 parallel threads for
-constructing the index, which can be changed by using the option `-t`. Note
-that a higher number of threads increases the memory usage during index
-construction, while reducing the number of threads decreases memory usage.
+construction and for running Kaiju.  As of October 2016, the nr database with
+option `-e` contains ca. 80M protein sequences, which amounts to a requirement of 43GB
+RAM for running Kaiju.
 
 After `makeDB.sh` is finished, only the files `kaiju_db_nr.fmi` or
 `kaiju_db_nr_euk.fmi`, `nodes.dmp`, and `names.dmp` are needed to run Kaiju.
@@ -117,7 +114,7 @@ The remaining files can be deleted.
 
 ###3. Custom database
 It is also possible to make a custom database from a collection of protein sequences.
-This only requires a FASTA file in which the headers are the numeric NCBI taxon identifiers of the protein sequences,
+The format needs to be a FASTA file in which the headers are the numeric NCBI taxon identifiers of the protein sequences,
 which can optionally be prefixed by another identifier (e.g. a counter) followed by an underscore, for example:
 ```
 >1_1358
@@ -158,7 +155,7 @@ Kaiju can read input files in FASTQ and FASTA format.
 If the files are compressed, the shell's process substitution can be used to decompress them on the fly.
 For example for GZIP compressed files:
 ```
-kaiju ... -i <(gunzip -c firstfile.fastq.gz) -j <(gunzip -c secondfile.fastq.gz) ...
+kaiju -i <(gunzip -c firstfile.fastq.gz) -j <(gunzip -c secondfile.fastq.gz) ...
 ```
 
 By default, Kaiju will print the output to the terminal (STDOUT).
@@ -172,7 +169,10 @@ Kaiju can use multiple parallel threads, which can be specified with the `-z` op
 kaiju -z 25 -t nodes.dmp -f kaiju_db.fmi -i inputfile.fastq -o kaiju.out
 ```
 
-The default run mode is MEM. For using Greedy mode, set the mode via the option `-a` and the number
+##Run modes
+
+The default run mode is **MEM**, which only considers exact matches.
+For using the **Greedy** mode, which allows mismatches, set the mode via the option `-a` and the number
 of allowed substitutions using option `-e`:
 ```
 kaiju -t nodes.dmp -f kaiju_db.fmi -i inputfile.fastq -a greedy -e 5
@@ -181,9 +181,11 @@ The cutoffs for minimum required match length and match score can be changed usi
 
 If the input sequences are already protein sequences, use option `-p` to disable translation of the input.
 
-Option `-x` can be used to enable filtering of query sequences containing low-complexity regions by using the 
-SEG algorithm from the blast+ package. This is useful for noisy reads and to avoid spurious matches caused by
-simple repeat patterns.
+Option `-x` can be used to enable filtering of query sequences containing
+low-complexity regions by using the SEG algorithm from the blast+ package.
+Enabling this option is always recommended in order to avoid false positive
+matches caused by spurious matches due to simple repeat patterns or other
+sequencing noise.
 
 ###Output format
 Kaiju will print one line for each read or read pair.
