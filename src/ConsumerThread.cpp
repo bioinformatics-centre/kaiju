@@ -606,6 +606,7 @@ void ConsumerThread::doWork() {
 	ReadItem * item = NULL;
 	while(myWorkQueue->pop(&item)) {    	
 		assert(item != NULL);
+		read_count++;
 
 		if(config->input_is_protein) {
 			if(item->sequence1.length() < config->min_fragment_length) {
@@ -622,7 +623,6 @@ void ConsumerThread::doWork() {
 				continue;
 			}
 		}
-		count++;
 
 		uint64_t lca = 0;
 		extraoutput = "";
@@ -706,7 +706,10 @@ void ConsumerThread::doWork() {
 
 		clearFragments();
 
-		if(count%40000==0) flush_output();
+		if(read_count==40000) {
+			flush_output();
+			read_count = 0;
+		}
 
 	}
 

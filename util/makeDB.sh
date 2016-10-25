@@ -4,6 +4,7 @@ SCRIPTDIR="$(dirname "$(readlink -f "$0")")"
 viruses=0
 use_nr=0
 euk=0
+use_progenomes=0
 threadsBWT=5
 parallelDL=5
 parallelConversions=5
@@ -11,22 +12,35 @@ exponentSA=3
 exponentSA_NR=5
 
 usage() {
-	echo This program downloads all complete bacterial and archaeal genomes from
-	echo the GenBank FTP server and builds a database index for Kaiju.
+	echo This program creates a protein reference database and index for Kaiju.
+	echo Several source databases can be used.
 	echo
-	echo Alternatively, makeDB.sh can download the non-redundant protein database NR
-	echo from GenBank, which contains all proteins. This file is then reduced to
-	echo microbial and viral proteins for Kaiju\'s database.
+	echo By default, all complete bacterial and archaeal genomes in the
+	echo NCBI RefSeq database are downloaded from the NCBI FTP server.
 	echo
-	echo By default, 5 parallel threads are used for download and for
-	echo index construction.
+	echo Alternatively, all proteins belonging to the set of representative genomes
+	echo from the proGenomes database can be downloaded using option -p.
+  echo
+  echo Viral proteins from NCBI Refseq can be included by using option -v.
+	echo
+	echo Instead of using full genomes as reference database, the NCBI BLAST
+	echo non-redundant protein database \"nr\" can be downloaded using option -n.
+	echo This file is then reduced to bacterial, archaeal, and viral proteins for
+	echo Kaiju\'s database. Additionally, proteins belonging to fungi and microbial
+	echo eukaryotes can also be included by using option -e.
+	echo
+	echo By default, 5 parallel threads are used for downloading and for the index construction.
+	echo Use option -t to modify the number of threads. The more threads are used, the
+	echo higher the memory requirement becomes.
 	echo
 	echo Optional arguments are:
+	echo "  -p|--progenomes  download proteins from proGenomes database"
+	echo "  -v|--viruses     download viral genomes from NCBI RefSeq"
+	echo "  -n|--nr          download non-redundant protein database nr"
+	echo "  -e|--euk         like -n, but also include microbial eukaryotes"
+	echo "                   (listed in the file taxonlist.tsv)"
 	echo "  -t|--threads X   for using X parallel threads for index construction"
-	echo "  -v|--viruses     for also downloading viral genomes"
-	echo "  -n|--nr          download GenBank non-redundant protein database instead"
-	echo "  -e|--euk         like -n, but also include microbial eukaryotes,"
-	echo "                   which are listed in the file taxonlist.tsv"
+	echo
 }
 
 while :; do
@@ -53,6 +67,9 @@ while :; do
             ;;
         -v|--viruses)
             viruses=1
+            ;;
+        -p|--progenomes)
+            use_progenomes=1
             ;;
         --)# End of all options.
             shift
@@ -105,9 +122,9 @@ fi
 
 if [ "$use_nr" -eq 1 -o "$euk" -eq 1 ]
 then
-	echo Downloading file: nr.gz
+	echo Downloading file nr.gz
 	wget --show-progress -N -c -nv ftp://ftp.ncbi.nih.gov/blast/db/FASTA/nr.gz
-	echo Downloading file: prot.accession2taxid.gz
+	echo Downloading file prot.accession2taxid.gz
 	wget --show-progress -N -c -nv ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/prot.accession2taxid.gz
 	if [ -r nr.gz -a -r prot.accession2taxid.gz ]
 	then
@@ -138,24 +155,42 @@ then
 else
 	echo Creating directory genomes/
 	mkdir -p genomes
-	echo Downloading file list for full genomes...
-	wget -nv -O assembly_summary.archaea.txt ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/archaea/assembly_summary.txt
-	wget -nv -O assembly_summary.bacteria.txt ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/bacteria/assembly_summary.txt
-	awk 'BEGIN{FS="\t";OFS="/"}$12=="Complete Genome" && $11=="latest"{l=split($20,a,"/");print $20,a[l]"_genomic.gbff.gz"}' assembly_summary.bacteria.txt assembly_summary.archaea.txt > downloadlist.txt
-	nfiles=`cat downloadlist.txt| wc -l`
-	echo Downloading $nfiles genome files from GenBank FTP server. This may take a while...
-	cat downloadlist.txt | xargs -P $parallelDL -n 1 wget -P genomes -c -nv
-
-	if [ "$viruses" -eq 1 ]
+	if [ "$use_progenomes" -eq 0 ]
 	then
-		echo Downloading virus genomes from GenBank FTP server...
-		wget -c -nv -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.1.genomic.gbff.gz
-		wget -c -nv -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.2.genomic.gbff.gz
+		echo Downloading file list for complete genomes from RefSeq...
+		wget -nv -O assembly_summary.archaea.txt ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/archaea/assembly_summary.txt
+		wget -nv -O assembly_summary.bacteria.txt ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/bacteria/assembly_summary.txt
+		awk 'BEGIN{FS="\t";OFS="/"}$12=="Complete Genome" && $11=="latest"{l=split($20,a,"/");print $20,a[l]"_genomic.gbff.gz"}' assembly_summary.bacteria.txt assembly_summary.archaea.txt > downloadlist.txt
+		nfiles=`cat downloadlist.txt| wc -l`
+		echo Downloading $nfiles genome files from GenBank FTP server. This may take a while...
+		cat downloadlist.txt | xargs -P $parallelDL -n 1 wget -P genomes -c -nv
+
+		if [ "$viruses" -eq 1 ]
+		then
+			echo Downloading virus genomes from RefSeq...
+			wget --show-progress -N -c -nv -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.1.genomic.gbff.gz
+			wget --show-progress -N -c -nv -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.2.genomic.gbff.gz
+		fi
+
+		echo Extracting protein sequences from downloaded files...
+		find ./genomes -name "*.gbff.gz" | xargs -n 1 -P $parallelConversions -i $SCRIPTDIR/gbk2faa.pl '{}' '{}'.faa
+	else
+		echo Downloading proGenomes database...
+		wget --show-progress -N -c -nv -P genomes http://progenomes.embl.de/data/repGenomes/representatives.proteins.fasta.gz
+
+		if [ "$viruses" -eq 1 ]
+		then
+			echo Downloading virus genomes from RefSeq...
+			wget --show-progress -N -c -nv -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.1.genomic.gbff.gz
+			wget --show-progress -N -c -nv -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.2.genomic.gbff.gz
+		fi
+
+		echo Extracting protein sequences from downloaded files...
+		gunzip -c genomes/representatives.proteins.fasta.gz | perl -lsane 'if(/>(\d+)\./){print ">",++$c,"_",$1}else{y/BZ/DE/;s/[^ARNDCQEGHILKMFPSTWYV]//gi;print if length}' > genomes/representatives.proteins.fasta.gz.faa
+		find ./genomes -name "viral.*.gbff.gz" | xargs -n 1 -P $parallelConversions -i $SCRIPTDIR/gbk2faa.pl '{}' '{}'.faa
 	fi
 
-	echo Extracting protein sequences from downloaded files...
-	find ./genomes -name "*.gbff.gz" | xargs -n 1 -P $parallelConversions -i $SCRIPTDIR/gbk2faa.pl '{}' '{}'.faa
-	cat genomes/*.gz.faa >kaiju_db.faa
+	cat genomes/*.faa >kaiju_db.faa
 
 	echo Creating Borrows-Wheeler transform...
 	$SCRIPTDIR/mkbwt -n $threadsBWT -e $exponentSA -a ACDEFGHIKLMNPQRSTVWY -o kaiju_db kaiju_db.faa

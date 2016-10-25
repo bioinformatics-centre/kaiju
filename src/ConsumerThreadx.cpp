@@ -178,6 +178,7 @@ void ConsumerThreadx::doWork() {
 	ReadItem * item = NULL;
 	while(myWorkQueue->pop(&item)) {    	
 		assert(item != NULL);
+		read_count++;
 
 		if((!item->paired && item->sequence1.length() < config->min_fragment_length*3) || 
 			(item->paired && item->sequence1.length() < config->min_fragment_length*3 && item->sequence2.length() < config->min_fragment_length*3)) {
@@ -185,7 +186,6 @@ void ConsumerThreadx::doWork() {
 			delete item;
 			continue;
 		}		
-		count++;
 
 		extraoutput = "";
 
@@ -226,7 +226,10 @@ void ConsumerThreadx::doWork() {
 
 		clearFragments();
 
-		if(count%40000==0) flush_output();
+		if(read_count==40000) {
+			flush_output();
+			read_count = 0;
+		}
 
 	}
 

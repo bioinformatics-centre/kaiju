@@ -5,10 +5,10 @@ Peter Menzel <pmenzel@gmail.com>
 Anders Krogh <krogh@binf.ku.dk>   
 
 
-Kaiju is a program for the taxonomic assignment of high-throughput sequencing
+Kaiju is a program for the taxonomic classification of high-throughput sequencing
 reads, e.g., Illumina or Roche/454, from whole-genome sequencing of
 metagenomic DNA. Reads are directly assigned to taxa using the NCBI taxonomy and a
-reference database of protein sequences from bacterial and archaeal genomes.
+reference database of protein sequences from microbial and viral genomes.
 
 The program is described in [Menzel, P. et al. (2016) Fast and sensitive taxonomic classification for metagenomics with Kaiju. *Nat. Commun.* 7:11257](http://www.nature.com/ncomms/2016/160413/ncomms11257/full/ncomms11257.html) (open access).
 
@@ -58,11 +58,12 @@ the currently available data from GenBank, or download the index used
 by the [Kaiju web server](http://kaiju.binf.ku.dk/).
 
 For creating a local index, the program `makeDB.sh` in the `bin/` directory
-will download the complete genome and taxonomy files from the NCBI FTP server,
-convert them to the protein database and construct Kaiju's index (the
+will download the reference genomes and taxonomy files from the NCBI FTP server,
+convert them into a protein database and construct Kaiju's index (the
 Burrows-Wheeler transform and the FM-index) in one go.
 
-It is recommended to create a new directory for the download and run the program from there, for example:
+It is recommended to create a new directory for downloading the files
+and database construction, for example:
 ```
 mkdir kaijudb
 cd kaijudb
@@ -71,14 +72,23 @@ makeDB.sh
 The downloaded files are several GB in size. Therefore, the program should be
 run in a directory having at least 80 GB of free space.
 
-There are two major options for creating the reference database with sequence data from the NCBI FTP server with `makeDB.sh`.
+There are several options for creating the reference database with protein
+sequences from different source databases:
 
-###1. Complete Genomes
+###1. Complete Reference Genomes
 The first option is to use only completely assembled and annotated reference
 genomes from the NCBI RefSeq database, which is the default behaviour of
 `makeDB.sh`.  Additional to archaeal and bacterial genomes, `makeDB.sh` can
 also add viral genomes to the database by using the option `-v`.  As of October
-2016, this database contains ca. 20M protein sequences, which amounts to a requirement of 14GB RAM for running Kaiju.
+2016, this database contains ca. 20M protein sequences, which amounts to a
+requirement of 14GB RAM for running Kaiju.
+
+Alternatively, `makeDB.sh` can download the protein sequences from the
+representative set of genomes from the [proGenomes](http://progenomes.embl.de/)
+web server by using the option `-p`. This option can be used together with
+option `-v` for adding viral genomes from NCBI RefSeq.
+As of October 2016, this database contains ca. 19M protein sequences, which amounts to a
+requirement of 13GB RAM for running Kaiju.
 
 By default, `makeDB.sh` downloads and extracts 5 genomes from the NCBI FTP
 server in parallel. This number can be changed by modifying the appropriate
@@ -169,7 +179,7 @@ Kaiju can use multiple parallel threads, which can be specified with the `-z` op
 kaiju -z 25 -t nodes.dmp -f kaiju_db.fmi -i inputfile.fastq -o kaiju.out
 ```
 
-##Run modes
+###Run modes
 
 The default run mode is **MEM**, which only considers exact matches.
 For using the **Greedy** mode, which allows mismatches, set the mode via the option `-a` and the number
@@ -199,6 +209,24 @@ Using the option `-v` enables the verbose output, which will print additional th
 5. the taxon identifiers of all database sequences with the best match
 6. matching fragment sequence(s)
 
+##Classification accuracy
+
+The accuracy of the classification depends both on the choice of the reference
+database and the chosen options when running Kaiju. These choices also affect
+the speed and memory usage of Kaiju.
+
+For highest sensitivity, it is recommended to use the nr database (+eukaryotes)
+as a reference and Greedy run mode, for example, with 5 allowed mismatches.
+
+For fastest classification, use the MEM run mode and multiple parallel threads
+(`-z`); and for lowest memory usage use the RefSeq or proGenomes reference
+database. The number of parallel threads has only little impact on memory usage.
+
+Further, the choice of the minimum required match length (`-m`) in MEM mode or
+match score (`-s`) in Greedy mode governs the trade-off between sensitivity and
+precision of the classification. Please refer to the paper for a discussion on
+this topic.
+
 ##Helper programs
 ###Creating input file for Krona
 The program `kaiju2krona` can be used to convert Kaiju's tab-separated output file
@@ -214,7 +242,7 @@ Krona's `ktImportText` program:
 ktImportText -o kaiju.out.html kaiju.out.krona
 ```
 
-###Creating summary
+###Creating classification summary
 The program `kaijuReport` can convert Kaiju's tab-separated output file into a
 summary report file for a given taxonomic rank, e.g., genus. It requires the
 `nodes.dmp` and `names.dmp` files for mapping the taxon identifiers from

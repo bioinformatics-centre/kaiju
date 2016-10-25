@@ -121,7 +121,7 @@ class ConsumerThread {
 
 	Config * config;
 	ostringstream output;
-	uint64_t count = 0;
+	uint32_t read_count = 0;
 	uint64_t classify_length();
 	uint64_t classify_greedyblosum();
 
