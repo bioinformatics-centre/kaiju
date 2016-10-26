@@ -54,7 +54,7 @@ You can add this directory to your shell's `$PATH` variable or copy the files to
 
 Before classification of reads, Kaiju's database index needs to be built from
 the reference protein database.  You can either create a local index based on
-the currently available data from GenBank, or download the index used
+the currently available data from GenBank, or download one of the indexes used
 by the [Kaiju web server](http://kaiju.binf.ku.dk/).
 
 For creating a local index, the program `makeDB.sh` in the `bin/` directory
@@ -67,7 +67,7 @@ and database construction, for example:
 ```
 mkdir kaijudb
 cd kaijudb
-makeDB.sh
+makeDB.sh [-r|-p|-n|-e]
 ```
 The downloaded files are several GB in size. Therefore, the program should be
 run in a directory having at least 80 GB of free space.
@@ -75,54 +75,56 @@ run in a directory having at least 80 GB of free space.
 There are several options for creating the reference database with protein
 sequences from different source databases:
 
-###1. Complete Reference Genomes
-The first option is to use only completely assembled and annotated reference
-genomes from the NCBI RefSeq database, which is the default behaviour of
-`makeDB.sh`.  Additional to archaeal and bacterial genomes, `makeDB.sh` can
-also add viral genomes to the database by using the option `-v`.  As of October
-2016, this database contains ca. 20M protein sequences, which amounts to a
-requirement of 14GB RAM for running Kaiju.
+###1. Complete Reference Genomes from NCBI RefSeq
+`makeDB.sh -r`  
+Download only completely assembled and annotated reference
+genomes of Archaea and Bacteria from the NCBI RefSeq database.
 
-Alternatively, `makeDB.sh` can download the protein sequences from the
-representative set of genomes from the [proGenomes](http://progenomes.embl.de/)
-web server by using the option `-p`. This option can be used together with
-option `-v` for adding viral genomes from NCBI RefSeq.
-As of October 2016, this database contains ca. 19M protein sequences, which amounts to a
-requirement of 13GB RAM for running Kaiju.
+Additionally, viral genomes from NCBI RefSeq can be added by using the option `-v`.
 
-By default, `makeDB.sh` downloads and extracts 5 genomes from the NCBI FTP
+As of October 2016, this database contains ca. 20M protein sequences, which
+amounts to a requirement of 14GB RAM for running Kaiju.
+
+###2. Representative genomes from proGenomes
+`makeDB.sh -p`  
+Download the protein sequences belonging to the representative set of genomes
+from the [proGenomes](http://progenomes.embl.de/) database.
+
+Additionally, viral genomes from NCBI RefSeq can be added by using the option `-v`.
+
+As of October 2016, this database contains ca. 19M protein sequences, which
+amounts to a requirement of 13GB RAM for running Kaiju.
+
+###3. Non-redundant protein database _nr_
+`makeDB.sh -n`  
+Download the _nr_ database that is used by NCBI BLAST and extract proteins belonging
+to Archaea, Bacteria and Viruses.
+
+`makeDB.sh -e`  
+Download the _nr_ database as above, but additionally include proteins from fungi and microbial eukaryotes.
+The complete taxon list for this option is in the file `bin/taxonlist.tsv`.
+
+Because the _nr_ database contains more proteins, more RAM is needed for index
+construction and for running Kaiju.  As of October 2016, the _nr_ database with
+option `-e` contains ca. 80M protein sequences, which amounts to a requirement
+of 43GB RAM for running Kaiju.
+
+###Index construction
+
+When using option `-r`, `makeDB.sh` downloads and extracts 5 genomes from the NCBI FTP
 server in parallel. This number can be changed by modifying the appropriate
-variables at the beginning of the script.  The program also uses 5 parallel
-threads for constructing the index, which can be changed by using the option
-`-t`. Note that a higher number of threads increases the memory usage during
-index construction, while reducing the number of threads decreases memory
-usage.
+variables at the beginning of the script.
 
-After `makeDB.sh` is finished, only the files `kaiju_db.fmi`, `nodes.dmp`,
-and `names.dmp` are needed to run Kaiju.  The remaining files and the `genomes`
+By default, `makeDB.sh` uses 5 parallel threads for constructing the index, which can
+be changed by using the option `-t`. Note that a higher number of threads
+increases the memory usage during index construction, while reducing the number
+of threads decreases memory usage.
+
+After `makeDB.sh` is finished, only the files `kaiju_db.fmi` (or `kaiju_db_nr.fmi / `kaiju_db_nr_euk.fmi`), `nodes.dmp`,
+and `names.dmp` are needed to run Kaiju. The remaining files and the `genomes`
 directory containing the downloaded genomes can be deleted.
 
-###2. Non-redundant protein database
-The second option is to use the the microbial subset of the complete
-non-redundant protein database (nr) that is used by NCBI BLAST.  This database
-contains all protein sequences from GenBank, including those from not
-completely assembled genomes. `makeDB.sh` will download the `nr.gz` file from
-GenBank's FTP server and create a database and index for Kaiju.
-
-There are two options:
-1. `makeDB.sh -n` will only use proteins that belong to Archaea, Bacteria and Viruses.
-2. `makeDB.sh -e` will additionally include proteins from fungi and microbial eukaryotes. The complete taxon list for this option is in the file `bin/taxonlist.tsv`.
-
-Because the nr database contains more proteins, more RAM is needed for index
-construction and for running Kaiju.  As of October 2016, the nr database with
-option `-e` contains ca. 80M protein sequences, which amounts to a requirement of 43GB
-RAM for running Kaiju.
-
-After `makeDB.sh` is finished, only the files `kaiju_db_nr.fmi` or
-`kaiju_db_nr_euk.fmi`, `nodes.dmp`, and `names.dmp` are needed to run Kaiju.
-The remaining files can be deleted.
-
-###3. Custom database
+###Custom database
 It is also possible to make a custom database from a collection of protein sequences.
 The format needs to be a FASTA file in which the headers are the numeric NCBI taxon identifiers of the protein sequences,
 which can optionally be prefixed by another identifier (e.g. a counter) followed by an underscore, for example:
@@ -215,10 +217,12 @@ The accuracy of the classification depends both on the choice of the reference
 database and the chosen options when running Kaiju. These choices also affect
 the speed and memory usage of Kaiju.
 
-For highest sensitivity, it is recommended to use the nr database (+eukaryotes)
-as a reference and Greedy run mode, for example, with 5 allowed mismatches.
+For highest sensitivity, it is recommended to use the _nr_ database (+eukaryotes)
+as a reference database because it is the most comprehensive set of protein 
+sequences. Additionally, Greedy run mode, for example, with 5 allowed mismatches,
+yields a higher sensitivity compared with MEM mode.
 
-For fastest classification, use the MEM run mode and multiple parallel threads
+For fastest classification, use MEM mode and multiple parallel threads
 (`-z`); and for lowest memory usage use the RefSeq or proGenomes reference
 database. The number of parallel threads has only little impact on memory usage.
 
