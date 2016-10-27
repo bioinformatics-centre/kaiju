@@ -89,6 +89,8 @@ amounts to a requirement of 14GB RAM for running Kaiju.
 `makeDB.sh -p`  
 Download the protein sequences belonging to the representative set of genomes
 from the [proGenomes](http://progenomes.embl.de/) database.
+This dataset generally covers a broader phylogenenic range compared to the RefSeq dataset,
+and is therefore recommended, especially for environmental samples.
 
 Additionally, viral genomes from NCBI RefSeq can be added by using the option `-v`.
 
@@ -120,8 +122,8 @@ be changed by using the option `-t`. Note that a higher number of threads
 increases the memory usage during index construction, while reducing the number
 of threads decreases memory usage.
 
-After `makeDB.sh` is finished, only the files `kaiju_db.fmi` (or `kaiju_db_nr.fmi / `kaiju_db_nr_euk.fmi`), `nodes.dmp`,
-and `names.dmp` are needed to run Kaiju. The remaining files and the `genomes`
+After `makeDB.sh` is finished, only the files `kaiju_db.fmi` (or `kaiju_db_nr.fmi` / `kaiju_db_nr_euk.fmi`), `nodes.dmp`,
+and `names.dmp` are needed to run Kaiju. The remaining files and the `genomes/`
 directory containing the downloaded genomes can be deleted.
 
 ###Custom database
@@ -219,11 +221,13 @@ the speed and memory usage of Kaiju.
 
 For highest sensitivity, it is recommended to use the _nr_ database (+eukaryotes)
 as a reference database because it is the most comprehensive set of protein 
-sequences. Additionally, Greedy run mode, for example, with 5 allowed mismatches,
+sequences. Alternatively, use proGenomes over Refseq for increased sensitivity.
+
+Additionally, Greedy run mode, for example, with 5 allowed mismatches,
 yields a higher sensitivity compared with MEM mode.
 
 For fastest classification, use MEM mode and multiple parallel threads
-(`-z`); and for lowest memory usage use the RefSeq or proGenomes reference
+(`-z`); and for lowest memory usage use the proGenomes reference
 database. The number of parallel threads has only little impact on memory usage.
 
 Further, the choice of the minimum required match length (`-m`) in MEM mode or
