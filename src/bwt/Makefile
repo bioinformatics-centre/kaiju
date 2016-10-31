@@ -1,9 +1,9 @@
-CC      = gcc # -static -lm
+CC = gcc
 #CFLAGS  = -g
-CFLAGS  = -O3 -g -Wno-unused-result
+CFLAGS = -O3 -g -Wno-unused-result
 LDLIBS = -lpthread -lm
 
-ALL: mkbwt mkfmi
+all: mkbwt mkfmi Makefile
 
 mkbwt: mkbwt.o readFasta.o suffixArray.o multikeyqsort.o sequence.o
 
@@ -28,4 +28,7 @@ multikeyqsort.o: multikeyqsort.c multikeyqsort.h
 clean:
 	rm -f mkfmi mkbwt
 
-.PHONY: clean 
+static: LDFLAGS = -static
+static: all
+
+.PHONY: clean static
