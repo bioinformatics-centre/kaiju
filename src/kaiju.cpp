@@ -288,7 +288,7 @@ int main(int argc, char** argv) {
 	bool isFastQ_file2 = false;
 	string line_from_file;
 	line_from_file.reserve(2000);
-	string suffixStartCharacters = " /";
+	string suffixStartCharacters = " /\t";
 	string name;
 	string sequence1;
 	string sequence2;
@@ -314,10 +314,8 @@ int main(int argc, char** argv) {
 			// remove '@' from beginning of line
 			line_from_file.erase(line_from_file.begin());
 			// delete suffixes like '/1' or ' 1:N:0:TAAGGCGA' from end of read name
-			if(paired) {
-				size_t n = line_from_file.find_first_of(suffixStartCharacters);
-				if(n != string::npos) { line_from_file.erase(n); }
-			}
+			size_t n = line_from_file.find_first_of(suffixStartCharacters);
+			if(n != string::npos) { line_from_file.erase(n); }
 			name = line_from_file;
 			// read sequence line
 			getline(in1_file,line_from_file);
@@ -331,10 +329,8 @@ int main(int argc, char** argv) {
 			// remove '>' from beginning of line
 			line_from_file.erase(line_from_file.begin());
 			// delete suffixes like '/1' or ' 1:N:0:TAAGGCGA' from end of read name
-			if(paired) {
-				size_t n = line_from_file.find_first_of(suffixStartCharacters);
-				if(n != string::npos) { line_from_file.erase(n); }
-			}
+			size_t n = line_from_file.find_first_of(suffixStartCharacters);
+			if(n != string::npos) { line_from_file.erase(n); }
 			name = line_from_file;
 			// read lines until next entry starts or file terminates
 			sequence1.clear();
@@ -372,10 +368,8 @@ int main(int argc, char** argv) {
 				// remove '@' from beginning of line
 				line_from_file.erase(line_from_file.begin());
 				// delete suffixes like '/2' or ' 2:N:0:TAAGGCGA' from end of read name
-				if(paired) {
-					size_t n = line_from_file.find_first_of(suffixStartCharacters);
-					if(n != string::npos) { line_from_file.erase(n); }
-				}
+				size_t n = line_from_file.find_first_of(suffixStartCharacters);
+				if(n != string::npos) { line_from_file.erase(n); }
 				if(name != line_from_file) {
 					cerr << "Error: Read names are not identical between the two input files. Probably reads are not in the same order in both files." << endl;
 					in1_file.close();
@@ -389,33 +383,31 @@ int main(int argc, char** argv) {
 				in2_file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 				// skip quality score line
 				in2_file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-				}
-				else { // FASTA
-					// remove '>' from beginning of line
-					line_from_file.erase(line_from_file.begin());
-					// delete suffixes like '/2' or ' 2:N:0:TAAGGCGA' from end of read name
-					if(paired) {
-						size_t n = line_from_file.find_first_of(suffixStartCharacters);
-						if(n != string::npos) { line_from_file.erase(n); }
-					}
-					if(name != line_from_file) {
-						cerr << "Error: Read names are not identical between the two input files" << endl;
-						in1_file.close();
-						in2_file.close();
-						exit(EXIT_FAILURE);
-					}
-					sequence2.clear();
-					while(!(in2_file.peek()=='>' || in2_file.peek()==EOF)) {
-						getline(in2_file,line_from_file);
-						sequence2.append(line_from_file);
-					}
-				}
-				strip(sequence2); // remove non-alphabet chars
-				myWorkQueue->push(new ReadItem(name, sequence1, sequence2));
-			} // not paired
-			else {
-				myWorkQueue->push(new ReadItem(name, sequence1));
 			}
+			else { // FASTA
+				// remove '>' from beginning of line
+				line_from_file.erase(line_from_file.begin());
+				// delete suffixes like '/2' or ' 2:N:0:TAAGGCGA' from end of read name
+				size_t n = line_from_file.find_first_of(suffixStartCharacters);
+				if(n != string::npos) { line_from_file.erase(n); }
+				if(name != line_from_file) {
+					cerr << "Error: Read names are not identical between the two input files" << endl;
+					in1_file.close();
+					in2_file.close();
+					exit(EXIT_FAILURE);
+				}
+				sequence2.clear();
+				while(!(in2_file.peek()=='>' || in2_file.peek()==EOF)) {
+					getline(in2_file,line_from_file);
+					sequence2.append(line_from_file);
+				}
+			}
+			strip(sequence2); // remove non-alphabet chars
+			myWorkQueue->push(new ReadItem(name, sequence1, sequence2));
+		} // not paired
+		else {
+			myWorkQueue->push(new ReadItem(name, sequence1));
+		}
 
 	} // end main loop around file1
 

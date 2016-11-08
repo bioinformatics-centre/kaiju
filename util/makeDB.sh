@@ -1,5 +1,5 @@
 #!/bin/sh
-SCRIPTDIR="$(dirname "$(readlink -f "$0")")"
+SCRIPTDIR=$(dirname $0)
 
 db_viruses=0
 db_refseq=0

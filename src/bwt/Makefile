@@ -1,7 +1,7 @@
 CC = gcc
 #CFLAGS  = -g
 CFLAGS = -O3 -g -Wno-unused-result
-LDLIBS = -lpthread -lm
+LDLIBS = -Wl,--whole-archive -lpthread -Wl,--no-whole-archive -lm
 
 all: mkbwt mkfmi Makefile
 
