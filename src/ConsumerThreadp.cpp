@@ -1,11 +1,11 @@
-/* This file is part of Kaiju, Copyright 2015 Peter Menzel and Anders Krogh,
+/* This file is part of Kaiju, Copyright 2015,2016 Peter Menzel and Anders Krogh,
  * Kaiju is licensed under the GPLv3, see the file LICENSE. */
 
 #include "ConsumerThreadp.hpp"
 
-void ConsumerThreadp::doWork() {        
+void ConsumerThreadp::doWork() {
 	ReadItem * item = NULL;
-	while(myWorkQueue->pop(&item)) {    	
+	while(myWorkQueue->pop(&item)) {
 		assert(item != NULL);
 		read_count++;
 
@@ -13,7 +13,7 @@ void ConsumerThreadp::doWork() {
 			output << "U\t" << item->name << "\t0\n";
 			delete item;
 			continue;
-		}		
+		}
 
 		for (auto & c: item->sequence1) {
 			c = (char)toupper(c);
@@ -74,7 +74,7 @@ void ConsumerThreadp::doWork() {
 			output << "C\t" << item->name << "\t" << extraoutput << "\n";
 		}
 		else  {
-			output << "U\t" << item->name << "\n";       
+			output << "U\t" << item->name << "\n";
 		}
 
 		delete item;

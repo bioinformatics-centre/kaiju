@@ -1,4 +1,8 @@
 #!/bin/sh
+#
+# This file is part of Kaiju, Copyright 2015,2016 Peter Menzel and Anders Krogh
+# Kaiju is licensed under the GPLv3, see the file LICENSE.
+#
 SCRIPTDIR=$(dirname $0)
 
 db_viruses=0
@@ -109,7 +113,7 @@ fi
 set -e
 
 echo Downloading file taxdump.tar.gz
-wget --show-progress -N -nv ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz
+wget --show-progress -N -c -nv ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz
 echo Extracting file taxdump.tar.gz
 tar xf taxdump.tar.gz nodes.dmp names.dmp merged.dmp
 

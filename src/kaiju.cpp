@@ -1,10 +1,10 @@
 /*************************************************
   Kaiju
 
-  Author: Peter Menzel <pmenzel@gmail.com> and
-          Anders Krogh <krogh@binf.ku.dk>
+  Authors: Peter Menzel <pmenzel@gmail.com> and
+           Anders Krogh <krogh@binf.ku.dk>
 
-  Copyright 2015 Peter Menzel and Anders Krogh
+  Copyright (C) 2015,2016 Peter Menzel and Anders Krogh
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program, see file LICENSE.
   If not, see <http://www.gnu.org/licenses/>.
-  
+
   See the file README.md for documentation.
 **************************************************/
 
@@ -40,6 +40,8 @@
 #include "ReadItem.hpp"
 #include "ConsumerThread.hpp"
 #include "Config.hpp"
+#include "version.hpp"
+#include "util.hpp"
 
 extern "C" {
 #include "./bwt/bwt.h"
@@ -48,10 +50,6 @@ extern "C" {
 using namespace std;
 
 void usage(char *progname);
-void strip(string &s);
-bool isalpha(char & c);
-string getCurrentTime();
-
 
 int main(int argc, char** argv) {
 
@@ -87,9 +85,8 @@ int main(int argc, char** argv) {
 	while ((c = getopt(argc, argv, "a:hdpxvn:m:e:l:t:f:i:j:s:z:o:")) != -1) {
 		switch (c)  {
 			case 'a': {
-									if("mem" == string(optarg)) mode = MEM;					
-									else if("greedyblosum" == string(optarg)) mode = GREEDYBLOSUM;					
-									else if("greedy" == string(optarg)) mode = GREEDYBLOSUM;					
+									if("mem" == string(optarg)) mode = MEM;
+									else if("greedy" == string(optarg)) mode = GREEDYBLOSUM;
 									else { cerr << "-a must be a valid mode.\n"; usage(argv[0]); }
 									break;
 								}
@@ -118,7 +115,7 @@ int main(int argc, char** argv) {
 								}
 			case 'l': {
 									try {
-										seed_length = stoi(optarg); 
+										seed_length = stoi(optarg);
 									}
 									catch(const std::invalid_argument& ia) {
 										cerr << "Invalid argument in -l " << optarg << endl;
@@ -130,7 +127,7 @@ int main(int argc, char** argv) {
 								}
 			case 's': {
 									try {
-										min_score = stoi(optarg); 
+										min_score = stoi(optarg);
 									}
 									catch(const std::invalid_argument& ia) {
 										cerr << "Invalid argument in -s " << optarg << endl;
@@ -142,7 +139,7 @@ int main(int argc, char** argv) {
 								}
 			case 'm': {
 									try {
-										min_fragment_length = stoi(optarg); 
+										min_fragment_length = stoi(optarg);
 									}
 									catch(const std::invalid_argument& ia) {
 										cerr << "Invalid argument in -m " << optarg << endl;
@@ -154,7 +151,7 @@ int main(int argc, char** argv) {
 								}
 			case 'e': {
 									try {
-										mismatches = stoi(optarg); 
+										mismatches = stoi(optarg);
 									}
 									catch(const std::invalid_argument& ia) {
 										cerr << "Invalid numerical argument in -e " << optarg << endl;
@@ -180,16 +177,16 @@ int main(int argc, char** argv) {
 								usage(argv[0]);
 		}
 	}
-	if(min_score <= 0) { cerr << "Error: Min Score (-s) must be greater than 0."  << endl; usage(argv[0]); }
-	if(num_threads <= 0) { cerr << "Error: Number of threads (-z) must be greater than 0."  << endl; usage(argv[0]); }
-	if(min_fragment_length <= 0) { cerr << "Error: Min fragment length (-m) must be greater than 0."  << endl; usage(argv[0]); }
-	if(mismatches < 0) { cerr << "Error: Number of mismatches must be >= 0."  << endl; usage(argv[0]); }
-	if(seed_length < 7) { cerr << "Error: Seed length must be >= 7."  << endl; usage(argv[0]); }
-	if(nodes_filename.length() == 0) { cerr << "Error: Please specify the location of the nodes.dmp file, using the -t option."  << endl; usage(argv[0]); }
-	if(fmi_filename.length() == 0) { cerr << "Error: Please specify the location of the FMI file, using the -f option."  << endl; usage(argv[0]); }
-	if(in1_filename.length() == 0) { cerr << "Error: Please specify the location of the input file, using the -i option."  << endl; usage(argv[0]); }
-	if(paired && input_is_protein) { cerr << "Error: Protein input only supports one input file." << endl; usage(argv[0]); }
-	
+	if(min_score <= 0) { error("Min Score (-s) must be greater than 0."); usage(argv[0]); }
+	if(num_threads <= 0) {  error("Number of threads (-z) must be greater than 0."); usage(argv[0]); }
+	if(min_fragment_length <= 0) { error("Min fragment length (-m) must be greater than 0."); usage(argv[0]); }
+	if(mismatches < 0) { error("Number of mismatches must be >= 0."); usage(argv[0]); }
+	if(seed_length < 7) { error("Seed length must be >= 7."); usage(argv[0]); }
+	if(nodes_filename.length() == 0) { error("Please specify the location of the nodes.dmp file, using the -t option."); usage(argv[0]); }
+	if(fmi_filename.length() == 0) { error("Please specify the location of the FMI file, using the -f option."); usage(argv[0]); }
+	if(in1_filename.length() == 0) { error("Please specify the location of the input file, using the -i option."); usage(argv[0]); }
+	if(paired && input_is_protein) { error("Protein input only supports one input file."); usage(argv[0]); }
+
 	if(debug) {
 		cerr << "Parameters: \n";
 		cerr << "  minimum fragment length for matches: " << min_fragment_length << "\n";
@@ -231,10 +228,10 @@ int main(int argc, char** argv) {
 			nodes->insert(make_pair(node,parent));  //maybe the nodes->at(node) = parent;  would be faster?!
 		}
 		catch(const std::invalid_argument& ia) {
-			cerr << "Found bad number in line: " << line << endl; 
+			cerr << "Found bad number in line: " << line << endl;
 		}
 		catch (const std::out_of_range& oor) {
-			cerr << "Found bad number (out of range error) in line: " << line << endl; 
+			cerr << "Found bad number (out of range error) in line: " << line << endl;
 		}
 	}
 	nodes_file.close();
@@ -256,7 +253,7 @@ int main(int argc, char** argv) {
 	if(output_filename.length()>0) {
 		if(verbose) cerr << "Output file: " << output_filename << endl;
 		ofstream * read2id_file = new ofstream();
-		read2id_file->open(output_filename);    
+		read2id_file->open(output_filename);
 		if(!read2id_file->is_open()) {  cerr << "Could not open file " << output_filename << " for writing" << endl; exit(EXIT_FAILURE); }
 		config->out_stream = read2id_file;
 	}
@@ -264,7 +261,7 @@ int main(int argc, char** argv) {
 		config->out_stream = &cout;
 	}
 
-	ProducerConsumerQueue<ReadItem*>* myWorkQueue = new ProducerConsumerQueue<ReadItem*>(500);        
+	ProducerConsumerQueue<ReadItem*>* myWorkQueue = new ProducerConsumerQueue<ReadItem*>(500);
 	std::deque<std::thread> threads;
 	std::deque<ConsumerThread *> threadpointers;
 	for(int i=0; i < num_threads; i++) {
@@ -274,14 +271,14 @@ int main(int argc, char** argv) {
 	}
 
 	ifstream in1_file, in2_file;
-	in1_file.open(in1_filename.c_str());    
-	
+	in1_file.open(in1_filename);
+
 	if(!in1_file.is_open()) {  cerr << "Could not open file " << in1_filename << endl; exit(EXIT_FAILURE); }
 	if(in2_filename.length() > 0) {
-		in2_file.open(in2_filename.c_str());    
+		in2_file.open(in2_filename);
 		if(!in2_file.is_open()) {  cerr << "Could not open file " << in2_filename << endl; exit(EXIT_FAILURE); }
 	}
-	
+
 	bool firstline_file1 = true;
 	bool firstline_file2 = true;
 	bool isFastQ_file1 = false;
@@ -297,7 +294,7 @@ int main(int argc, char** argv) {
 
 	if(verbose) cerr << getCurrentTime() << " Start classification using " << num_threads << " threads." << endl;
 
-	while(getline(in1_file,line_from_file)) {                		
+	while(getline(in1_file,line_from_file)) {
 		if(line_from_file.length() == 0) { continue; }
 		if(firstline_file1) {
 			char fileTypeIdentifier = line_from_file[0];
@@ -411,10 +408,10 @@ int main(int argc, char** argv) {
 
 	} // end main loop around file1
 
-	myWorkQueue->pushedLast();    	
+	myWorkQueue->pushedLast();
 
 	if(in1_file.is_open()) in1_file.close();
-	
+
 	if(paired && in2_file.is_open()) {
 		if(getline(in2_file,line_from_file) && line_from_file.length()>0) {
 			cerr << "Warning: File " << in2_filename <<" has more reads then file " << in1_filename  <<endl;
@@ -429,7 +426,7 @@ int main(int argc, char** argv) {
 		threadpointers.pop_front();
 	}
 	if(verbose) cerr << getCurrentTime() << " Finished." << endl;
-	
+
 	config->out_stream->flush();
 	if(output_filename.length()>0) {
 		((ofstream*)config->out_stream)->close();
@@ -439,23 +436,14 @@ int main(int argc, char** argv) {
 	delete myWorkQueue;
 	delete config;
 	delete nodes;
-	return EXIT_SUCCESS;    
+	return EXIT_SUCCESS;
 }
 
-inline bool isalpha(char & c) { 
-	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
-}
-
-void strip(string &s) {
-	for(auto it = s.begin(); it!=s.end(); ++it) {
-		if(!isalpha(*it)) {
-			s.erase(it);
-			it--;
-		}
-	}
-}
-
-void usage(char *progname) { 
+void usage(char *progname) {
+	fprintf(stderr, "Kaiju %s\n",KAIJUVERSION);
+	fprintf(stderr, "Copyright 2015,2016 Peter Menzel, Anders Krogh\n");
+	fprintf(stderr, "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>\n");
+	fprintf(stderr, "\n");
 	fprintf(stderr, "Usage:\n   %s -t nodes.dmp -f kaiju_db.fmi -i reads.fastq [-j reads2.fastq]\n", progname);
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Mandatory arguments:\n");
@@ -478,9 +466,3 @@ void usage(char *progname) {
 	exit(EXIT_FAILURE);
 }
 
-string getCurrentTime() {
-	time_t t= time(0);
-	char buffer[9] = {0};
-	strftime(buffer, 9, "%H:%M:%S", localtime(&t));
-	return string(buffer);  
-}

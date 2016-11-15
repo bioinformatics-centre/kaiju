@@ -1,4 +1,4 @@
-/* This file is part of Kaiju, Copyright 2015 Peter Menzel and Anders Krogh,
+/* This file is part of Kaiju, Copyright 2015,2016 Peter Menzel and Anders Krogh,
  * Kaiju is licensed under the GPLv3, see the file LICENSE. */
 
 #ifndef CONSUMERTHREAD_H
@@ -84,25 +84,25 @@ class Fragment {
 		matchlen=si->ql;
 	}
 	Fragment(string s, unsigned int n, unsigned int p) {
-		seq = s; 
-		num_mm=n; 
+		seq = s;
+		num_mm=n;
 		pos_lastmm=p;
 	}
-}; 
+};
 
 class ConsumerThread {
 	protected:
-	ProducerConsumerQueue<ReadItem*> * myWorkQueue;        
+	ProducerConsumerQueue<ReadItem*> * myWorkQueue;
 
 	unordered_map<uint64_t,unsigned int> node2depth;
 
 	uint8_t codon_to_int(const char* codon);
 	uint8_t revcomp_codon_to_int(const char* codon);
 
-	uint8_t nuc2int[256];   
-	uint8_t compnuc2int[256];   
+	uint8_t nuc2int[256];
+	uint8_t compnuc2int[256];
 	char codon2aa[256];
-	uint8_t aa2int[256];   
+	uint8_t aa2int[256];
 
 	map<char, vector<char>> blosum_subst;
 	int8_t blosum62diag[20];
@@ -110,11 +110,11 @@ class ConsumerThread {
 
 	string translations[6];
 	multimap<unsigned int,Fragment *,std::greater<unsigned int>> fragments;
-	vector<SI *> best_matches_SI; 
-	vector<SI *> longest_matches_SI; 
-	vector<string> best_matches; 
-	vector<string> longest_fragments; 
-	set<uint64_t> match_ids; 
+	vector<SI *> best_matches_SI;
+	vector<SI *> longest_matches_SI;
+	vector<string> best_matches;
+	vector<string> longest_fragments;
+	set<uint64_t> match_ids;
 
 	unsigned int best_match_score = 0;
 	string extraoutput = "";
@@ -139,11 +139,11 @@ class ConsumerThread {
 	void getAllFragmentsBits(const string & line);
 	void flush_output();
 
-	public:        
-	ConsumerThread(ProducerConsumerQueue<ReadItem*>* workQueue, Config * config);        
-	void doWork(); 
+	public:
+	ConsumerThread(ProducerConsumerQueue<ReadItem*>* workQueue, Config * config);
+	void doWork();
 
-	
+
 };
 #endif
 

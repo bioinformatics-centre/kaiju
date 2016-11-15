@@ -1,11 +1,11 @@
-/* This file is part of Kaiju, Copyright 2015 Peter Menzel and Anders Krogh,
+/* This file is part of Kaiju, Copyright 2015,2016 Peter Menzel and Anders Krogh,
  * Kaiju is licensed under the GPLv3, see the file LICENSE. */
 
 #include "ConsumerThread.hpp"
 
-ConsumerThread::ConsumerThread(ProducerConsumerQueue<ReadItem*>* workQueue, Config * config) { 
+ConsumerThread::ConsumerThread(ProducerConsumerQueue<ReadItem*>* workQueue, Config * config) {
 
-	myWorkQueue = workQueue; 
+	myWorkQueue = workQueue;
 	this->config = config;
 	blosum_subst = {
 					{'A',{'S', 'V', 'T', 'G', 'C', 'P', 'M', 'K', 'L', 'I', 'E', 'Q', 'R', 'Y', 'F', 'H', 'D', 'N', 'W' }},
@@ -188,7 +188,7 @@ ConsumerThread::ConsumerThread(ProducerConsumerQueue<ReadItem*>* workQueue, Conf
 
 
 void ConsumerThread::getAllFragmentsBits(const string & line) {
-	
+
 	for(unsigned int i = 0; i<=2; i++) {
 		translations[i].clear();
 	}
@@ -353,7 +353,7 @@ void ConsumerThread::addAllMismatchVariantsAtPosSI(const Fragment * f, unsigned 
 	assert(fragment.length() >= config->min_fragment_length);
 	char origchar = fragment[pos];
 	assert(blosum_subst.count(origchar) > 0);
-	
+
 	if(erase_pos != string::npos && erase_pos < fragment.length()) {
 		if(config->debug)	cerr << "Deleting from position " << erase_pos  << "\n";
 		fragment.erase(erase_pos);
@@ -366,7 +366,7 @@ void ConsumerThread::addAllMismatchVariantsAtPosSI(const Fragment * f, unsigned 
 	siarray[1] = si->start+(IndexType)si->len;
 
 	for(auto itv : blosum_subst.at(origchar)) {
-		// we know the difference between score of original aa and substitution score, this 
+		// we know the difference between score of original aa and substitution score, this
 		// has to be subtracted when summing over all positions later
 		// so we add this difference to the fragment
 		int score_after_subst = score + b62[aa2int[(uint8_t)origchar]][aa2int[(uint8_t)itv]];
@@ -381,7 +381,7 @@ void ConsumerThread::addAllMismatchVariantsAtPosSI(const Fragment * f, unsigned 
 				fragment[pos] = itv;
 				cerr << "Skipping fragment " << fragment << " mismatch at pos " << pos << ", because " << itv << " is not a valid extension\n";
 			}
- 
+
 		}
 		else {
 			if(config->debug) { fragment[pos] = itv; cerr << "Skipping fragment "<< fragment <<" and following fragments, because score is too low: " << score_after_subst << " < " << max(best_match_score,config->min_score) << "\n"; }
@@ -421,12 +421,12 @@ unsigned int ConsumerThread::calcScore(const string & s) {
 uint64_t ConsumerThread::classify_greedyblosum() {
 
 		best_matches_SI.clear();
-		best_matches.clear(); 
+		best_matches.clear();
 		best_match_score = 0;
 
 		while(1) {
 			Fragment * t = getNextFragment(best_match_score);
-			if(!t) break; 
+			if(!t) break;
 			const string fragment = t->seq;
 			const size_t length = fragment.length();
 			const unsigned int num_mm = t->num_mm;
@@ -436,16 +436,16 @@ uint64_t ConsumerThread::classify_greedyblosum() {
 			std::strcpy(seq, fragment.c_str());
 
 			translate2numbers((uchar *)seq, (unsigned int)length, config->astruct);
-			
+
 			SI * si = NULL;
 			if(num_mm > 0) {
 				if(num_mm == config->mismatches) { //after last mm has been done, we need to have at least reached the min_length
 					si = maxMatches_withStart(config->fmi, seq, (unsigned int)length, config->min_fragment_length, 1,t->si0,t->si1,t->matchlen);
 				}
-				else { 
+				else {
 					si = maxMatches_withStart(config->fmi, seq, (unsigned int)length, t->matchlen, 1,t->si0,t->si1,t->matchlen);
 				}
-			 	
+
 			}
 			else {
 				si = maxMatches(config->fmi, seq, (unsigned int)length, config->seed_length, 0); //initial matches
@@ -458,8 +458,8 @@ uint64_t ConsumerThread::classify_greedyblosum() {
 				continue; // continue with the next fragment
 			}
 			if(config->debug) cerr << "Longest match is length " << (unsigned int)si->ql <<  "\n";
-			
-			if(config->mismatches > 0 && num_mm < config->mismatches) {  
+
+			if(config->mismatches > 0 && num_mm < config->mismatches) {
 				SI * si_it = si;
 				while(si_it) {
 					unsigned int match_right_end = si_it->qi + si_it->ql - 1;
@@ -507,9 +507,9 @@ uint64_t ConsumerThread::classify_greedyblosum() {
 		if(config->verbose)  {
 			stringstream ss;
 			ss << best_match_score << "\t" ;
-			for(auto it : match_ids) ss << it << ","; 
+			for(auto it : match_ids) ss << it << ",";
 			ss  << "\t";
-			for(auto it : best_matches) ss << it << ","; 
+			for(auto it : best_matches) ss << it << ",";
 			extraoutput = ss.str();
 		}
 
@@ -522,11 +522,11 @@ uint64_t ConsumerThread::classify_length() {
 
 		unsigned int longest_match_length = 0;
 		longest_matches_SI.clear();
-		longest_fragments.clear(); 
+		longest_fragments.clear();
 
 		while(1) {
 			Fragment * t = getNextFragment(longest_match_length);
-			if(!t) break;// searched all fragments that are longer than best match length 
+			if(!t) break;// searched all fragments that are longer than best match length
 			const string fragment = t->seq;
 			const size_t length = fragment.length();
 
@@ -545,7 +545,7 @@ uint64_t ConsumerThread::classify_length() {
 				delete t;
 				continue; // continue with the next fragment
 			}
-			
+
 
 			// just get length here and save si when it is longest
 			if(config->debug) cerr << "Longest match is length " << (unsigned int)si->ql << "\n";
@@ -557,7 +557,7 @@ uint64_t ConsumerThread::classify_length() {
 				longest_matches_SI.push_back(si);
 				longest_match_length = (unsigned int)si->ql;
 				if(config->verbose) {
-					longest_fragments.clear(); 
+					longest_fragments.clear();
 					longest_fragments.push_back(fragment.substr(si->qi,si->ql));
 				}
 			}
@@ -591,9 +591,9 @@ uint64_t ConsumerThread::classify_length() {
 		if(config->verbose) {
 			stringstream ss;
 			ss << longest_match_length << "\t";
-			for(auto it : match_ids) ss << it << ","; 
+			for(auto it : match_ids) ss << it << ",";
 			ss  << "\t";
-			for(auto it : longest_fragments) ss << it << ","; 
+			for(auto it : longest_fragments) ss << it << ",";
 			extraoutput = ss.str();
 		}
 
@@ -602,9 +602,9 @@ uint64_t ConsumerThread::classify_length() {
 
 }
 
-void ConsumerThread::doWork() {        
+void ConsumerThread::doWork() {
 	ReadItem * item = NULL;
-	while(myWorkQueue->pop(&item)) {    	
+	while(myWorkQueue->pop(&item)) {
 		assert(item != NULL);
 		read_count++;
 
@@ -673,7 +673,7 @@ void ConsumerThread::doWork() {
 			}
 		}
 
-		if(config->debug) cerr << fragments.size()  << " fragments found in the read."<< "\n"; 
+		if(config->debug) cerr << fragments.size()  << " fragments found in the read."<< "\n";
 
 		if(config->mode == MEM) {
 			lca = classify_length();
@@ -695,7 +695,7 @@ void ConsumerThread::doWork() {
 
 		}
 		else  {
-			output << "U\t" << item->name << "\t0\n";       
+			output << "U\t" << item->name << "\t0\n";
 			if(config->debug) {
 				cerr << "U\t" << item->name << "\t0\n";
 			}
@@ -722,15 +722,13 @@ void ConsumerThread::eval_match_scores(SI *si, Fragment * frag) {
 	if(!si) return;
 
 	// eval the remaining same-length and shorter matches
-	if(si->samelen) 
+	if(si->samelen)
 		eval_match_scores(si->samelen, frag);
-	if(si->next && si->next->ql >= (int)config->min_fragment_length) 
+	if(si->next && si->next->ql >= (int)config->min_fragment_length)
 		eval_match_scores(si->next, frag);
 	else if(si->next)
 		recursive_free_SI(si->next);
-	
-	//string match = frag->seq.substr(si->qi,si->ql);
-	//int score = calcScore(match,frag->diff);
+
 	unsigned int score = calcScore(frag->seq,si->qi,si->ql,frag->diff);
 
 	if(config->debug) cerr << "Match " <<frag->seq.substr(si->qi,si->ql) << " (length=" << (unsigned int)si->ql << " score=" << score << " num_mm=" << frag->num_mm<< ")\n";
@@ -750,11 +748,11 @@ void ConsumerThread::eval_match_scores(SI *si, Fragment * frag) {
 		best_matches_SI.push_back(si);
 		best_match_score = score;
 		if(config->verbose) {
-			best_matches.clear(); 
+			best_matches.clear();
 			best_matches.push_back(frag->seq.substr(si->qi,si->ql));
 		}
 	}
-	else if(score == best_match_score) { 
+	else if(score == best_match_score) {
 		best_matches_SI.push_back(si);
 		if(config->verbose)
 			best_matches.push_back(frag->seq.substr(si->qi,si->ql));
@@ -783,7 +781,7 @@ void ConsumerThread::ids_from_SI(SI *si) {
 		}
 
 		if(id == ULONG_MAX)
-			cerr << "Found bad number (out of range error) in database sequence name: " << config->bwt->s->ids[iseq] << endl; 
+			cerr << "Found bad number (out of range error) in database sequence name: " << config->bwt->s->ids[iseq] << endl;
 		else
 			match_ids.insert(id);
 	}
@@ -796,18 +794,7 @@ void ConsumerThread::ids_from_SI_recursive(SI *si) {
 		int iseq;
 		for (k=si_it->start; k<si_it->start+si_it->len; ++k) {
 			get_suffix(config->fmi, config->bwt->s, k, &iseq, &pos);
-			/*string id = string(b->ids[iseq]);
-			// we can have either  123_4567 oder 4567 as database names
-			size_t find = id.find("_");
-			if(find != string::npos) {
-				id = id.substr(find+1);
-			}
-			try {	
-				match_ids.insert(stoul(id)); 
-			}
-			catch(const std::invalid_argument& ia) { cerr << "Found bad number database sequence name: " << id << endl; }
-			catch (const std::out_of_range& oor) { cerr << "Found bad number (out of range error) in database sequence name: " << id << endl; }
-			*/
+
 			uint64_t id = ULONG_MAX;
 
 			// we can have either  123_4567 oder 4567 as database names
@@ -820,7 +807,7 @@ void ConsumerThread::ids_from_SI_recursive(SI *si) {
 			}
 
 			if(id == ULONG_MAX)
-				cerr << "Found bad number (out of range error) in database sequence name: " << config->bwt->s->ids[iseq] << endl; 
+				cerr << "Found bad number (out of range error) in database sequence name: " << config->bwt->s->ids[iseq] << endl;
 			else
 				match_ids.insert(id);
 		} // end for

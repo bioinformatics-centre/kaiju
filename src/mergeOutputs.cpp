@@ -1,4 +1,4 @@
-/* This file is part of Kaiju, Copyright 2015 Peter Menzel and Anders Krogh,
+/* This file is part of Kaiju, Copyright 2015,2016 Peter Menzel and Anders Krogh,
  * Kaiju is licensed under the GPLv3, see the file LICENSE. */
 
 #include <getopt.h>
@@ -14,14 +14,15 @@
 #include <locale>
 #include <string>
 #include <stdexcept>
+#include <cstdarg>
+
+#include "version.hpp"
+#include "util.hpp"
 
 using namespace std;
 
 void usage(const char * progname);
-string strip(const string & s);
-bool isalpha(const char & c);
 string calc_lca(unordered_map<uint64_t,uint64_t> *, const string &, const string &);
-
 
 int main(int argc, char** argv) {
 
@@ -63,11 +64,11 @@ int main(int argc, char** argv) {
 								usage(argv[0]);
 		}
 	}
-	if(!(conflict=="1" || conflict=="2" || conflict=="lca")) { cerr << "Error: Value of argument -c must be either 1, 2, or lca." <<endl; usage(argv[0]); }
-	if(conflict=="lca" && nodes_filename.length() == 0) { cerr << "Error: LCA mode requires the name of the nodes.dmp file, using the -t option."  << endl; usage(argv[0]); }
-	if(in1_filename.length() == 0) { cerr << "Error: Specify the name of the first input file, using the -i option."  << endl; usage(argv[0]); }
-	if(in2_filename.length() == 0) { cerr << "Error: Specify the name of the second input file, using the -j option."  << endl; usage(argv[0]); }
-	
+	if(!(conflict=="1" || conflict=="2" || conflict=="lca")) { error("Value of argument -c must be either 1, 2, or lca."); usage(argv[0]); }
+	if(conflict=="lca" && nodes_filename.length() == 0) { error("Error: LCA mode requires the name of the nodes.dmp file, using the -t option."); usage(argv[0]); }
+	if(in1_filename.length() == 0) { error("Specify the name of the first input file, using the -i option."); usage(argv[0]); }
+	if(in2_filename.length() == 0) { error("Specify the name of the second input file, using the -j option."); usage(argv[0]); }
+
 	if(nodes_filename.length() > 0) {
 		ifstream nodes_file;
 		nodes_file.open(nodes_filename.c_str());
@@ -244,24 +245,14 @@ int main(int argc, char** argv) {
 	}
 
 	delete nodes;
-	return EXIT_SUCCESS;    
-}
-
-inline bool isalpha(const char & c) {
-	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
-}
-
-string strip(const string & s) {
-		string result;
-		result.reserve(s.length());
-		for(auto it=s.cbegin(); it!=s.cend(); ++it) {
-			if(isalpha(*it))
-				result += *it;
-		}
-		return result;
+	return EXIT_SUCCESS;
 }
 
 void usage(const char * progname) {
+	fprintf(stderr, "Kaiju %s\n",KAIJUVERSION);
+	fprintf(stderr, "Copyright 2015,2016 Peter Menzel, Anders Krogh\n");
+	fprintf(stderr, "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>\n");
+	fprintf(stderr, "\n");
 	fprintf(stderr, "Usage:\n   %s -i in1.tsv -j in2.tsv [-o outfile.tsv] [-c 1|2|lca] [-t nodes.dmp] [-v] [-d]\n", progname);
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Mandatory arguments:\n");

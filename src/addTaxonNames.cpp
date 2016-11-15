@@ -1,4 +1,4 @@
-/* This file is part of Kaiju, Copyright 2015 Peter Menzel and Anders Krogh,
+/* This file is part of Kaiju, Copyright 2015,2016 Peter Menzel and Anders Krogh,
  * Kaiju is licensed under the GPLv3, see the file LICENSE. */
 
 #include <getopt.h>
@@ -17,13 +17,14 @@
 #include <stdexcept>
 #include <deque>
 
-
-void usage(char *progname);
+#include "version.hpp"
+#include "util.hpp"
 
 using namespace std;
 
-int main(int argc, char** argv) {
+void usage(char *progname);
 
+int main(int argc, char** argv) {
 
 	unordered_map<uint64_t,uint64_t> nodes;
 	unordered_map<uint64_t, string> node2name;
@@ -73,10 +74,10 @@ int main(int argc, char** argv) {
 				usage(argv[0]);
 		}
 	}
-	if(names_filename.length() == 0) { cerr << "Error: Please specify the location of the names.dmp file with the -n option."  << endl; usage(argv[0]); }
-	if(nodes_filename.length() == 0) { cerr << "Error: Please specify the location of the nodes.dmp file with the -t option."  << endl; usage(argv[0]); }
-	if(in_filename.length() == 0) { cerr << "Error: Please specify the location of the input file with the -i option."  << endl; usage(argv[0]); }
-	if(ranks.length() > 0 && full_path) { cerr << "Error: Please use either option -r or -p, but not both of them."  << endl; usage(argv[0]); }
+	if(names_filename.length() == 0) { error("Please specify the location of the names.dmp file with the -n option."); usage(argv[0]); }
+	if(nodes_filename.length() == 0) { error("Please specify the location of the nodes.dmp file, using the -t option."); usage(argv[0]); }
+	if(in_filename.length() == 0) { error("Please specify the location of the input file, using the -i option."); usage(argv[0]); }
+	if(ranks.length() > 0 && full_path) { error("Please use either option -r or -p, but not both of them."); usage(argv[0]); }
 
 	// parse ranks into set
 	if(ranks.length() > 0) {
@@ -119,10 +120,10 @@ int main(int argc, char** argv) {
 
 		}
 		catch(const std::invalid_argument& ia) {
-			cerr << "Found bad number in line: " << line << endl; 
+			cerr << "Found bad number in line: " << line << endl;
 		}
 		catch (const std::out_of_range& oor) {
-			cerr << "Found bad number (out of range error) in line: " << line << endl; 
+			cerr << "Found bad number (out of range error) in line: " << line << endl;
 		}
 	}
 	nodes_file.close();
@@ -135,34 +136,34 @@ int main(int argc, char** argv) {
 	while(getline(names_file, line)) {
 		if(line.length() == 0) { continue; }
 		try {
-			if(line.find("scientific name")==string::npos) continue;			
+			if(line.find("scientific name")==string::npos) continue;
 			size_t start = line.find_first_of("0123456789");
 			size_t end = line.find_first_not_of("0123456789",start);
 			uint64_t node = stoul(line.substr(start,end-start));
 			start = line.find_first_not_of("\t|",end);
 			end = line.find_first_of("\t|",start+1);
 			string name = line.substr(start,end-start);
-			node2name.insert(make_pair(node,name)); 
+			node2name.insert(make_pair(node,name));
 		}
 		catch(const std::invalid_argument& ia) {
-			cerr << "Found bad number in line: " << line << endl; 
+			cerr << "Found bad number in line: " << line << endl;
 		}
 		catch (const std::out_of_range& oor) {
-			cerr << "Found bad number (out of range error) in line: " << line << endl; 
+			cerr << "Found bad number (out of range error) in line: " << line << endl;
 		}
 	}
 	names_file.close();
 
 
 	ifstream in_file;
-	in_file.open(in_filename);    
+	in_file.open(in_filename);
 	if(!in_file.is_open()) {  cerr << "Could not open file " << in_filename << endl; exit(EXIT_FAILURE); }
 
 	ostream * out_stream;
 	if(out_filename.length()>0) {
 		if(verbose) cerr << "Output file: " << out_filename << endl;
 		ofstream * output_file = new ofstream();
-		output_file->open(out_filename);    
+		output_file->open(out_filename);
 		if(!output_file->is_open()) {  cerr << "Could not open file " << out_filename << " for writing" << endl; exit(EXIT_FAILURE); }
 		out_stream = output_file;
 	}
@@ -171,15 +172,15 @@ int main(int argc, char** argv) {
 	}
 
 	if(verbose) cerr << "Processing " << in_filename <<"..." << "\n";
-	
-	while(getline(in_file,line)) {                		
-		if(line.length() == 0) { continue; } 
-		if(line[0] != 'C') { 
+
+	while(getline(in_file,line)) {
+		if(line.length() == 0) { continue; }
+		if(line[0] != 'C') {
 			if(!filter_unclassified) {
-				*out_stream << line << "\n";	
+				*out_stream << line << "\n";
 			}
 			continue;
-		} 
+		}
 
 		size_t found = line.find('\t');
 		found = line.find('\t',found+1);
@@ -236,10 +237,10 @@ int main(int argc, char** argv) {
 			}
 		}
 		catch(const std::invalid_argument& ia) {
-			cerr << "Found bad taxon id in line: " << line << endl; 
+			cerr << "Found bad taxon id in line: " << line << endl;
 		}
 		catch (const std::out_of_range& oor) {
-			cerr << "Found bad taxon id (out of range error) in line: " << line << endl; 
+			cerr << "Found bad taxon id (out of range error) in line: " << line << endl;
 		}
 	}  // end while getline
 
@@ -254,8 +255,11 @@ int main(int argc, char** argv) {
 
 }
 
-
-void usage(char *progname) { 
+void usage(char *progname) {
+	fprintf(stderr, "Kaiju %s\n",KAIJUVERSION);
+	fprintf(stderr, "Copyright 2015,2016 Peter Menzel, Anders Krogh\n");
+	fprintf(stderr, "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>\n");
+	fprintf(stderr, "\n");
 	fprintf(stderr, "Usage:\n   %s -t nodes.dmp -n names.dmp -i kaiju.out -o kaiju-names.out\n", progname);
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Mandatory arguments:\n");

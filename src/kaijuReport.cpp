@@ -1,4 +1,4 @@
-/* This file is part of Kaiju, Copyright 2015 Peter Menzel and Anders Krogh,
+/* This file is part of Kaiju, Copyright 2015,2016 Peter Menzel and Anders Krogh,
  * Kaiju is licensed under the GPLv3, see the file LICENSE. */
 
 #include <getopt.h>
@@ -17,6 +17,8 @@
 #include <utility>
 #include <stdexcept>
 
+#include "version.hpp"
+#include "util.hpp"
 
 void usage(char *progname);
 
@@ -246,10 +248,10 @@ int main(int argc, char** argv) {
 				float percent = (float)it.second/(float)totalreads*100;
 				if(percent >= min_percent)
 					sorted_count2ids.insert(std::pair<uint64_t,uint64_t>(count,id));
-				else 
-					below_percent += count; 
+				else
+					below_percent += count;
 			} else {
-				below_reads += count; 
+				below_reads += count;
 			}
 			sum += count;
 		}
@@ -264,15 +266,16 @@ int main(int argc, char** argv) {
 	uint64_t viruses = (node2summarizedhits.count(taxonid_viruses) > 0) ?  node2summarizedhits[taxonid_viruses] : 0;
 
 	above -= viruses;
-				
+
 	for(auto it : sorted_count2ids) {
 			string name;
 			if(node2name.count(it.second)==0) {
-				cerr << "Warning: Taxon ID " << it.second << " in output file is not contained in names file "<< names_filename << ".\n"; 
+				cerr << "Warning: Taxon ID " << it.second << " in output file is not contained in names file "<< names_filename << ".\n";
 				name = "taxonid:"; name += to_string(it.second);
 			}
-			else 
+			else {
 				name = node2name[it.second];
+			}
 		float percent = (float)it.first/(float)totalreads*100;
 		fprintf(report_file,"%9.6f\t%9lu\t%s\n", percent, it.first, name.c_str() );
 	}
@@ -292,11 +295,15 @@ int main(int argc, char** argv) {
 
 	fclose(report_file);
 
-	return EXIT_SUCCESS;    
+	return EXIT_SUCCESS;
 }
 
 
-void usage(char *progname) { 
+void usage(char *progname) {
+	fprintf(stderr, "Kaiju %s\n",KAIJUVERSION);
+	fprintf(stderr, "Copyright 2015,2016 Peter Menzel, Anders Krogh\n");
+	fprintf(stderr, "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>\n");
+	fprintf(stderr, "\n");
 	fprintf(stderr, "Usage:\n   %s -t nodes.dmp -n names.dmp -i kaiju.out -o kaiju.report\n", progname);
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Mandatory arguments:\n");

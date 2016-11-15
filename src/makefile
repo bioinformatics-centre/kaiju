@@ -33,35 +33,36 @@ all: makefile kaiju kaiju2krona mergeOutputs kaijuReport kaijux kaijup convertNR
 bwt/mkbwt:
 	$(MAKE) -C bwt/ $(MAKECMDGOALS)
 
-kaiju: makefile bwt/mkbwt kaiju.o ReadItem.o Config.o ConsumerThread.o $(BLASTOBJS)
-	$(CXX) $(LDFLAGS) -o kaiju kaiju.o ReadItem.o Config.o ConsumerThread.o bwt/bwt.o bwt/compactfmi.o bwt/sequence.o bwt/suffixArray.o $(BLASTOBJS) $(LDLIBS)
+kaiju: makefile bwt/mkbwt kaiju.o ReadItem.o Config.o ConsumerThread.o util.o $(BLASTOBJS)
+	$(CXX) $(LDFLAGS) -o kaiju kaiju.o ReadItem.o Config.o ConsumerThread.o util.o bwt/bwt.o bwt/compactfmi.o bwt/sequence.o bwt/suffixArray.o $(BLASTOBJS) $(LDLIBS)
 
-kaijux: makefile bwt/mkbwt kaijux.o ReadItem.o Config.o ConsumerThread.o ConsumerThreadx.o $(BLASTOBJS)
-	$(CXX) $(LDFLAGS) -o kaijux kaijux.o ReadItem.o Config.o ConsumerThread.o ConsumerThreadx.o bwt/bwt.o bwt/compactfmi.o bwt/sequence.o bwt/suffixArray.o $(BLASTOBJS) $(LDLIBS)
+kaijux: makefile bwt/mkbwt kaijux.o ReadItem.o Config.o ConsumerThread.o ConsumerThreadx.o util.o $(BLASTOBJS)
+	$(CXX) $(LDFLAGS) -o kaijux kaijux.o ReadItem.o Config.o ConsumerThread.o ConsumerThreadx.o util.o bwt/bwt.o bwt/compactfmi.o bwt/sequence.o bwt/suffixArray.o $(BLASTOBJS) $(LDLIBS)
 
-kaijup: makefile bwt/mkbwt kaijup.o ReadItem.o Config.o ConsumerThread.o ConsumerThreadx.o ConsumerThreadp.o $(BLASTOBJS)
-	$(CXX) $(LDFLAGS) -o kaijup kaijup.o ReadItem.o Config.o ConsumerThread.o ConsumerThreadx.o ConsumerThreadp.o bwt/bwt.o bwt/compactfmi.o bwt/sequence.o bwt/suffixArray.o $(BLASTOBJS) $(LDLIBS)
+kaijup: makefile bwt/mkbwt kaijup.o ReadItem.o Config.o ConsumerThread.o ConsumerThreadx.o ConsumerThreadp.o util.o $(BLASTOBJS)
+	$(CXX) $(LDFLAGS) -o kaijup kaijup.o ReadItem.o Config.o ConsumerThread.o ConsumerThreadx.o ConsumerThreadp.o util.o bwt/bwt.o bwt/compactfmi.o bwt/sequence.o bwt/suffixArray.o $(BLASTOBJS) $(LDLIBS)
 
-kaiju2krona: makefile kaiju2krona.o
-	$(CXX) $(LDFLAGS) -o kaiju2krona kaiju2krona.o
+kaiju2krona: makefile kaiju2krona.o util.o
+	$(CXX) $(LDFLAGS) -o kaiju2krona kaiju2krona.o util.o
 
-mergeOutputs: makefile mergeOutputs.o
-	$(CXX) $(LDFLAGS) -o mergeOutputs mergeOutputs.o
+mergeOutputs: makefile mergeOutputs.o util.o
+	$(CXX) $(LDFLAGS) -o mergeOutputs mergeOutputs.o util.o
 
-kaijuReport: makefile kaijuReport.o
-	$(CXX) $(LDFLAGS) -o kaijuReport kaijuReport.o
+kaijuReport: makefile kaijuReport.o util.o
+	$(CXX) $(LDFLAGS) -o kaijuReport kaijuReport.o util.o
 
-addTaxonNames: makefile addTaxonNames.o
-	$(CXX) $(LDFLAGS) -o addTaxonNames addTaxonNames.o
+addTaxonNames: makefile addTaxonNames.o util.o
+	$(CXX) $(LDFLAGS) -o addTaxonNames addTaxonNames.o util.o
 
 convertNR: makefile Config.o convertNR.o bwt/mkbwt $(BLASTOBJS)
-	$(CXX) $(LDFLAGS) -o convertNR convertNR.o Config.o ./bwt/sequence.o $(BLASTOBJS)
+	$(CXX) $(LDFLAGS) -o convertNR convertNR.o Config.o util.o ./bwt/sequence.o $(BLASTOBJS)
 
 
 %.o : %.c
 	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
-%.o : %.cpp
+%.o : %.cpp version.hpp
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
+
 
 clean:
 	rm -f -v bwt/mkbwt bwt/mkfmi kaiju kaijux kaijup kaiju2krona mergeOutputs kaijuReport convertNR addTaxonNames ../bin/*

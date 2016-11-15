@@ -1,4 +1,4 @@
-/* This file is part of Kaiju, Copyright 2015 Peter Menzel and Anders Krogh,
+/* This file is part of Kaiju, Copyright 2015,2016 Peter Menzel and Anders Krogh,
  * Kaiju is licensed under the GPLv3, see the file LICENSE. */
 
 #include <stdexcept>
@@ -12,6 +12,8 @@
 #include <iterator>
 
 #include "Config.hpp"
+#include "version.hpp"
+#include "util.hpp"
 
 void usage(char *progname);
 bool has_parent(uint64_t id, uint64_t parent, std::unordered_map<uint64_t,uint64_t> & nodes);
@@ -109,11 +111,11 @@ int main(int argc, char **argv) {
 		while(getline(list_file, line)) {
 			if(line.length() == 0) { continue; }
 			size_t start = line.find_first_of("0123456789");
-			if(start == string::npos) {
+			if(start == std::string::npos) {
 				continue;
 			}
 			size_t end = line.find_first_not_of("0123456789",start+1);
-			if(end == string::npos) {
+			if(end == std::string::npos) {
 				end = start + line.length()-start;
 			}
 			try {
@@ -190,7 +192,7 @@ int main(int argc, char **argv) {
 			if(debug) cerr << "processing line " << line << endl;
 			skip = true;
 			size_t start = 1, end = 0;
-			while((end = line.find(' ',start)) != string::npos) {
+			while((end = line.find(' ',start)) != std::string::npos) {
 				// acc is between start and end
 				std::string acc = line.substr(start, end - start);
 				if(acc2taxid.count(acc)>0 && acc2taxid.at(acc)>0 && nodes.count(acc2taxid.at(acc))>0) {
@@ -199,7 +201,7 @@ int main(int argc, char **argv) {
 				}
 				else if(verbose) { cerr << "Accession " << acc <<" was either not found in " << acc_taxid_filename << " or in " << nodes_filename << "\n"; }
 				//look for next ID
-				if((start = line.find("\x01",end+1)) == string::npos) { // no more entries
+				if((start = line.find("\x01",end+1)) == std::string::npos) { // no more entries
 					break;
 				}
 				else {
@@ -235,7 +237,7 @@ int main(int argc, char **argv) {
 		else {
 			if(!skip) {
 				size_t p = 0;
-				while((p = line.find_first_of("ARNDCQEGHILKMFPSTWYV",p)) != string::npos) {
+				while((p = line.find_first_of("ARNDCQEGHILKMFPSTWYV",p)) != std::string::npos) {
 					output << line[p];
 					p++;
 				}
@@ -269,6 +271,10 @@ bool has_parent(uint64_t id, uint64_t parent, std::unordered_map<uint64_t,uint64
 
 
 void usage(char *progname) {
+	fprintf(stderr, "Kaiju %s\n",KAIJUVERSION);
+	fprintf(stderr, "Copyright 2015,2016 Peter Menzel, Anders Krogh\n");
+	fprintf(stderr, "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>\n");
+	fprintf(stderr, "\n");
 	fprintf(stderr, "Usage:\n   %s -t nodes.dmp -g gi_taxid_prot.dmp -i nr\n", progname);
 	fprintf(stderr, "Mandatory arguments:\n");
 	fprintf(stderr, "   -t FILENAME   Name of nodes.dmp file.\n");

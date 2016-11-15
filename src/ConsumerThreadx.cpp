@@ -1,4 +1,4 @@
-/* This file is part of Kaiju, Copyright 2015 Peter Menzel and Anders Krogh,
+/* This file is part of Kaiju, Copyright 2015,2016 Peter Menzel and Anders Krogh,
  * Kaiju is licensed under the GPLv3, see the file LICENSE. */
 
 #include "ConsumerThreadx.hpp"
@@ -8,12 +8,12 @@
 void ConsumerThreadx::classify_greedyblosum() {
 
 		best_matches_SI.clear();
-		best_matches.clear(); 
+		best_matches.clear();
 		best_match_score = 0;
 
 		while(1) {
 			Fragment * t = getNextFragment(best_match_score);
-			if(!t) break; 
+			if(!t) break;
 			const string fragment = t->seq;
 			const size_t length = fragment.length();
 			const unsigned int num_mm = t->num_mm;
@@ -23,16 +23,15 @@ void ConsumerThreadx::classify_greedyblosum() {
 			std::strcpy(seq, fragment.c_str());
 
 			translate2numbers((uchar *)seq, (unsigned int)length, config->astruct);
-			
+
 			SI * si = NULL;
 			if(num_mm > 0) {
 				if(num_mm == config->mismatches) { //after last mm has been done, we need to have at least reached the min_length
 					si = maxMatches_withStart(config->fmi, seq, (unsigned int)length, config->min_fragment_length, 1,t->si0,t->si1,t->matchlen);
 				}
-				else { 
+				else {
 					si = maxMatches_withStart(config->fmi, seq, (unsigned int)length, t->matchlen, 1,t->si0,t->si1,t->matchlen);
 				}
-			 	
 			}
 			else {
 				si = maxMatches(config->fmi, seq, (unsigned int)length, config->seed_length, 0); //initial matches
@@ -45,8 +44,8 @@ void ConsumerThreadx::classify_greedyblosum() {
 				continue; // continue with the next fragment
 			}
 			if(config->debug) cerr << "Longest match has length " << (unsigned int)si->ql <<  "\n";
-			
-			if(config->mismatches > 0 && num_mm < config->mismatches) {  
+
+			if(config->mismatches > 0 && num_mm < config->mismatches) {
 				SI * si_it = si;
 				while(si_it) {
 					unsigned int match_right_end = si_it->qi + si_it->ql - 1;
@@ -92,9 +91,9 @@ void ConsumerThreadx::classify_greedyblosum() {
 
 		stringstream ss;
 		ss << best_match_score << "\t" ;
-		for(auto it : match_ids) ss << it << ","; 
+		for(auto it : match_ids) ss << it << ",";
 		ss  << "\t";
-		for(auto it : best_matches) ss << it << ","; 
+		for(auto it : best_matches) ss << it << ",";
 		extraoutput = ss.str();
 
 }
@@ -103,11 +102,11 @@ void ConsumerThreadx::classify_length() {
 
 		unsigned int longest_match_length = 0;
 		longest_matches_SI.clear();
-		longest_fragments.clear(); 
+		longest_fragments.clear();
 
 		while(1) {
 			Fragment * t = getNextFragment(longest_match_length);
-			if(!t) break;// searched all fragments that are longer than best match length 
+			if(!t) break;// searched all fragments that are longer than best match length
 			const string fragment = t->seq;
 			const unsigned int length = (unsigned int)fragment.length();
 
@@ -125,24 +124,24 @@ void ConsumerThreadx::classify_length() {
 				delete t;
 				continue; // continue with the next fragment
 			}
-			
+
 
 			// just get length here and save si when it is longest
 			if(config->debug) cerr << "Longest match is length " << (unsigned int)si->ql << "\n";
 			if((unsigned int)si->ql > longest_match_length) {
-				for(auto itm : longest_matches_SI) 
+				for(auto itm : longest_matches_SI)
 					recursive_free_SI(itm);
 				longest_matches_SI.clear();
 				longest_matches_SI.push_back(si);
 				longest_match_length = (unsigned int)si->ql;
 				if(config->verbose) {
-					longest_fragments.clear(); 
+					longest_fragments.clear();
 					longest_fragments.push_back(fragment.substr(si->qi,si->ql));
 				}
 			}
 			else if((unsigned int)si->ql == longest_match_length) {
 				longest_matches_SI.push_back(si);
-				if(config->verbose) 
+				if(config->verbose)
 					longest_fragments.push_back(fragment.substr(si->qi,si->ql));
 			}
 			else {
@@ -167,35 +166,35 @@ void ConsumerThreadx::classify_length() {
 
 		stringstream ss;
 		ss << longest_match_length << "\t";
-		for(auto it : match_ids) ss << it << ","; 
+		for(auto it : match_ids) ss << it << ",";
 		ss  << "\t";
-		for(auto it : longest_fragments) ss << it << ","; 
+		for(auto it : longest_fragments) ss << it << ",";
 		extraoutput = ss.str();
 
 }
 
-void ConsumerThreadx::doWork() {        
+void ConsumerThreadx::doWork() {
 	ReadItem * item = NULL;
-	while(myWorkQueue->pop(&item)) {    	
+	while(myWorkQueue->pop(&item)) {
 		assert(item != NULL);
 		read_count++;
 
-		if((!item->paired && item->sequence1.length() < config->min_fragment_length*3) || 
+		if((!item->paired && item->sequence1.length() < config->min_fragment_length*3) ||
 			(item->paired && item->sequence1.length() < config->min_fragment_length*3 && item->sequence2.length() < config->min_fragment_length*3)) {
 			output << "U\t" << item->name << "\t0\n";
 			delete item;
 			continue;
-		}		
+		}
 
 		extraoutput = "";
 
-		if(config->debug) cerr << "Getting fragments for read: "<< item->sequence1 << "\n"; 
+		if(config->debug) cerr << "Getting fragments for read: "<< item->sequence1 << "\n";
 		getAllFragmentsBits(item->sequence1);
 		if(item->paired) {
 			if(config->debug) cerr << "Getting fragments for 2nd read: " << item->sequence2 << "\n";
 			getAllFragmentsBits(item->sequence2);
 		}
-		if(config->debug) cerr << fragments.size()  << " fragments found in the read."<< "\n"; 
+		if(config->debug) cerr << fragments.size()  << " fragments found in the read."<< "\n";
 
 		if(config->mode == MEM) {
 			classify_length();
@@ -215,7 +214,7 @@ void ConsumerThreadx::doWork() {
 
 		}
 		else  {
-			output << "U\t" << item->name << "\n";       
+			output << "U\t" << item->name << "\n";
 			if(config->debug) {
 				cerr << "U\t" << item->name << "\n";
 			}
