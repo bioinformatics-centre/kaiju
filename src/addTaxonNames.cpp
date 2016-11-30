@@ -13,6 +13,7 @@
 #include <set>
 #include <algorithm>
 #include <string>
+#include <list>
 #include <utility>
 #include <stdexcept>
 #include <deque>
@@ -20,21 +21,19 @@
 #include "version.hpp"
 #include "util.hpp"
 
-using namespace std;
-
 void usage(char *progname);
 
 int main(int argc, char** argv) {
 
-	unordered_map<uint64_t,uint64_t> nodes;
-	unordered_map<uint64_t, string> node2name;
-	unordered_map<uint64_t, string> node2rank;
-	unordered_map<uint64_t, string> node2path;
+	std::unordered_map<uint64_t,uint64_t> nodes;
+	std::unordered_map<uint64_t, std::string> node2name;
+	std::unordered_map<uint64_t, std::string> node2rank;
+	std::unordered_map<uint64_t, std::string> node2path;
 
-	string nodes_filename = "";
-	string names_filename = "";
-	string in_filename = "";
-	string out_filename;
+	std::string nodes_filename = "";
+	std::string names_filename = "";
+	std::string in_filename = "";
+	std::string out_filename;
 
 	bool filter_unclassified = false;
 
@@ -42,8 +41,9 @@ int main(int argc, char** argv) {
 
 	bool full_path = false;
 	bool specified_ranks = false;
-	string ranks;
-	set<string> ranks_set;
+	std::string ranks_arg;
+	std::list<std::string> ranks_list;
+	std::set<std::string> ranks_set;
 
 
 	// --------------------- START ------------------------------------------------------------------
@@ -69,7 +69,7 @@ int main(int argc, char** argv) {
 				in_filename = optarg; break;
 			case 'r': {
 				specified_ranks = true;
-				ranks = optarg; break; }
+				ranks_arg = optarg; break; }
 			default:
 				usage(argv[0]);
 		}
@@ -77,101 +77,103 @@ int main(int argc, char** argv) {
 	if(names_filename.length() == 0) { error("Please specify the location of the names.dmp file with the -n option."); usage(argv[0]); }
 	if(nodes_filename.length() == 0) { error("Please specify the location of the nodes.dmp file, using the -t option."); usage(argv[0]); }
 	if(in_filename.length() == 0) { error("Please specify the location of the input file, using the -i option."); usage(argv[0]); }
-	if(ranks.length() > 0 && full_path) { error("Please use either option -r or -p, but not both of them."); usage(argv[0]); }
+	if(ranks_arg.length() > 0 && full_path) { error("Please use either option -r or -p, but not both of them."); usage(argv[0]); }
 
-	// parse ranks into set
-	if(ranks.length() > 0) {
+	// parse ranks into list
+	if(ranks_arg.length() > 0) {
 		size_t begin = 0;
 		size_t pos = -1;
-		string rankname;
-		while((pos = ranks.find(",",pos+1)) != string::npos) {
-			rankname = ranks.substr(begin,(pos - begin));
-			ranks_set.insert(rankname);
+		std::string rankname;
+		while((pos = ranks_arg.find(",",pos+1)) != std::string::npos) {
+			rankname = ranks_arg.substr(begin,(pos - begin));
+			ranks_list.emplace_back(rankname);
+			ranks_set.emplace(rankname);
 			begin = pos+1;
 		}
-		rankname = ranks.substr(begin);
-		ranks_set.insert(rankname);
+		rankname = ranks_arg.substr(begin);
+		ranks_set.emplace(rankname);
+		ranks_list.push_back(rankname);
 	}
 
-	ifstream nodes_file;
+	std::ifstream nodes_file;
 	nodes_file.open(nodes_filename);
-	if(!nodes_file.is_open()) { cerr << "Error: Could not open file " << nodes_filename << endl; usage(argv[0]); }
-	if(verbose) cerr << "Reading taxonomic tree from file " << nodes_filename << endl;
-	string line;
+	if(!nodes_file.is_open()) { std::cerr << "Error: Could not open file " << nodes_filename << std::endl; usage(argv[0]); }
+	if(verbose) std::cerr << "Reading taxonomic tree from file " << nodes_filename << std::endl;
+	std::string line;
 	while(getline(nodes_file, line)) {
 		if(line.length() == 0) { continue; }
 		try {
 			size_t end = line.find_first_not_of("0123456789");
-			//cerr << "end=" << end << "\t";
+			//std::cerr << "end=" << end << "\t";
 			uint64_t node = stoul(line.substr(0,end));
 			size_t start = line.find_first_of("0123456789",end);
-			//cerr << "start=" << start <<"\t";
+			//std::cerr << "start=" << start <<"\t";
 			end = line.find_first_not_of("0123456789",start+1);
-			//cerr << "end=" << end <<"\t";
+			//std::cerr << "end=" << end <<"\t";
 			uint64_t parent = stoul(line.substr(start,end-start));
 			start = line.find_first_of("abcdefghijklmnopqrstuvwxyz",end);
-			//cerr << "start=" << start <<","<< line[start] << "\t";
+			//std::cerr << "start=" << start <<","<< line[start] << "\t";
 			end = line.find_first_not_of("abcdefghijklmnopqrstuvwxyz ",start);
-			//cerr << "end=" << end << "\t";
-			string rank = line.substr(start,end-start);
-			nodes.insert(make_pair(node,parent));
-			node2rank.insert(make_pair(node,rank));
-			//cerr << node << "\t" << parent << "\t" <<rank << "\n";
+			//std::cerr << "end=" << end << "\t";
+			std::string rank = line.substr(start,end-start);
+			nodes.emplace(node,parent);
+			node2rank.emplace(node,rank);
+			//std::cerr << node << "\t" << parent << "\t" <<rank << "\n";
 
 		}
 		catch(const std::invalid_argument& ia) {
-			cerr << "Found bad number in line: " << line << endl;
+			std::cerr << "Found bad number in line: " << line << std::endl;
 		}
 		catch (const std::out_of_range& oor) {
-			cerr << "Found bad number (out of range error) in line: " << line << endl;
+			std::cerr << "Found bad number (out of range error) in line: " << line << std::endl;
 		}
 	}
 	nodes_file.close();
 
 
-	ifstream names_file;
+	std::ifstream names_file;
 	names_file.open(names_filename);
-	if(!names_file.is_open()) { cerr << "Error: Could not open file " << names_filename << endl; usage(argv[0]); }
-	if(verbose) cerr << "Reading taxon names from file " << names_filename << endl;
+	if(!names_file.is_open()) { std::cerr << "Error: Could not open file " << names_filename << std::endl; usage(argv[0]); }
+	if(verbose) std::cerr << "Reading taxon names from file " << names_filename << std::endl;
 	while(getline(names_file, line)) {
 		if(line.length() == 0) { continue; }
 		try {
-			if(line.find("scientific name")==string::npos) continue;
+			if(line.find("scientific name")==std::string::npos) continue;
 			size_t start = line.find_first_of("0123456789");
 			size_t end = line.find_first_not_of("0123456789",start);
 			uint64_t node = stoul(line.substr(start,end-start));
 			start = line.find_first_not_of("\t|",end);
 			end = line.find_first_of("\t|",start+1);
-			string name = line.substr(start,end-start);
+			std::string name = line.substr(start,end-start);
 			node2name.insert(make_pair(node,name));
 		}
 		catch(const std::invalid_argument& ia) {
-			cerr << "Found bad number in line: " << line << endl;
+			std::cerr << "Found bad number in line: " << line << std::endl;
 		}
 		catch (const std::out_of_range& oor) {
-			cerr << "Found bad number (out of range error) in line: " << line << endl;
+			std::cerr << "Found bad number (out of range error) in line: " << line << std::endl;
 		}
 	}
 	names_file.close();
 
 
-	ifstream in_file;
+	std::ifstream in_file;
 	in_file.open(in_filename);
-	if(!in_file.is_open()) {  cerr << "Could not open file " << in_filename << endl; exit(EXIT_FAILURE); }
+	if(!in_file.is_open()) {  std::cerr << "Could not open file " << in_filename << std::endl; exit(EXIT_FAILURE); }
 
-	ostream * out_stream;
+	std::ostream * out_stream;
 	if(out_filename.length()>0) {
-		if(verbose) cerr << "Output file: " << out_filename << endl;
-		ofstream * output_file = new ofstream();
+		if(verbose) std::cerr << "Output file: " << out_filename << std::endl;
+		std::ofstream * output_file = new std::ofstream();
 		output_file->open(out_filename);
-		if(!output_file->is_open()) {  cerr << "Could not open file " << out_filename << " for writing" << endl; exit(EXIT_FAILURE); }
+		if(!output_file->is_open()) {  std::cerr << "Could not open file " << out_filename << " for writing" << std::endl; exit(EXIT_FAILURE); }
 		out_stream = output_file;
 	}
 	else {
-		out_stream = &cout;
+		out_stream = &std::cout;
 	}
 
-	if(verbose) cerr << "Processing " << in_filename <<"..." << "\n";
+	if(verbose) std::cerr << "Processing " << in_filename <<"..." << "\n";
 
 	while(getline(in_file,line)) {
 		if(line.length() == 0) { continue; }
@@ -188,11 +190,11 @@ int main(int argc, char** argv) {
 		try {
 			uint64_t taxonid = stoul(line.substr(found,end-found));
 			if(nodes.count(taxonid)==0) {
-				cerr << "Warning: Taxon ID " << taxonid << " in output file is not contained in taxonomic tree file "<< nodes_filename << ".\n"; 
+				std::cerr << "Warning: Taxon ID " << taxonid << " in output file is not contained in taxonomic tree file "<< nodes_filename << ".\n";
 				continue;
 			}
 			if(node2name.count(taxonid)==0) {
-				cerr << "Warning: Taxon ID " << taxonid << " in output file is not found in file "<< names_filename << ".\n";
+				std::cerr << "Warning: Taxon ID " << taxonid << " in output file is not found in file "<< names_filename << ".\n";
 				continue;
 			}
 			if(full_path || specified_ranks) {
@@ -200,36 +202,65 @@ int main(int argc, char** argv) {
 					*out_stream << line << '\t' << node2path.at(taxonid) << "\n";
 					continue;
 				}
-				deque<string> lineage;
+				std::deque<std::string> lineage; // for full_path
+				std::map<std::string,std::string> curr_rank_values;
+				if(specified_ranks) { //set the values for all specified ranks to NA, which will be overwritten by the actual values if they are found
+					for(auto it : ranks_list) {
+						curr_rank_values.emplace(it,"NA");
+					}
+				}
+				//  go from leaf to root starting at taxonid and gather values for ranks
 				uint64_t id = taxonid;
 				while(nodes.count(id)>0 && id != nodes.at(id)) {
-					string name;
+					std::string taxon_name;
 					if(specified_ranks) {
 						if(node2rank.count(id)==0 || node2rank.at(id)=="no rank") {  // no rank name
 							id = nodes.at(id);
 							continue;
 						}
-						if(ranks_set.count(node2rank.at(id))==0) { // rank name is not in specified list of ranks
+						std::string rank_name = node2rank.at(id);
+						if(ranks_set.count(rank_name)==0) { // rank name is not in specified list of ranks
 							id = nodes.at(id);
 							continue;
 						}
+						if(node2name.count(id)==0) {
+							std::cerr << "Warning: Taxon ID " << id << " is not found in file "<< names_filename << ".\n";
+							taxon_name = "no name";
+						}
+						else {
+							taxon_name = node2name.at(id);
+						}
+						curr_rank_values[rank_name] = taxon_name;
 					}
-					if(node2name.count(nodes.at(id))==0) {
-						cerr << "Warning: Taxon ID " << nodes.at(id) << " is not found in file "<< names_filename << ".\n";
-						name = "n/a";
-					}
-					else {
-						name = node2name.at(id);
+					else { //full path
+						if(node2name.count(id)==0) {
+							std::cerr << "Warning: Taxon ID " << id << " is not found in file "<< names_filename << ".\n";
+							taxon_name = "no name";
+						}
+						else {
+							taxon_name = node2name.at(id);
+						}
+						lineage.push_front(taxon_name);
 					}
 					id = nodes.at(id);
-					lineage.push_front(name);
+				} // end while
+
+				// assemble lineage into one string
+				std::string lineage_text;
+				if(specified_ranks) {
+					for(auto it : ranks_list) {
+						lineage_text += curr_rank_values[it];
+						lineage_text += "; ";
+					}
 				}
-				string lineage_text;
-				for(auto  itl : lineage) {
-					lineage_text += itl;
-					lineage_text += "; ";
+				else { // full path
+					for(auto  itl : lineage) {
+						lineage_text += itl;
+						lineage_text += "; ";
+					}
 				}
-				node2path.insert(make_pair(taxonid,lineage_text));
+				// now lineage_text contains the final lineage for the taxon
+				node2path.emplace(taxonid,lineage_text);
 				*out_stream << line << '\t' << lineage_text << "\n";
 			}
 			else {
@@ -237,10 +268,10 @@ int main(int argc, char** argv) {
 			}
 		}
 		catch(const std::invalid_argument& ia) {
-			cerr << "Found bad taxon id in line: " << line << endl;
+			std::cerr << "Found bad taxon id in line: " << line << std::endl;
 		}
 		catch (const std::out_of_range& oor) {
-			cerr << "Found bad taxon id (out of range error) in line: " << line << endl;
+			std::cerr << "Found bad taxon id (out of range error) in line: " << line << std::endl;
 		}
 	}  // end while getline
 
@@ -249,9 +280,11 @@ int main(int argc, char** argv) {
 	}
 	out_stream->flush();
 	if(out_filename.length()>0) {
-		((ofstream*)out_stream)->close();
-		delete ((ofstream*)out_stream);
+		((std::ofstream*)out_stream)->close();
+		delete ((std::ofstream*)out_stream);
 	}
+
+	return 0;
 
 }
 
@@ -271,7 +304,8 @@ void usage(char *progname) {
 	fprintf(stderr, "Optional arguments:\n");
 	fprintf(stderr, "   -u            Unclassified reads are not contained in the output.\n");
 	fprintf(stderr, "   -p            Print full taxon path.\n");
-	fprintf(stderr, "   -r            Print taxon path with specified ranks, e.g. -r phylum,genus\n");
+	fprintf(stderr, "   -r            Print taxon path containing only ranks specified by a comma-separated list,\n");
+	fprintf(stderr, "                 for example: superkingdom,phylum,order,class,family,genus,species\n");
 	fprintf(stderr, "   -v            Enable verbose output.\n");
 	fprintf(stderr, "\n");
 	exit(EXIT_FAILURE);
