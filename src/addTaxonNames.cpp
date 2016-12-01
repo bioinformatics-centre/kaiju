@@ -79,7 +79,7 @@ int main(int argc, char** argv) {
 	if(in_filename.length() == 0) { error("Please specify the location of the input file, using the -i option."); usage(argv[0]); }
 	if(ranks_arg.length() > 0 && full_path) { error("Please use either option -r or -p, but not both of them."); usage(argv[0]); }
 
-	// parse ranks into list
+	/* parse user-supplied rank list into list and set */
 	if(ranks_arg.length() > 0) {
 		size_t begin = 0;
 		size_t pos = -1;
@@ -95,67 +95,21 @@ int main(int argc, char** argv) {
 		ranks_list.push_back(rankname);
 	}
 
+	/* read nodes.dmp */
 	std::ifstream nodes_file;
 	nodes_file.open(nodes_filename);
 	if(!nodes_file.is_open()) { std::cerr << "Error: Could not open file " << nodes_filename << std::endl; usage(argv[0]); }
 	if(verbose) std::cerr << "Reading taxonomic tree from file " << nodes_filename << std::endl;
-	std::string line;
-	while(getline(nodes_file, line)) {
-		if(line.length() == 0) { continue; }
-		try {
-			size_t end = line.find_first_not_of("0123456789");
-			//std::cerr << "end=" << end << "\t";
-			uint64_t node = stoul(line.substr(0,end));
-			size_t start = line.find_first_of("0123456789",end);
-			//std::cerr << "start=" << start <<"\t";
-			end = line.find_first_not_of("0123456789",start+1);
-			//std::cerr << "end=" << end <<"\t";
-			uint64_t parent = stoul(line.substr(start,end-start));
-			start = line.find_first_of("abcdefghijklmnopqrstuvwxyz",end);
-			//std::cerr << "start=" << start <<","<< line[start] << "\t";
-			end = line.find_first_not_of("abcdefghijklmnopqrstuvwxyz ",start);
-			//std::cerr << "end=" << end << "\t";
-			std::string rank = line.substr(start,end-start);
-			nodes.emplace(node,parent);
-			node2rank.emplace(node,rank);
-			//std::cerr << node << "\t" << parent << "\t" <<rank << "\n";
-
-		}
-		catch(const std::invalid_argument& ia) {
-			std::cerr << "Found bad number in line: " << line << std::endl;
-		}
-		catch (const std::out_of_range& oor) {
-			std::cerr << "Found bad number (out of range error) in line: " << line << std::endl;
-		}
-	}
+	parseNodesDmpWithRank(nodes,node2rank,nodes_file);
 	nodes_file.close();
 
-
+	/* read names.dmp */
 	std::ifstream names_file;
 	names_file.open(names_filename);
 	if(!names_file.is_open()) { std::cerr << "Error: Could not open file " << names_filename << std::endl; usage(argv[0]); }
 	if(verbose) std::cerr << "Reading taxon names from file " << names_filename << std::endl;
-	while(getline(names_file, line)) {
-		if(line.length() == 0) { continue; }
-		try {
-			if(line.find("scientific name")==std::string::npos) continue;
-			size_t start = line.find_first_of("0123456789");
-			size_t end = line.find_first_not_of("0123456789",start);
-			uint64_t node = stoul(line.substr(start,end-start));
-			start = line.find_first_not_of("\t|",end);
-			end = line.find_first_of("\t|",start+1);
-			std::string name = line.substr(start,end-start);
-			node2name.insert(make_pair(node,name));
-		}
-		catch(const std::invalid_argument& ia) {
-			std::cerr << "Found bad number in line: " << line << std::endl;
-		}
-		catch (const std::out_of_range& oor) {
-			std::cerr << "Found bad number (out of range error) in line: " << line << std::endl;
-		}
-	}
+	parseNamesDmp(node2name,names_file);
 	names_file.close();
-
 
 	std::ifstream in_file;
 	in_file.open(in_filename);
@@ -175,6 +129,7 @@ int main(int argc, char** argv) {
 
 	if(verbose) std::cerr << "Processing " << in_filename <<"..." << "\n";
 
+	std::string line;
 	while(getline(in_file,line)) {
 		if(line.length() == 0) { continue; }
 		if(line[0] != 'C') {

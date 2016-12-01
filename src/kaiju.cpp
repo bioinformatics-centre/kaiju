@@ -211,31 +211,12 @@ int main(int argc, char** argv) {
 
 	if(verbose) cerr << getCurrentTime() << " Reading database" << endl;
 
-	{
 	ifstream nodes_file;
 	nodes_file.open(nodes_filename.c_str());
 	if(!nodes_file.is_open()) { cerr << "Error: Could not open file " << nodes_filename << endl; usage(argv[0]); }
 	if(verbose) cerr << " Reading taxonomic tree from file " << nodes_filename << endl;
-	string line;
-	while(getline(nodes_file, line)) {
-		if(line.length() == 0) { continue; }
-		try {
-			size_t end = line.find_first_not_of("0123456789");
-			uint64_t node = stoul(line.substr(0,end));
-			size_t start = line.find_first_of("0123456789",end);
-			end = line.find_first_not_of("0123456789",start+1);
-			uint64_t parent = stoul(line.substr(start,end-start));
-			nodes->insert(make_pair(node,parent));  //maybe the nodes->at(node) = parent;  would be faster?!
-		}
-		catch(const std::invalid_argument& ia) {
-			cerr << "Found bad number in line: " << line << endl;
-		}
-		catch (const std::out_of_range& oor) {
-			cerr << "Found bad number (out of range error) in line: " << line << endl;
-		}
-	}
+	parseNodesDmp(*nodes,nodes_file);
 	nodes_file.close();
-	}
 
 	{
 	if(verbose) cerr << " Reading index from file " << fmi_filename << endl;

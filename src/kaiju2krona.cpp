@@ -8,7 +8,6 @@
 #include <iostream>
 #include <fstream>
 #include <unordered_map>
-#include <map>
 #include <string>
 #include <vector>
 #include <stdexcept>
@@ -16,20 +15,18 @@
 #include "version.hpp"
 #include "util.hpp"
 
-using namespace std;
-
 void usage(char *progname);
 
 int main(int argc, char** argv) {
 
 
-	unordered_map<uint64_t,uint64_t> nodes;
-	unordered_map<uint64_t, string> node2name;
+	std::unordered_map<uint64_t,uint64_t> nodes;
+	std::unordered_map<uint64_t, std::string> node2name;
 
-	string nodes_filename = "";
-	string names_filename = "";
-	string in1_filename = "";
-	string out_filename;
+	std::string nodes_filename = "";
+	std::string names_filename = "";
+	std::string in1_filename = "";
+	std::string out_filename;
 
 	bool verbose = false;
 	bool count_unclassified = false;
@@ -54,7 +51,7 @@ int main(int argc, char** argv) {
 			case 'i':
 				in1_filename = optarg; break;
 			default:
-								usage(argv[0]);
+				usage(argv[0]);
 		}
 	}
 
@@ -63,66 +60,30 @@ int main(int argc, char** argv) {
 	if(nodes_filename.length() == 0) { error("Please specify the location of the nodes.dmp file, using the -t option."); usage(argv[0]); }
 	if(in1_filename.length() == 0) { error("Please specify the location of the input file, using the -i option."); usage(argv[0]); }
 
-	ifstream nodes_file;
+	std::ifstream nodes_file;
 	nodes_file.open(nodes_filename);
-	if(!nodes_file.is_open()) { cerr << "Error: Could not open file " << nodes_filename << endl; usage(argv[0]); }
-	if(verbose) cerr << "Reading taxonomic tree from file " << nodes_filename << endl;
-	string line;
-	while(getline(nodes_file, line)) {
-		if(line.length() == 0) { continue; }
-		try {
-			size_t end = line.find_first_not_of("0123456789");
-			uint64_t node = stoul(line.substr(0,end));
-			size_t start = line.find_first_of("0123456789",end);
-			end = line.find_first_not_of("0123456789",start+1);
-			uint64_t parent = stoul(line.substr(start,end-start));
-			nodes.insert(make_pair(node,parent));
-		}
-		catch(const std::invalid_argument& ia) {
-			cerr << "Found bad number in line: " << line << endl;
-		}
-		catch (const std::out_of_range& oor) {
-			cerr << "Found bad number (out of range error) in line: " << line << endl;
-		}
-	}
+	if(!nodes_file.is_open()) { std::cerr << "Error: Could not open file " << nodes_filename << std::endl; usage(argv[0]); }
+	if(verbose) std::cerr << "Reading taxonomic tree from file " << nodes_filename << std::endl;
+	parseNodesDmp(nodes,nodes_file);
 	nodes_file.close();
 
-
-	ifstream names_file;
+	std::ifstream names_file;
 	names_file.open(names_filename);
-	if(!names_file.is_open()) { cerr << "Error: Could not open file " << names_filename << endl; usage(argv[0]); }
-	if(verbose) cerr << "Reading taxon names from file " << names_filename << endl;
-	while(getline(names_file, line)) {
-		if(line.length() == 0) { continue; }
-		try {
-			if(line.find("scientific name")==string::npos) continue;
-			size_t start = line.find_first_of("0123456789");
-			size_t end = line.find_first_not_of("0123456789",start);
-			uint64_t node = stoul(line.substr(start,end-start));
-			start = line.find_first_not_of("\t|",end);
-			end = line.find_first_of("\t|",start+1);
-			string name = line.substr(start,end-start);
-			node2name.insert(make_pair(node,name));
-		}
-		catch(const std::invalid_argument& ia) {
-			cerr << "Found bad number in line: " << line << endl;
-		}
-		catch (const std::out_of_range& oor) {
-			cerr << "Found bad number (out of range error) in line: " << line << endl;
-		}
-	}
+	if(!names_file.is_open()) { std::cerr << "Error: Could not open file " << names_filename << std::endl; usage(argv[0]); }
+	if(verbose) std::cerr << "Reading taxon names from file " << names_filename << std::endl;
+	parseNamesDmp(node2name,names_file);
 	names_file.close();
 
-	if(verbose) cerr << "Processing " << in1_filename <<"..." << "\n";
+	if(verbose) std::cerr << "Processing " << in1_filename <<"..." << "\n";
 
-	ifstream in1_file;
+	std::ifstream in1_file;
 	in1_file.open(in1_filename);
+	if(!in1_file.is_open()) {  std::cerr << "Could not open file " << in1_filename << std::endl; exit(EXIT_FAILURE); }
 
-	if(!in1_file.is_open()) {  cerr << "Could not open file " << in1_filename << endl; exit(EXIT_FAILURE); }
-
-	map<uint64_t, uint64_t> node2hitcount;
+	std::unordered_map<uint64_t, uint64_t> node2hitcount;
 	long num_unclassified = 0;
 
+	std::string line;
 	while(getline(in1_file,line)) {
 		if(line.length() == 0) { continue; }
 		if(line[0] != 'C') {
@@ -141,10 +102,10 @@ int main(int argc, char** argv) {
 				node2hitcount[taxonid] = 1;
 			}
 		catch(const std::invalid_argument& ia) {
-			cerr << "Found bad taxon id in line: " << line << endl;
+			std::cerr << "Found bad taxon id in line: " << line << std::endl;
 		}
 		catch (const std::out_of_range& oor) {
-			cerr << "Found bad taxon id (out of range error) in line: " << line << endl;
+			std::cerr << "Found bad taxon id (out of range error) in line: " << line << std::endl;
 		}
 
 	} // end main loop around file1
@@ -153,25 +114,25 @@ int main(int argc, char** argv) {
 	if(in1_file.is_open()) in1_file.close();
 
 
-	if(verbose) cerr << "Writing to file " << out_filename << endl;
-	ofstream krona_file;
+	if(verbose) std::cerr << "Writing to file " << out_filename << std::endl;
+	std::ofstream krona_file;
 	krona_file.open(out_filename);
-	if(!krona_file.is_open()) {  cerr << "Could not open file " << out_filename << " for writing" << endl; exit(EXIT_FAILURE); }
+	if(!krona_file.is_open()) {  std::cerr << "Could not open file " << out_filename << " for writing" << std::endl; exit(EXIT_FAILURE); }
 	for(auto  it : node2hitcount) {
 		uint64_t id = it.first;
 		if(nodes.count(id)==0) {
-			cerr << "Warning: Taxon ID " << id << " found in input file is not contained in taxonomic tree file "<< nodes_filename << ".\n";
+			std::cerr << "Warning: Taxon ID " << id << " found in input file is not contained in taxonomic tree file "<< nodes_filename << ".\n";
 			continue;
 		}
 		if(node2name.count(id)==0) {
-			cerr << "Warning: Taxon ID " << id << " found in input file is not contained in names.dmp file "<< names_filename << ".\n";
+			std::cerr << "Warning: Taxon ID " << id << " found in input file is not contained in names.dmp file "<< names_filename << ".\n";
 			continue;
 		}
-		vector<string> lineage;
+		std::vector<std::string> lineage;
 		lineage.push_back(node2name.at(id));
 		while(nodes.count(id)>0 && id != nodes.at(id)) {
 			if(node2name.count(nodes.at(id))==0) {
-				cerr << "Warning: Taxon ID " << nodes.at(id) << " found in input file is not contained in names file "<< names_filename << ".\n";
+				std::cerr << "Warning: Taxon ID " << nodes.at(id) << " found in input file is not contained in names file "<< names_filename << ".\n";
 			}
 			else {
 				lineage.insert(lineage.begin(),node2name.at(nodes.at(id)));
@@ -183,7 +144,7 @@ int main(int argc, char** argv) {
 		krona_file << "\n";
 	}
 	if(count_unclassified && num_unclassified>0) {
-		krona_file << num_unclassified << "\tUnclassified" << endl;
+		krona_file << num_unclassified << "\tUnclassified" << std::endl;
 	}
 	krona_file.close();
 
