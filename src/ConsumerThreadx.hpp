@@ -21,15 +21,12 @@
 #include <cstring>
 #include <climits>
 #include <map>
-#include <utility>
-#include <functional>
 
 #include "include/ProducerConsumerQueue/src/ProducerConsumerQueue.hpp"
 #include "ReadItem.hpp"
 #include "Config.hpp"
 #include "ConsumerThread.hpp"
 
-using namespace std;
 
 class ConsumerThreadx: public ConsumerThread  {
 	protected:
@@ -37,13 +34,12 @@ class ConsumerThreadx: public ConsumerThread  {
 	void classify_greedyblosum();
 	void ids_from_SI(SI *);
 	void ids_from_SI_recursive(SI *);
-	set<char *> match_ids; 
+	std::set<char *> match_ids;
 
-	public:        
+	public:
 	ConsumerThreadx(ProducerConsumerQueue<ReadItem*>* workQueue, Config * config) : ConsumerThread(workQueue, config) { };
-	void doWork(); 
+	void doWork();
 
-	
 };
 #endif
 

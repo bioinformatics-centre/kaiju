@@ -14,11 +14,11 @@ void ConsumerThreadx::classify_greedyblosum() {
 		while(1) {
 			Fragment * t = getNextFragment(best_match_score);
 			if(!t) break;
-			const string fragment = t->seq;
+			const std::string fragment = t->seq;
 			const size_t length = fragment.length();
 			const unsigned int num_mm = t->num_mm;
 
-			if(config->debug) { cerr << "Searching fragment "<< fragment <<  " (" << length << ","<< num_mm << "," << t->diff << ")" << "\n"; }
+			if(config->debug) { std::cerr << "Searching fragment "<< fragment <<  " (" << length << ","<< num_mm << "," << t->diff << ")" << "\n"; }
 			char * seq = new char[length+1];
 			std::strcpy(seq, fragment.c_str());
 
@@ -38,23 +38,23 @@ void ConsumerThreadx::classify_greedyblosum() {
 			}
 
 			if(!si) {// no match for this fragment
-				if(config->debug) cerr << "No match for this fragment." << "\n";
+				if(config->debug) std::cerr << "No match for this fragment." << "\n";
 				delete[] seq;
 				delete t;
 				continue; // continue with the next fragment
 			}
-			if(config->debug) cerr << "Longest match has length " << (unsigned int)si->ql <<  "\n";
+			if(config->debug) std::cerr << "Longest match has length " << (unsigned int)si->ql <<  "\n";
 
 			if(config->mismatches > 0 && num_mm < config->mismatches) {
 				SI * si_it = si;
 				while(si_it) {
 					unsigned int match_right_end = si_it->qi + si_it->ql - 1;
 					if(num_mm > 0) assert(match_right_end  == length - 1); // greedy matches end always at the end
-					if(config->debug) cerr << "Match from " << si_it->qi << " to " << match_right_end << ": " << fragment.substr(si_it->qi, match_right_end -  si_it->qi +1)  << " (" << si_it->ql << ")\n";
+					if(config->debug) std::cerr << "Match from " << si_it->qi << " to " << match_right_end << ": " << fragment.substr(si_it->qi, match_right_end -  si_it->qi +1)  << " (" << si_it->ql << ")\n";
 					if(si_it->qi > 0 && match_right_end + 1 >= config->min_fragment_length) {
 						//1. match must end before beginning of fragment, i.e. it is extendable
 						//2. remaining fragment, from zero to end of current match, must be longer than minimum length of accepted matches
-						const size_t erase_pos = (match_right_end < length - 1) ? match_right_end + 1 : string::npos;
+						const size_t erase_pos = (match_right_end < length - 1) ? match_right_end + 1 : std::string::npos;
 						addAllMismatchVariantsAtPosSI(t,(unsigned int)(si_it->qi - 1),erase_pos,si_it);
 					}
 					si_it = si_it->samelen ? si_it->samelen : si_it->next;
@@ -62,7 +62,7 @@ void ConsumerThreadx::classify_greedyblosum() {
 			}
 
 			if((unsigned int)si->ql < config->min_fragment_length) { // match was too short
-				if(config->debug) { cerr << "Match of length " << si->ql << " is too short\n"; }
+				if(config->debug) { std::cerr << "Match of length " << si->ql << " is too short\n"; }
 				delete[] seq;
 				delete t;
 				recursive_free_SI(si);
@@ -89,7 +89,7 @@ void ConsumerThreadx::classify_greedyblosum() {
 			free(itm);
 		}
 
-		stringstream ss;
+		std::stringstream ss;
 		ss << best_match_score << "\t" ;
 		for(auto it : match_ids) ss << it << ",";
 		ss  << "\t";
@@ -107,19 +107,19 @@ void ConsumerThreadx::classify_length() {
 		while(1) {
 			Fragment * t = getNextFragment(longest_match_length);
 			if(!t) break;// searched all fragments that are longer than best match length
-			const string fragment = t->seq;
+			const std::string fragment = t->seq;
 			const unsigned int length = (unsigned int)fragment.length();
 
-			if(config->debug) { cerr << "Searching fragment "<< fragment <<  " (" << length << ")" << "\n"; }
+			if(config->debug) { std::cerr << "Searching fragment "<< fragment <<  " (" << length << ")" << "\n"; }
 			char * seq = new char[length+1];
 			std::strcpy(seq, fragment.c_str());
 
 			translate2numbers((uchar *)seq, length, config->astruct);
 			//use longest_match_length here too:
-			SI * si = maxMatches(config->fmi, seq, length, max(config->min_fragment_length,longest_match_length),  1);
+			SI * si = maxMatches(config->fmi, seq, length, std::max(config->min_fragment_length,longest_match_length),  1);
 
 			if(!si) {// no match for this fragment
-				if(config->debug) cerr << "No match for this fragment." << "\n";
+				if(config->debug) std::cerr << "No match for this fragment." << "\n";
 				delete[] seq;
 				delete t;
 				continue; // continue with the next fragment
@@ -127,7 +127,7 @@ void ConsumerThreadx::classify_length() {
 
 
 			// just get length here and save si when it is longest
-			if(config->debug) cerr << "Longest match is length " << (unsigned int)si->ql << "\n";
+			if(config->debug) std::cerr << "Longest match is length " << (unsigned int)si->ql << "\n";
 			if((unsigned int)si->ql > longest_match_length) {
 				for(auto itm : longest_matches_SI)
 					recursive_free_SI(itm);
@@ -164,7 +164,7 @@ void ConsumerThreadx::classify_length() {
 			recursive_free_SI(itm);
 		}
 
-		stringstream ss;
+		std::stringstream ss;
 		ss << longest_match_length << "\t";
 		for(auto it : match_ids) ss << it << ",";
 		ss  << "\t";
@@ -188,13 +188,13 @@ void ConsumerThreadx::doWork() {
 
 		extraoutput = "";
 
-		if(config->debug) cerr << "Getting fragments for read: "<< item->sequence1 << "\n";
+		if(config->debug) std::cerr << "Getting fragments for read: "<< item->sequence1 << "\n";
 		getAllFragmentsBits(item->sequence1);
 		if(item->paired) {
-			if(config->debug) cerr << "Getting fragments for 2nd read: " << item->sequence2 << "\n";
+			if(config->debug) std::cerr << "Getting fragments for 2nd read: " << item->sequence2 << "\n";
 			getAllFragmentsBits(item->sequence2);
 		}
-		if(config->debug) cerr << fragments.size()  << " fragments found in the read."<< "\n";
+		if(config->debug) std::cerr << fragments.size()  << " fragments found in the read."<< "\n";
 
 		if(config->mode == MEM) {
 			classify_length();
@@ -216,7 +216,7 @@ void ConsumerThreadx::doWork() {
 		else  {
 			output << "U\t" << item->name << "\n";
 			if(config->debug) {
-				cerr << "U\t" << item->name << "\n";
+				std::cerr << "U\t" << item->name << "\n";
 			}
 
 		}

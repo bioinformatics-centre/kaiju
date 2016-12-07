@@ -20,9 +20,9 @@ void ConsumerThreadp::doWork() {
 		}
 		size_t start = 0;
 		size_t pos = item->sequence1.find_first_not_of("ACDEFGHIKLMNPQRSTVWY");
-		while(pos != string::npos) {
+		while(pos != std::string::npos) {
 			if(pos-start >= config->min_fragment_length) {
-				string subseq =  item->sequence1.substr(start,pos-start);
+				std::string subseq =  item->sequence1.substr(start,pos-start);
 				//cerr << "subseq=" << subseq << endl;
 				if(config->mode==GREEDYBLOSUM) {
 					const unsigned int score = calcScore(subseq);
@@ -38,7 +38,7 @@ void ConsumerThreadp::doWork() {
 			pos = item->sequence1.find_first_not_of("ACDEFGHIKLMNPQRSTVWY", pos + 1);
 		}
 		//add remaining sequence, which corresponds to the whole sequence if no invalid char was found
-		string subseq = item->sequence1.substr(start,item->sequence1.length()-start);
+		std::string subseq = item->sequence1.substr(start,item->sequence1.length()-start);
 		if(subseq.length() >= config->min_fragment_length) {
 			if(config->mode==GREEDYBLOSUM) {
 				const unsigned int score = calcScore(subseq);
@@ -51,7 +51,7 @@ void ConsumerThreadp::doWork() {
 			}
 		}
 
-		if(config->debug) cerr << fragments.size()  << " fragments found in the read."<< "\n";
+		if(config->debug) std::cerr << fragments.size()  << " fragments found in the read."<< "\n";
 
 		if(fragments.empty()) {
 			output << "U\t" << item->name << "\t0\n";

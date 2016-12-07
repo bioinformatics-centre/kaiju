@@ -25,7 +25,6 @@ extern "C" {
 #include "./bwt/bwt.h"
 }
 
-using namespace std;
 
 void usage(char *progname);
 
@@ -34,9 +33,9 @@ int main(int argc, char** argv) {
 
 	Config * config = new Config();
 
-	string fmi_filename = "";
-	string in1_filename = "";
-	string output_filename;
+	std::string fmi_filename = "";
+	std::string in1_filename = "";
+	std::string output_filename;
 
 	Mode mode = MEM;
 
@@ -56,9 +55,9 @@ int main(int argc, char** argv) {
 	while ((c = getopt(argc, argv, "a:hdxvn:m:e:l:f:i:s:z:o:")) != -1) {
 		switch (c)  {
 			case 'a': {
-									if("mem" == string(optarg)) mode = MEM;
-									else if("greedy" == string(optarg)) mode = GREEDYBLOSUM;
-									else { cerr << "-a must be a valid mode.\n"; usage(argv[0]); }
+									if("mem" == std::string(optarg)) mode = MEM;
+									else if("greedy" == std::string(optarg)) mode = GREEDYBLOSUM;
+									else { std::cerr << "-a must be a valid mode.\n"; usage(argv[0]); }
 									break;
 								}
 			case 'h':
@@ -77,61 +76,61 @@ int main(int argc, char** argv) {
 				in1_filename = optarg; break;
 			case 'l': {
 									try {
-										seed_length = stoi(optarg);
+										seed_length = std::stoi(optarg);
 									}
 									catch(const std::invalid_argument& ia) {
-										cerr << "Invalid argument in -l " << optarg << endl;
+										std::cerr << "Invalid argument in -l " << optarg << std::endl;
 									}
 									catch (const std::out_of_range& oor) {
-										cerr << "Invalid argument in -l " << optarg << endl;
+										std::cerr << "Invalid argument in -l " << optarg << std::endl;
 									}
 									break;
 								}
 			case 's': {
 									try {
-										min_score = stoi(optarg);
+										min_score = std::stoi(optarg);
 									}
 									catch(const std::invalid_argument& ia) {
-										cerr << "Invalid argument in -s " << optarg << endl;
+										std::cerr << "Invalid argument in -s " << optarg << std::endl;
 									}
 									catch (const std::out_of_range& oor) {
-										cerr << "Invalid argument in -s " << optarg << endl;
+										std::cerr << "Invalid argument in -s " << optarg << std::endl;
 									}
 									break;
 								}
 			case 'm': {
 									try {
-										min_fragment_length = stoi(optarg);
+										min_fragment_length = std::stoi(optarg);
 									}
 									catch(const std::invalid_argument& ia) {
-										cerr << "Invalid argument in -m " << optarg << endl;
+										std::cerr << "Invalid argument in -m " << optarg << std::endl;
 									}
 									catch (const std::out_of_range& oor) {
-										cerr << "Invalid argument in -m " << optarg << endl;
+										std::cerr << "Invalid argument in -m " << optarg << std::endl;
 									}
 									break;
 								}
 			case 'e': {
 									try {
-										mismatches = stoi(optarg);
+										mismatches = std::stoi(optarg);
 									}
 									catch(const std::invalid_argument& ia) {
-										cerr << "Invalid numerical argument in -e " << optarg << endl;
+										std::cerr << "Invalid numerical argument in -e " << optarg << std::endl;
 									}
 									catch (const std::out_of_range& oor) {
-										cerr << "Invalid numerical argument in -e " << optarg << endl;
+										std::cerr << "Invalid numerical argument in -e " << optarg << std::endl;
 									}
 									break;
 								}
 			case 'z': {
 									try {
-										num_threads = stoi(optarg);
+										num_threads = std::stoi(optarg);
 									}
 									catch(const std::invalid_argument& ia) {
-										cerr << "Invalid argument in -z " << optarg << endl;
+										std::cerr << "Invalid argument in -z " << optarg << std::endl;
 									}
 									catch (const std::out_of_range& oor) {
-										cerr << "Invalid argument in -z " << optarg << endl;
+										std::cerr << "Invalid argument in -z " << optarg << std::endl;
 									}
 									break;
 								}
@@ -148,12 +147,12 @@ int main(int argc, char** argv) {
 	if(in1_filename.length() == 0) { error("Please specify the location of the input file, using the -i option."); usage(argv[0]); }
 
 	if(debug) {
-		cerr << "Parameters: \n";
-		cerr << "  minimum fragment length for matches: " << min_fragment_length << "\n";
-		cerr << "  minimum blosum score for matches: " << min_score << "\n";
-		cerr << "  max number of mismatches within a match: "  << mismatches << "\n";
-		cerr << "  run mode: "  << mode << "\n";
-		cerr << "  input file 1: " << in1_filename << "\n";
+		std::cerr << "Parameters: \n";
+		std::cerr << "  minimum fragment length for matches: " << min_fragment_length << "\n";
+		std::cerr << "  minimum blosum score for matches: " << min_score << "\n";
+		std::cerr << "  max number of mismatches within a match: "  << mismatches << "\n";
+		std::cerr << "  run mode: "  << mode << "\n";
+		std::cerr << "  input file 1: " << in1_filename << "\n";
 	}
 
 	config->mode = mode;
@@ -165,11 +164,11 @@ int main(int argc, char** argv) {
 	config->mismatches = mismatches;
 	config->SEG = SEG_check;
 
-	if(verbose) cerr << getCurrentTime() << " Reading database" << endl;
+	if(verbose) std::cerr << getCurrentTime() << " Reading database" << std::endl;
 
-	if(verbose) cerr << " Reading FM Index from file " << fmi_filename << endl;
+	if(verbose) std::cerr << " Reading FM Index from file " << fmi_filename << std::endl;
 	FILE * fp = fopen(fmi_filename.c_str(),"r");
-	if (!fp) { cerr << "Could not open file " << fmi_filename << endl; usage(argv[0]); }
+	if (!fp) { std::cerr << "Could not open file " << fmi_filename << std::endl; usage(argv[0]); }
   BWT * b = readIndexes(fp);
 	fclose(fp);
 	if(debug) fprintf(stderr,"BWT of length %ld has been read with %d sequencs, alphabet=%s\n", b->len,b->nseq, b->alphabet);
@@ -180,14 +179,14 @@ int main(int argc, char** argv) {
 	config->init();
 
 	if(output_filename.length()>0) {
-		cerr << "Output file: " << output_filename << endl;
-		ofstream * read2id_file = new ofstream();
+		std::cerr << "Output file: " << output_filename << std::endl;
+		std::ofstream * read2id_file = new std::ofstream();
 		read2id_file->open(output_filename);
-		if(!read2id_file->is_open()) {  cerr << "Could not open file " << output_filename << " for writing" << endl; exit(EXIT_FAILURE); }
+		if(!read2id_file->is_open()) {  std::cerr << "Could not open file " << output_filename << " for writing" << std::endl; exit(EXIT_FAILURE); }
 		config->out_stream = read2id_file;
 	}
 	else {
-		config->out_stream = &cout;
+		config->out_stream = &std::cout;
 	}
 
 	ProducerConsumerQueue<ReadItem*>* myWorkQueue = new ProducerConsumerQueue<ReadItem*>(500);
@@ -199,20 +198,20 @@ int main(int argc, char** argv) {
 		threads.push_back(std::thread(&ConsumerThreadp::doWork,p));
 	}
 
-	ifstream in1_file;
+	std::ifstream in1_file;
 	in1_file.open(in1_filename);
 
-	if(!in1_file.is_open()) {  cerr << "Could not open file " << in1_filename << endl; exit(EXIT_FAILURE); }
+	if(!in1_file.is_open()) {  std::cerr << "Could not open file " << in1_filename << std::endl; exit(EXIT_FAILURE); }
 
 	bool isFastQ = false;
 	bool firstline = true;
-	string line_from_file;
+	std::string line_from_file;
 	line_from_file.reserve(2000);
-	string name;
-	string sequence;
+	std::string name;
+	std::string sequence;
 	sequence.reserve(2000);
 
-	if(verbose) cerr << getCurrentTime() << " Start search using " << num_threads << " threads." << endl;
+	if(verbose) std::cerr << getCurrentTime() << " Start search using " << num_threads << " threads." << std::endl;
 
 	while(getline(in1_file,line_from_file)) {
 		if(firstline) {
@@ -221,7 +220,7 @@ int main(int argc, char** argv) {
 				isFastQ = true;
 			}
 			else if(fileTypeIdentifier != '>') {
-				cerr << "Auto-detection of file type for file " << in1_filename << " failed."  << endl;
+				std::cerr << "Auto-detection of file type for file " << in1_filename << " failed."  << std::endl;
 				exit(EXIT_FAILURE);
 			}
 			firstline = false;
@@ -266,12 +265,12 @@ int main(int argc, char** argv) {
 		delete  threadpointers.front();
 		threadpointers.pop_front();
 	}
-	if(verbose) cerr << getCurrentTime() << " Finished." << endl;
+	if(verbose) std::cerr << getCurrentTime() << " Finished." << std::endl;
 
 	config->out_stream->flush();
 	if(output_filename.length()>0) {
-		((ofstream*)config->out_stream)->close();
-		delete ((ofstream*)config->out_stream);
+		((std::ofstream*)config->out_stream)->close();
+		delete ((std::ofstream*)config->out_stream);
 	}
 
 	delete myWorkQueue;

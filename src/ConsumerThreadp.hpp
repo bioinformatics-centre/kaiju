@@ -21,23 +21,19 @@
 #include <cstring>
 #include <climits>
 #include <map>
-#include <utility>
-#include <functional>
 
 #include "include/ProducerConsumerQueue/src/ProducerConsumerQueue.hpp"
 #include "ReadItem.hpp"
 #include "Config.hpp"
 #include "ConsumerThreadx.hpp"
 
-using namespace std;
 
 class ConsumerThreadp: public ConsumerThreadx  {
 
-	public:        
+	public:
 	ConsumerThreadp(ProducerConsumerQueue<ReadItem*>* workQueue, Config * config) : ConsumerThreadx(workQueue, config) { };
-	void doWork(); 
+	void doWork();
 
-	
 };
 #endif
 

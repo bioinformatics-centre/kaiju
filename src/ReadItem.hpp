@@ -6,14 +6,13 @@
 
 #include <string>
 
-using namespace std;
 class ReadItem {
     public:
-        string name;
+        std::string name;
         bool paired = false;
-        string sequence1;
-        string sequence2;    
-        ReadItem(string name, string sequence1);
-        ReadItem(string name, string sequence1, string sequence2);
+        std::string sequence1;
+        std::string sequence2;
+        ReadItem(std::string name, std::string sequence1);
+        ReadItem(std::string name, std::string sequence1, std::string sequence2);
 };
 #endif

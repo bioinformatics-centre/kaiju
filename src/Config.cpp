@@ -3,7 +3,6 @@
 
 #include "Config.hpp"
 
-using namespace std;
 
 Config::Config() { // constructor
 }
@@ -26,7 +25,7 @@ void Config::init() {
 }
 
 
-uint64_t Config::lca_from_ids(unordered_map<uint64_t,unsigned int> & node2depth, set<uint64_t> & ids) {
+uint64_t Config::lca_from_ids(std::unordered_map<uint64_t,unsigned int> & node2depth, std::set<uint64_t> & ids) {
 
 	if(ids.size() == 1) {
 		return *(ids.begin());
@@ -36,10 +35,10 @@ uint64_t Config::lca_from_ids(unordered_map<uint64_t,unsigned int> & node2depth,
 	unsigned int shallowest_depth = 100000;
 	unsigned int index = 0;
 	for(auto it = ids.begin() ; it != ids.end(); ++it) {
-		uint64_t id = *it;	
+		uint64_t id = *it;
 
 		if(nodes->count(id)==0) {
-			if(verbose) cerr << "Warning: Taxon ID " << id << " in database is not contained in taxonomic tree.\n";
+			if(verbose) std::cerr << "Warning: Taxon ID " << id << " in database is not contained in taxonomic tree.\n";
 			num_ids--;
 			continue;
 		}
@@ -52,9 +51,9 @@ uint64_t Config::lca_from_ids(unordered_map<uint64_t,unsigned int> & node2depth,
 			unsigned int depth = 1;
 			while(nodes->count(id)>0 && id != nodes->at(id)) {
 				depth++;
-				id = nodes->at(id);	
+				id = nodes->at(id);
 			}
-			node2depth.insert(pair<uint64_t,unsigned int>(*it,depth));
+			node2depth.emplace(*it,depth);
 			//cerr << "Inserting to depth map: " << *it <<" -> " << depth << endl;
 			if(depth < shallowest_depth) { shallowest_depth = depth; }
 		}

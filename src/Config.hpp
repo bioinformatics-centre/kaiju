@@ -25,12 +25,11 @@ extern "C" {
 #include "./bwt/sequence.h"
 }
 
-using namespace std;
 
 enum Mode { MEM, GREEDYBLOSUM };
 
 class Config {
-	public:	
+	public:
 		Mode mode;
 		bool debug;
 		bool SEG = false;
@@ -41,8 +40,8 @@ class Config {
 		unsigned int min_fragment_length;
 		unsigned int min_score;
 		unsigned int seed_length;
-		ostream * out_stream;
-		unordered_map<uint64_t,uint64_t> * nodes;
+		std::ostream * out_stream;
+		std::unordered_map<uint64_t,uint64_t> * nodes;
 
 		std::mutex out_mutex;
 
@@ -55,7 +54,7 @@ class Config {
 		~Config();
 
 		void init();
-		uint64_t lca_from_ids(unordered_map<uint64_t,unsigned int> & node2depth, set<uint64_t> & ids);
+		uint64_t lca_from_ids(std::unordered_map<uint64_t,unsigned int> & node2depth, std::set<uint64_t> & ids);
 
 };
 

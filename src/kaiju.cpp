@@ -47,7 +47,6 @@ extern "C" {
 #include "./bwt/bwt.h"
 }
 
-using namespace std;
 
 void usage(char *progname);
 
@@ -56,14 +55,14 @@ int main(int argc, char** argv) {
 
 	Config * config = new Config();
 
-	unordered_map<uint64_t,uint64_t> * nodes = new unordered_map<uint64_t,uint64_t>();
+	std::unordered_map<uint64_t,uint64_t> * nodes = new std::unordered_map<uint64_t,uint64_t>();
 
-	string nodes_filename = "";
-	string fmi_filename = "";
-	string sa_filename = "";
-	string in1_filename = "";
-	string in2_filename = "";
-	string output_filename;
+	std::string nodes_filename = "";
+	std::string fmi_filename = "";
+	std::string sa_filename = "";
+	std::string in1_filename = "";
+	std::string in2_filename = "";
+	std::string output_filename;
 
 	Mode mode = MEM;
 
@@ -85,9 +84,9 @@ int main(int argc, char** argv) {
 	while ((c = getopt(argc, argv, "a:hdpxvn:m:e:l:t:f:i:j:s:z:o:")) != -1) {
 		switch (c)  {
 			case 'a': {
-									if("mem" == string(optarg)) mode = MEM;
-									else if("greedy" == string(optarg)) mode = GREEDYBLOSUM;
-									else { cerr << "-a must be a valid mode.\n"; usage(argv[0]); }
+									if("mem" == std::string(optarg)) mode = MEM;
+									else if("greedy" == std::string(optarg)) mode = GREEDYBLOSUM;
+									else { std::cerr << "-a must be a valid mode.\n"; usage(argv[0]); }
 									break;
 								}
 			case 'h':
@@ -115,61 +114,61 @@ int main(int argc, char** argv) {
 								}
 			case 'l': {
 									try {
-										seed_length = stoi(optarg);
+										seed_length = std::stoi(optarg);
 									}
 									catch(const std::invalid_argument& ia) {
-										cerr << "Invalid argument in -l " << optarg << endl;
+										std::cerr << "Invalid argument in -l " << optarg << std::endl;
 									}
 									catch (const std::out_of_range& oor) {
-										cerr << "Invalid argument in -l " << optarg << endl;
+										std::cerr << "Invalid argument in -l " << optarg << std::endl;
 									}
 									break;
 								}
 			case 's': {
 									try {
-										min_score = stoi(optarg);
+										min_score = std::stoi(optarg);
 									}
 									catch(const std::invalid_argument& ia) {
-										cerr << "Invalid argument in -s " << optarg << endl;
+										std::cerr << "Invalid argument in -s " << optarg << std::endl;
 									}
 									catch (const std::out_of_range& oor) {
-										cerr << "Invalid argument in -s " << optarg << endl;
+										std::cerr << "Invalid argument in -s " << optarg << std::endl;
 									}
 									break;
 								}
 			case 'm': {
 									try {
-										min_fragment_length = stoi(optarg);
+										min_fragment_length = std::stoi(optarg);
 									}
 									catch(const std::invalid_argument& ia) {
-										cerr << "Invalid argument in -m " << optarg << endl;
+										std::cerr << "Invalid argument in -m " << optarg << std::endl;
 									}
 									catch (const std::out_of_range& oor) {
-										cerr << "Invalid argument in -m " << optarg << endl;
+										std::cerr << "Invalid argument in -m " << optarg << std::endl;
 									}
 									break;
 								}
 			case 'e': {
 									try {
-										mismatches = stoi(optarg);
+										mismatches = std::stoi(optarg);
 									}
 									catch(const std::invalid_argument& ia) {
-										cerr << "Invalid numerical argument in -e " << optarg << endl;
+										std::cerr << "Invalid numerical argument in -e " << optarg << std::endl;
 									}
 									catch (const std::out_of_range& oor) {
-										cerr << "Invalid numerical argument in -e " << optarg << endl;
+										std::cerr << "Invalid numerical argument in -e " << optarg << std::endl;
 									}
 									break;
 								}
 			case 'z': {
 									try {
-										num_threads = stoi(optarg);
+										num_threads = std::stoi(optarg);
 									}
 									catch(const std::invalid_argument& ia) {
-										cerr << "Invalid argument in -z " << optarg << endl;
+										std::cerr << "Invalid argument in -z " << optarg << std::endl;
 									}
 									catch (const std::out_of_range& oor) {
-										cerr << "Invalid argument in -z " << optarg << endl;
+										std::cerr << "Invalid argument in -z " << optarg << std::endl;
 									}
 									break;
 								}
@@ -188,14 +187,14 @@ int main(int argc, char** argv) {
 	if(paired && input_is_protein) { error("Protein input only supports one input file."); usage(argv[0]); }
 
 	if(debug) {
-		cerr << "Parameters: \n";
-		cerr << "  minimum fragment length for matches: " << min_fragment_length << "\n";
-		cerr << "  minimum blosum score for matches: " << min_score << "\n";
-		cerr << "  max number of mismatches within a match: "  << mismatches << "\n";
-		cerr << "  run mode: "  << mode << "\n";
-		cerr << "  input file 1: " << in1_filename << "\n";
+		std::cerr << "Parameters: \n";
+		std::cerr << "  minimum fragment length for matches: " << min_fragment_length << "\n";
+		std::cerr << "  minimum blosum score for matches: " << min_score << "\n";
+		std::cerr << "  max number of mismatches within a match: "  << mismatches << "\n";
+		std::cerr << "  run mode: "  << mode << "\n";
+		std::cerr << "  input file 1: " << in1_filename << "\n";
 		if(in2_filename.length() > 0)
-			cerr << "  input file 2: " << in2_filename << "\n";
+			std::cerr << "  input file 2: " << in2_filename << "\n";
 	}
 
 	config->mode = mode;
@@ -209,19 +208,19 @@ int main(int argc, char** argv) {
 	config->mismatches = mismatches;
 	config->SEG = SEG_check;
 
-	if(verbose) cerr << getCurrentTime() << " Reading database" << endl;
+	if(verbose) std::cerr << getCurrentTime() << " Reading database" << std::endl;
 
-	ifstream nodes_file;
+	std::ifstream nodes_file;
 	nodes_file.open(nodes_filename.c_str());
-	if(!nodes_file.is_open()) { cerr << "Error: Could not open file " << nodes_filename << endl; usage(argv[0]); }
-	if(verbose) cerr << " Reading taxonomic tree from file " << nodes_filename << endl;
+	if(!nodes_file.is_open()) { std::cerr << "Error: Could not open file " << nodes_filename << std::endl; usage(argv[0]); }
+	if(verbose) std::cerr << " Reading taxonomic tree from file " << nodes_filename << std::endl;
 	parseNodesDmp(*nodes,nodes_file);
 	nodes_file.close();
 
 	{
-	if(verbose) cerr << " Reading index from file " << fmi_filename << endl;
+	if(verbose) std::cerr << " Reading index from file " << fmi_filename << std::endl;
 	FILE * fp = fopen(fmi_filename.c_str(),"r");
-	if (!fp) { cerr << "Could not open file " << fmi_filename << endl; usage(argv[0]); }
+	if (!fp) { std::cerr << "Could not open file " << fmi_filename << std::endl; usage(argv[0]); }
 	BWT * b = readIndexes(fp);
 	fclose(fp);
 	if(debug) fprintf(stderr,"BWT of length %ld has been read with %d sequences, alphabet=%s\n", b->len,b->nseq, b->alphabet);
@@ -232,14 +231,14 @@ int main(int argc, char** argv) {
 	config->init();
 
 	if(output_filename.length()>0) {
-		if(verbose) cerr << "Output file: " << output_filename << endl;
-		ofstream * read2id_file = new ofstream();
+		if(verbose) std::cerr << "Output file: " << output_filename << std::endl;
+		std::ofstream * read2id_file = new std::ofstream();
 		read2id_file->open(output_filename);
-		if(!read2id_file->is_open()) {  cerr << "Could not open file " << output_filename << " for writing" << endl; exit(EXIT_FAILURE); }
+		if(!read2id_file->is_open()) {  std::cerr << "Could not open file " << output_filename << " for writing" << std::endl; exit(EXIT_FAILURE); }
 		config->out_stream = read2id_file;
 	}
 	else {
-		config->out_stream = &cout;
+		config->out_stream = &std::cout;
 	}
 
 	ProducerConsumerQueue<ReadItem*>* myWorkQueue = new ProducerConsumerQueue<ReadItem*>(500);
@@ -251,29 +250,29 @@ int main(int argc, char** argv) {
 		threads.push_back(std::thread(&ConsumerThread::doWork,p));
 	}
 
-	ifstream in1_file, in2_file;
+	std::ifstream in1_file, in2_file;
 	in1_file.open(in1_filename);
 
-	if(!in1_file.is_open()) {  cerr << "Could not open file " << in1_filename << endl; exit(EXIT_FAILURE); }
+	if(!in1_file.is_open()) {  std::cerr << "Could not open file " << in1_filename << std::endl; exit(EXIT_FAILURE); }
 	if(in2_filename.length() > 0) {
 		in2_file.open(in2_filename);
-		if(!in2_file.is_open()) {  cerr << "Could not open file " << in2_filename << endl; exit(EXIT_FAILURE); }
+		if(!in2_file.is_open()) {  std::cerr << "Could not open file " << in2_filename << std::endl; exit(EXIT_FAILURE); }
 	}
 
 	bool firstline_file1 = true;
 	bool firstline_file2 = true;
 	bool isFastQ_file1 = false;
 	bool isFastQ_file2 = false;
-	string line_from_file;
+	std::string line_from_file;
 	line_from_file.reserve(2000);
-	string suffixStartCharacters = " /\t";
-	string name;
-	string sequence1;
-	string sequence2;
+	std::string suffixStartCharacters = " /\t";
+	std::string name;
+	std::string sequence1;
+	std::string sequence2;
 	sequence1.reserve(2000);
 	if(paired) sequence2.reserve(2000);
 
-	if(verbose) cerr << getCurrentTime() << " Start classification using " << num_threads << " threads." << endl;
+	if(verbose) std::cerr << getCurrentTime() << " Start classification using " << num_threads << " threads." << std::endl;
 
 	while(getline(in1_file,line_from_file)) {
 		if(line_from_file.length() == 0) { continue; }
@@ -283,7 +282,7 @@ int main(int argc, char** argv) {
 				isFastQ_file1 = true;
 			}
 			else if(fileTypeIdentifier != '>') {
-				cerr << "Auto-detection of file type for file " << in1_filename << " failed."  << endl;
+				std::cerr << "Auto-detection of file type for file " << in1_filename << " failed."  << std::endl;
 				exit(EXIT_FAILURE);
 			}
 			firstline_file1 = false;
@@ -293,7 +292,7 @@ int main(int argc, char** argv) {
 			line_from_file.erase(line_from_file.begin());
 			// delete suffixes like '/1' or ' 1:N:0:TAAGGCGA' from end of read name
 			size_t n = line_from_file.find_first_of(suffixStartCharacters);
-			if(n != string::npos) { line_from_file.erase(n); }
+			if(n != std::string::npos) { line_from_file.erase(n); }
 			name = line_from_file;
 			// read sequence line
 			getline(in1_file,line_from_file);
@@ -308,7 +307,7 @@ int main(int argc, char** argv) {
 			line_from_file.erase(line_from_file.begin());
 			// delete suffixes like '/1' or ' 1:N:0:TAAGGCGA' from end of read name
 			size_t n = line_from_file.find_first_of(suffixStartCharacters);
-			if(n != string::npos) { line_from_file.erase(n); }
+			if(n != std::string::npos) { line_from_file.erase(n); }
 			name = line_from_file;
 			// read lines until next entry starts or file terminates
 			sequence1.clear();
@@ -325,7 +324,7 @@ int main(int argc, char** argv) {
 			while(line_from_file.length() == 0) {
 				if(!getline(in2_file,line_from_file)) {
 					//that's the border case where file1 has more entries than file2
-					cerr << "Error: File " << in1_filename <<" contains more reads then file " << in2_filename  <<endl;
+					std::cerr << "Error: File " << in1_filename <<" contains more reads then file " << in2_filename  <<std::endl;
 					in1_file.close();
 					in2_file.close();
 					exit(EXIT_FAILURE);
@@ -337,7 +336,7 @@ int main(int argc, char** argv) {
 					isFastQ_file2 = true;
 				}
 				else if(fileTypeIdentifier != '>') {
-					cerr << "Auto-detection of file type for file " << in2_filename << " failed."  << endl;
+					std::cerr << "Auto-detection of file type for file " << in2_filename << " failed."  << std::endl;
 					exit(EXIT_FAILURE);
 				}
 				firstline_file2 = false;
@@ -347,9 +346,9 @@ int main(int argc, char** argv) {
 				line_from_file.erase(line_from_file.begin());
 				// delete suffixes like '/2' or ' 2:N:0:TAAGGCGA' from end of read name
 				size_t n = line_from_file.find_first_of(suffixStartCharacters);
-				if(n != string::npos) { line_from_file.erase(n); }
+				if(n != std::string::npos) { line_from_file.erase(n); }
 				if(name != line_from_file) {
-					cerr << "Error: Read names are not identical between the two input files. Probably reads are not in the same order in both files." << endl;
+					std::cerr << "Error: Read names are not identical between the two input files. Probably reads are not in the same order in both files." << std::endl;
 					in1_file.close();
 					in2_file.close();
 					exit(EXIT_FAILURE);
@@ -367,9 +366,9 @@ int main(int argc, char** argv) {
 				line_from_file.erase(line_from_file.begin());
 				// delete suffixes like '/2' or ' 2:N:0:TAAGGCGA' from end of read name
 				size_t n = line_from_file.find_first_of(suffixStartCharacters);
-				if(n != string::npos) { line_from_file.erase(n); }
+				if(n != std::string::npos) { line_from_file.erase(n); }
 				if(name != line_from_file) {
-					cerr << "Error: Read names are not identical between the two input files" << endl;
+					std::cerr << "Error: Read names are not identical between the two input files" << std::endl;
 					in1_file.close();
 					in2_file.close();
 					exit(EXIT_FAILURE);
@@ -395,7 +394,7 @@ int main(int argc, char** argv) {
 
 	if(paired && in2_file.is_open()) {
 		if(getline(in2_file,line_from_file) && line_from_file.length()>0) {
-			cerr << "Warning: File " << in2_filename <<" has more reads then file " << in1_filename  <<endl;
+			std::cerr << "Warning: File " << in2_filename <<" has more reads then file " << in1_filename  <<std::endl;
 		}
 		in2_file.close();
 	}
@@ -403,15 +402,15 @@ int main(int argc, char** argv) {
 	while(!threads.empty()) {
 		threads.front().join();
 		threads.pop_front();
-		delete  threadpointers.front();
+		delete threadpointers.front();
 		threadpointers.pop_front();
 	}
-	if(verbose) cerr << getCurrentTime() << " Finished." << endl;
+	if(verbose) std::cerr << getCurrentTime() << " Finished." << std::endl;
 
 	config->out_stream->flush();
 	if(output_filename.length()>0) {
-		((ofstream*)config->out_stream)->close();
-		delete ((ofstream*)config->out_stream);
+		((std::ofstream*)config->out_stream)->close();
+		delete ((std::ofstream*)config->out_stream);
 	}
 
 	delete myWorkQueue;
