@@ -92,21 +92,21 @@ int main(int argc, char** argv) {
 		}
 	}
 	if(names_filename.length() == 0) { error("Please specify the location of the names.dmp file with the -n option."); usage(argv[0]); }
-	if(nodes_filename.length() == 0) { std::cerr << "Error: Please specify the location of the nodes.dmp file with the -t option."  << std::endl; usage(argv[0]); }
-	if(out_filename.length() == 0) { std::cerr << "Error: Please specify the name of the output file with the -o option."  << std::endl; usage(argv[0]); }
-	if(in_filename.length() == 0) { std::cerr << "Error: Please specify the location of the input file with the -i option."  << std::endl; usage(argv[0]); }
-	if(rank.length() == 0) { std::cerr << "Error: Please specify the rank (phylum, class, order, family, genus, or species) with the -r option."  << std::endl; usage(argv[0]); }
+	if(nodes_filename.length() == 0) { error("Please specify the location of the nodes.dmp file with the -t option."); usage(argv[0]); }
+	if(out_filename.length() == 0) { error("Please specify the name of the output file with the -o option."); usage(argv[0]); }
+	if(in_filename.length() == 0) { error("Please specify the location of the input file with the -i option."); usage(argv[0]); }
+	if(rank.length() == 0) { error("Please specify the rank (phylum, class, order, family, genus, or species) with the -r option."); usage(argv[0]); }
 	if(!(rank.compare("phylum")==0 || rank.compare("class")==0 || rank.compare("order")==0 || rank.compare("family")==0 || rank.compare("genus")==0 || rank.compare("species")==0)) {
-		std::cerr << "Error: Rank must be one of: phylum, class, order, family, genus, species."  << std::endl; usage(argv[0]);
+		error("Rank must be one of: phylum, class, order, family, genus, species."); usage(argv[0]);
 	}
 	if(min_read_count < 0) {
-		std::cerr << "Error: min required read count (-c) must be >= 0"   << std::endl; usage(argv[0]);
+		error("Min required read count (-c) must be >= 0"); usage(argv[0]);
 	}
 	if(min_percent < 0.0 || min_percent > 100.0) {
-		std::cerr << "Error: min required percent (-m) must be between 0.0 and 100.0"   << std::endl; usage(argv[0]);
+		error("Min required percent (-m) must be between 0.0 and 100.0"); usage(argv[0]);
 	}
 	if(min_percent > 0.0 && min_read_count > 0) {
-		std::cerr << "Error: Either specify minimum percent with -m or minimum read count with -c."   << std::endl; usage(argv[0]);
+		error("Either specify minimum percent with -m or minimum read count with -c."); usage(argv[0]);
 	}
 
 
@@ -263,7 +263,7 @@ void usage(char *progname) {
 	fprintf(stderr, "   -o FILENAME   Name of output file.\n");
 	fprintf(stderr, "   -t FILENAME   Name of nodes.dmp file\n");
 	fprintf(stderr, "   -n FILENAME   Name of names.dmp file.\n");
-	fprintf(stderr, "   -r std::string     Taxonomic rank, must be one of: phylum, class, order, family, genus, species\n");
+	fprintf(stderr, "   -r STRING     Taxonomic rank, must be one of: phylum, class, order, family, genus, species\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Optional arguments:\n");
 	fprintf(stderr, "   -m FLOAT      Number in [0, 100], denoting the minimum required percentage for the taxon to be reported (default: 0.0)\n");

@@ -95,6 +95,12 @@ command -v tar >/dev/null 2>/dev/null || { echo Error: tar not found; exit 1; }
 command -v gunzip >/dev/null 2>/dev/null || { echo Error: gunzip not found; exit 1; }
 command -v perl >/dev/null 2>/dev/null || { echo Error: perl not found; exit 1; }
 
+#test if option --show-progress is available for wget, then use it when downloading
+wgetProgress=""
+failurestring="unrecognized option"
+wgetout=$(wget --show-progress 2>&1 | head -n 1)
+[ "${wgetout#*$failurestring}" != "$wgetout" ] || { wgetProgress="--show-progress"; }
+
 command -v $SCRIPTDIR/gbk2faa.pl >/dev/null 2>/dev/null || { echo Error: gbk2faa.pl not found in $SCRIPTDIR; exit 1; }
 command -v $SCRIPTDIR/mkfmi >/dev/null 2>/dev/null || { echo Error: mkfmi not found in $SCRIPTDIR; exit 1; }
 command -v $SCRIPTDIR/mkbwt >/dev/null 2>/dev/null || { echo Error: mkbwt not found in $SCRIPTDIR; exit 1; }
@@ -113,16 +119,16 @@ fi
 set -e
 
 echo Downloading file taxdump.tar.gz
-wget --show-progress -N -c -nv ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz
+wget $wgetProgress -N -c -nv ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz
 echo Extracting file taxdump.tar.gz
 tar xf taxdump.tar.gz nodes.dmp names.dmp merged.dmp
 
 if [ $db_nr -eq 1 -o $db_euk -eq 1 ]
 then
 	echo Downloading file nr.gz
-	wget --show-progress -N -c -nv ftp://ftp.ncbi.nih.gov/blast/db/FASTA/nr.gz
+	wget $wgetProgress -N -c -nv ftp://ftp.ncbi.nih.gov/blast/db/FASTA/nr.gz
 	echo Downloading file prot.accession2taxid.gz
-	wget --show-progress -N -c -nv ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/prot.accession2taxid.gz
+	wget $wgetProgress -N -c -nv ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/prot.accession2taxid.gz
 	if [ -r nr.gz -a -r prot.accession2taxid.gz ]
 	then
 		echo Unpacking prot.accession2taxid.gz
@@ -167,21 +173,21 @@ else
 		if [ $db_viruses -eq 1 ]
 		then
 			echo Downloading virus genomes from RefSeq...
-			wget --show-progress -N -c -nv -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.1.genomic.gbff.gz
-			wget --show-progress -N -c -nv -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.2.genomic.gbff.gz
+			wget $wgetProgress -N -c -nv -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.1.genomic.gbff.gz
+			wget $wgetProgress -N -c -nv -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.2.genomic.gbff.gz
 		fi
 
 		echo Extracting protein sequences from downloaded files...
 		find ./genomes -name "*.gbff.gz" | xargs -n 1 -P $parallelConversions -i $SCRIPTDIR/gbk2faa.pl '{}' '{}'.faa
 	else # must be proGenomes
 		echo Downloading proGenomes database...
-		wget --show-progress -N -c -nv -P genomes http://progenomes.embl.de/data/repGenomes/representatives.proteins.fasta.gz
+		wget $wgetProgress -N -c -nv -P genomes http://progenomes.embl.de/data/repGenomes/representatives.proteins.fasta.gz
 
 		if [ $db_viruses -eq 1 ]
 		then
 			echo Downloading virus genomes from RefSeq...
-			wget --show-progress -N -c -nv -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.1.genomic.gbff.gz
-			wget --show-progress -N -c -nv -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.2.genomic.gbff.gz
+			wget $wgetProgress -N -c -nv -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.1.genomic.gbff.gz
+			wget $wgetProgress -N -c -nv -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.2.genomic.gbff.gz
 		fi
 
 		echo Extracting protein sequences from downloaded files...

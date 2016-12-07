@@ -64,9 +64,9 @@ int main(int argc, char **argv) {
 				usage(argv[0]);
 		}
 	}
-	if(nodes_filename.length() == 0) { std::cerr << "Error: Please specify the location of the nodes.dmp file, using the -t option."  << std::endl; usage(argv[0]); }
-	if(acc_taxid_filename.length() == 0) { std::cerr << "Error: Please specify the location of the prot.accession2taxid file, using the -g option."  << std::endl; usage(argv[0]); }
-	if(out_filename.length() == 0) { std::cerr << "Error: Please specify the name of the output file, using the -o option."  << std::endl; usage(argv[0]); }
+	if(nodes_filename.length() == 0) { error("Please specify the location of the nodes.dmp file, using the -t option."); usage(argv[0]); }
+	if(acc_taxid_filename.length() == 0) { error("Please specify the location of the prot.accession2taxid file, using the -g option."); usage(argv[0]); }
+	if(out_filename.length() == 0) { error("Please specify the name of the output file, using the -o option."); usage(argv[0]); }
 
 	config->nodes = &nodes;
 	config->debug = debug;

@@ -21,6 +21,7 @@
 
 void usage(const char * progname);
 std::string calc_lca(std::unordered_map<uint64_t,uint64_t> &, const std::string &, const std::string &);
+bool is_ancestor(std::unordered_map<uint64_t,uint64_t> &, const std::string &, const std::string &);
 
 int main(int argc, char** argv) {
 
@@ -62,7 +63,7 @@ int main(int argc, char** argv) {
 								usage(argv[0]);
 		}
 	}
-	if(!(conflict=="1" || conflict=="2" || conflict=="lca")) { error("Value of argument -c must be either 1, 2, or lca."); usage(argv[0]); }
+	if(!(conflict=="1" || conflict=="2" || conflict=="lca" || conflict=="lowest")) { error("Value of argument -c must be either 1, 2, lca, or lowest."); usage(argv[0]); }
 	if(conflict=="lca" && nodes_filename.length() == 0) { error("Error: LCA mode requires the name of the nodes.dmp file, using the -t option."); usage(argv[0]); }
 	if(in1_filename.length() == 0) { error("Specify the name of the first input file, using the -i option."); usage(argv[0]); }
 	if(in2_filename.length() == 0) { error("Specify the name of the second input file, using the -j option."); usage(argv[0]); }
@@ -145,7 +146,7 @@ int main(int argc, char** argv) {
 		//if(debug) std::cerr << "Name2=" << name1 <<" ID2=" << taxon_id2 << std::endl;
 
 		if(name1 != name2) {
-			std::cerr << "Error: Read names are not identical between the two input files" << std::endl;
+			std::cerr << "Error: Read names are not identical between the two input files on line " << count << std::endl;
 			break;
 		}
 		if(!(classified1=='C' || classified1 =='U')) {
@@ -163,10 +164,24 @@ int main(int argc, char** argv) {
 				lca = taxon_id1;
 			}
 			else { // different taxon ids in both files
-				if(conflict=="1")
+				if(conflict=="1") {
 					lca = taxon_id1;
-				else if(conflict=="2")
+				}
+				else if(conflict=="2") {
 					lca = taxon_id2;
+				}
+				else if(conflict=="lowest") {
+					if(is_ancestor(nodes,taxon_id1,taxon_id2)) {
+						lca = taxon_id2;
+					}
+					else if(is_ancestor(nodes,taxon_id2,taxon_id1)) {
+						lca = taxon_id1;
+					}
+					else {
+						lca = calc_lca(nodes, taxon_id1, taxon_id2);
+					}
+					if(lca=="0") { std::cerr << "Error while calculating lowest node of " << taxon_id1 << " and " << taxon_id2 << " in line " << count << std::endl; break; }
+				}
 				else {
 					assert(conflict=="lca");
 					lca = calc_lca(nodes, taxon_id1, taxon_id2);
@@ -241,7 +256,7 @@ void usage(const char * progname) {
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Optional arguments:\n");
 	fprintf(stderr, "   -o FILENAME   Name of output file.\n");
-	fprintf(stderr, "   -c std::string     Conflict resolution mode, must be 1, 2 or lca (default: 1)\n");
+	fprintf(stderr, "   -c STRING     Conflict resolution mode, must be 1, 2 or lca (default: 1)\n");
 	fprintf(stderr, "   -t FILENAME   Name of nodes.dmp file, only required when -c is set to lca\n");
 	fprintf(stderr, "   -v            Enable verbose output, which will print a summary in the end.\n");
 	fprintf(stderr, "   -d            Enable debug output.\n");
@@ -249,11 +264,44 @@ void usage(const char * progname) {
 	fprintf(stderr, "NOTE: Both input files need to be sorted by the read name in the second column.\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "The option -c determines the method of resolving conflicts in the taxonomic assignment for a read.\n");
-	fprintf(stderr, "If set to 1, then the taxon id from the first input file is used.\n");
-	fprintf(stderr, "If set to 2, then the taxon id from the second input file is used.\n");
-	fprintf(stderr, "If set to lca, then the LCA of the two taxon ids from both input files is used. This option requires to set the name of the nodes.dmp file.\n");
+	fprintf(stderr, "Possible values are '1', '2', 'lca', 'lowest':\n");
+	fprintf(stderr, "  '1' -> the taxon id from the first input file is used.\n");
+	fprintf(stderr, "  '2' -> the taxon id from the second input file is used.\n");
+	fprintf(stderr, "  'lca' -> the least common ancestor of the two taxon ids from both input files is used.\n");
+	fprintf(stderr, "  'lowest' -> the lowest ranking of the two nodes is used if they are within the same lineage. Otherwise the LCA is used.\n");
+	fprintf(stderr, "When using values 'lca' or 'lowest', the path to the file nodes.dmp needs to be specified via option -t.\n");
 	exit(EXIT_FAILURE);
 }
+
+/* returns true if node 1 is ancestor of node 2 */
+bool is_ancestor(std::unordered_map<uint64_t,uint64_t> & nodes, const std::string & id1, const std::string & id2) {
+
+		uint64_t node1;
+		uint64_t node2;
+		try {
+			node1 = stoul(id1);
+			node2 = stoul(id2);
+		}
+		catch(const std::invalid_argument& ia) {
+			std::cerr << "Bad number in taxon id" << std::endl;
+			return 0;
+		}
+		catch (const std::out_of_range& oor) {
+			std::cerr << "Bad number (out of range error) in taxon id" << std::endl;
+			return 0;
+		}
+
+		/* climb up from node 2 and return true if encountering node 1 */
+		while(nodes.count(node2)>0 && node2 != nodes.at(node2)) {
+			if(node2==node1) {
+				return true;
+			}
+			node2 = nodes.at(node2);
+		}
+
+		return false;
+}
+
 
 std::string calc_lca(std::unordered_map<uint64_t,uint64_t> & nodes, const std::string & id1, const std::string & id2) {
 
