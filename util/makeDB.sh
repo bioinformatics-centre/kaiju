@@ -15,6 +15,7 @@ parallelDL=5
 parallelConversions=5
 exponentSA=3
 exponentSA_NR=5
+DL=1
 
 usage() {
 echo
@@ -39,6 +40,8 @@ echo
 echo -t X  set number of parallel threads for index construction to X \(default:5\)
 echo       The more threads are used, the higher the memory requirement becomes.
 echo
+echo --noDL  do not download files, but use the existing files in the folder.
+echo
 }
 
 while :; do
@@ -56,6 +59,9 @@ while :; do
                 usage
                 exit 1
             fi
+            ;;
+        --noDL)
+            DL=0
             ;;
         -n|--nr)
             db_nr=1
@@ -118,21 +124,27 @@ fi
 #good to go
 set -e
 
-echo Downloading file taxdump.tar.gz
-wget $wgetProgress -N -c -nv ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz
+if [ $DL -eq 1 ]
+then
+	echo Downloading file taxdump.tar.gz
+	wget $wgetProgress -N -nv ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz
+fi
 echo Extracting file taxdump.tar.gz
 tar xf taxdump.tar.gz nodes.dmp names.dmp merged.dmp
 
 if [ $db_nr -eq 1 -o $db_euk -eq 1 ]
 then
-	echo Downloading file nr.gz
-	wget $wgetProgress -N -c -nv ftp://ftp.ncbi.nih.gov/blast/db/FASTA/nr.gz
-	echo Downloading file prot.accession2taxid.gz
-	wget $wgetProgress -N -c -nv ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/prot.accession2taxid.gz
+	if [ $DL -eq 1 ]
+	then
+		echo Downloading file nr.gz
+		wget $wgetProgress -N -nv ftp://ftp.ncbi.nih.gov/blast/db/FASTA/nr.gz
+		echo Downloading file prot.accession2taxid.gz
+		wget $wgetProgress -N -nv ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/prot.accession2taxid.gz
+	fi
 	if [ -r nr.gz -a -r prot.accession2taxid.gz ]
 	then
 		echo Unpacking prot.accession2taxid.gz
-		gunzip -f prot.accession2taxid.gz
+		gunzip -c prot.accession2taxid.gz > prot.accession2taxid
 		echo Converting NR file to Kaiju database
 		if [ $db_euk -eq 1 ]
 		then
@@ -162,32 +174,38 @@ else
 	mkdir -p genomes
 	if [ $db_refseq -eq 1 ]
 	then
-		echo Downloading file list for complete genomes from RefSeq...
-		wget -nv -O assembly_summary.archaea.txt ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/archaea/assembly_summary.txt
-		wget -nv -O assembly_summary.bacteria.txt ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/bacteria/assembly_summary.txt
-		awk 'BEGIN{FS="\t";OFS="/"}$12=="Complete Genome" && $11=="latest"{l=split($20,a,"/");print $20,a[l]"_genomic.gbff.gz"}' assembly_summary.bacteria.txt assembly_summary.archaea.txt > downloadlist.txt
-		nfiles=`cat downloadlist.txt| wc -l`
-		echo Downloading $nfiles genome files from NCBI FTP server. This may take a while...
-		cat downloadlist.txt | xargs -P $parallelDL -n 1 wget -P genomes -c -nv
-
-		if [ $db_viruses -eq 1 ]
+		if [ $DL -eq 1 ]
 		then
-			echo Downloading virus genomes from RefSeq...
-			wget $wgetProgress -N -c -nv -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.1.genomic.gbff.gz
-			wget $wgetProgress -N -c -nv -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.2.genomic.gbff.gz
+			echo Downloading file list for complete genomes from RefSeq...
+			wget -nv -O assembly_summary.archaea.txt ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/archaea/assembly_summary.txt
+			wget -nv -O assembly_summary.bacteria.txt ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/bacteria/assembly_summary.txt
+			awk 'BEGIN{FS="\t";OFS="/"}$12=="Complete Genome" && $11=="latest"{l=split($20,a,"/");print $20,a[l]"_genomic.gbff.gz"}' assembly_summary.bacteria.txt assembly_summary.archaea.txt > downloadlist.txt
+			nfiles=`cat downloadlist.txt| wc -l`
+			echo Downloading $nfiles genome files from NCBI FTP server. This may take a while...
+			cat downloadlist.txt | xargs -P $parallelDL -n 1 wget -P genomes -nv
+
+			if [ $db_viruses -eq 1 ]
+			then
+				echo Downloading virus genomes from RefSeq...
+				wget $wgetProgress -N -nv -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.1.genomic.gbff.gz
+				wget $wgetProgress -N -nv -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.2.genomic.gbff.gz
+			fi
 		fi
 
 		echo Extracting protein sequences from downloaded files...
 		find ./genomes -name "*.gbff.gz" | xargs -n 1 -P $parallelConversions -i $SCRIPTDIR/gbk2faa.pl '{}' '{}'.faa
 	else # must be proGenomes
-		echo Downloading proGenomes database...
-		wget $wgetProgress -N -c -nv -P genomes http://progenomes.embl.de/data/repGenomes/representatives.proteins.fasta.gz
-
-		if [ $db_viruses -eq 1 ]
+		if [ $DL -eq 1 ]
 		then
-			echo Downloading virus genomes from RefSeq...
-			wget $wgetProgress -N -c -nv -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.1.genomic.gbff.gz
-			wget $wgetProgress -N -c -nv -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.2.genomic.gbff.gz
+			echo Downloading proGenomes database...
+			wget $wgetProgress -N -nv -P genomes http://progenomes.embl.de/data/repGenomes/representatives.proteins.fasta.gz
+
+			if [ $db_viruses -eq 1 ]
+			then
+				echo Downloading virus genomes from RefSeq...
+				wget $wgetProgress -N -nv -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.1.genomic.gbff.gz
+				wget $wgetProgress -N -nv -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.2.genomic.gbff.gz
+			fi
 		fi
 
 		echo Extracting protein sequences from downloaded files...
