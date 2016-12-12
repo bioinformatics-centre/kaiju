@@ -184,7 +184,6 @@ kaiju -z 25 -t nodes.dmp -f kaiju_db.fmi -i inputfile.fastq -o kaiju.out
 ```
 
 ###Run modes
-
 The default run mode is **MEM**, which only considers exact matches.
 For using the **Greedy** mode, which allows mismatches, set the mode via the option `-a` and the number
 of allowed substitutions using option `-e`:
@@ -220,7 +219,7 @@ database and the chosen options when running Kaiju. These choices also affect
 the speed and memory usage of Kaiju.
 
 For highest sensitivity, it is recommended to use the _nr_ database (+eukaryotes)
-as a reference database because it is the most comprehensive set of protein 
+as a reference database because it is the most comprehensive set of protein
 sequences. Alternatively, use proGenomes over Refseq for increased sensitivity.
 
 Additionally, Greedy run mode, for example, with 5 allowed mismatches,
@@ -290,19 +289,22 @@ Then both files can be merged:
 ```
 mergeOutputs -i kaiju.out.sort -j kraken.out.sort -o combined.out -v
 ```
-Again, process substitution can be used without creating intermediate files:
+Again, process substitution can be used for sorting without creating intermediate files:
 ```
 mergeOutputs -i <(sort -k2,2 kaiju.out) -j <(sort -k2,2 kraken.out) -o combined.out -v
 ```
 The output file will be in the same column format as the input files (but only
 contain the first three columns) and it will have the same length as the input
-files (which have to be of same length).  In the case of conflicting taxon
-identifiers in both files, `mergeOutputs` will use the identifier found in the
+files (which also have to be of same length).  In the case of conflicting taxon
+identifiers for a classified read in both input files, `mergeOutputs` will use the identifier found in the
 first input file (specified by `-i`).  This behaviour can be changed using the
-`-c` option, which can take the values `1` (default), `2` (use identifier from
-the second file) or `lca`, which determines and prints the least common
-ancestor of the taxon identifiers from both files. Option `lca` requires to
-specify the nodes.dmp file using the `-t` option.
+`-c` option, which can take four possible values:
+- `1`: use taxon identifier from the first input file (default)
+- `2`: use taxon identifier from the second input file
+- `lca`: use the least common ancestor of the taxon identifiers from both files.
+- `lowest`: use the lowest ranking of the two taxon identifiers iff they are within the same lineage. Otherwise use the LCA.
+
+Options `lca` and `lowest` require the path to the file `nodes.dmp` by using the `-t` option.
 
 ###KaijuX and KaijuP
 
