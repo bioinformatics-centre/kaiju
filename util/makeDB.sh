@@ -129,6 +129,7 @@ then
 	echo Downloading file taxdump.tar.gz
 	wget $wgetProgress -N -nv ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz
 fi
+[ -r taxdump.tar.gz ] || { echo Missing file taxdump.tgz; exit 1; }
 echo Extracting file taxdump.tar.gz
 tar xf taxdump.tar.gz nodes.dmp names.dmp merged.dmp
 
@@ -141,33 +142,32 @@ then
 		echo Downloading file prot.accession2taxid.gz
 		wget $wgetProgress -N -nv ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/prot.accession2taxid.gz
 	fi
-	if [ -r nr.gz -a -r prot.accession2taxid.gz ]
+	[ -r nr.gz ] || { echo Missing file nr.gz; exit 1; }
+	[ -r prot.accession2taxid.gz ] || { echo Missing file prot.accession2taxid.gz; exit 1; }
+	echo Unpacking prot.accession2taxid.gz
+	gunzip -c prot.accession2taxid.gz > prot.accession2taxid
+	echo Converting NR file to Kaiju database
+	if [ $db_euk -eq 1 ]
 	then
-		echo Unpacking prot.accession2taxid.gz
-		gunzip -c prot.accession2taxid.gz > prot.accession2taxid
-		echo Converting NR file to Kaiju database
-		if [ $db_euk -eq 1 ]
-		then
-			gunzip -c nr.gz | $SCRIPTDIR/convertNR -t nodes.dmp -g prot.accession2taxid -c -o kaiju_db_nr_euk.faa -l $SCRIPTDIR/taxonlist.tsv
-			echo Creating BWT from Kaiju database
-			$SCRIPTDIR/mkbwt -e $exponentSA_NR -n $threadsBWT -a ACDEFGHIKLMNPQRSTVWY -o kaiju_db_nr_euk kaiju_db_nr_euk.faa
-			echo Creating FM-index
-			$SCRIPTDIR/mkfmi kaiju_db_nr_euk
-			echo Done!
-			echo Kaiju only needs the files kaiju_db_nr_euk.fmi, nodes.dmp, and names.dmp.
-			echo The remaining files can be deleted.
-			echo
-		else
-			gunzip -c nr.gz | $SCRIPTDIR/convertNR -t nodes.dmp -g prot.accession2taxid -c -o kaiju_db_nr.faa
-			echo Creating BWT from Kaiju database
-			$SCRIPTDIR/mkbwt -e $exponentSA_NR -n $threadsBWT -a ACDEFGHIKLMNPQRSTVWY -o kaiju_db_nr kaiju_db_nr.faa
-			echo Creating FM-index
-			$SCRIPTDIR/mkfmi kaiju_db_nr
-			echo Done!
-			echo Kaiju only needs the files kaiju_db_nr.fmi, nodes.dmp, and names.dmp.
-			echo The remaining files can be deleted.
-			echo
-		fi
+		gunzip -c nr.gz | $SCRIPTDIR/convertNR -t nodes.dmp -g prot.accession2taxid -c -o kaiju_db_nr_euk.faa -l $SCRIPTDIR/taxonlist.tsv
+		echo Creating BWT from Kaiju database
+		$SCRIPTDIR/mkbwt -e $exponentSA_NR -n $threadsBWT -a ACDEFGHIKLMNPQRSTVWY -o kaiju_db_nr_euk kaiju_db_nr_euk.faa
+		echo Creating FM-index
+		$SCRIPTDIR/mkfmi kaiju_db_nr_euk
+		echo Done!
+		echo Kaiju only needs the files kaiju_db_nr_euk.fmi, nodes.dmp, and names.dmp.
+		echo The remaining files can be deleted.
+		echo
+	else
+		gunzip -c nr.gz | $SCRIPTDIR/convertNR -t nodes.dmp -g prot.accession2taxid -c -o kaiju_db_nr.faa
+		echo Creating BWT from Kaiju database
+		$SCRIPTDIR/mkbwt -e $exponentSA_NR -n $threadsBWT -a ACDEFGHIKLMNPQRSTVWY -o kaiju_db_nr kaiju_db_nr.faa
+		echo Creating FM-index
+		$SCRIPTDIR/mkfmi kaiju_db_nr
+		echo Done!
+		echo Kaiju only needs the files kaiju_db_nr.fmi, nodes.dmp, and names.dmp.
+		echo The remaining files can be deleted.
+		echo
 	fi
 else
 	echo Creating directory genomes/
@@ -183,7 +183,6 @@ else
 			nfiles=`cat downloadlist.txt| wc -l`
 			echo Downloading $nfiles genome files from NCBI FTP server. This may take a while...
 			cat downloadlist.txt | xargs -P $parallelDL -n 1 wget -P genomes -nv
-
 			if [ $db_viruses -eq 1 ]
 			then
 				echo Downloading virus genomes from RefSeq...
@@ -191,6 +190,8 @@ else
 				wget $wgetProgress -N -nv -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.2.genomic.gbff.gz
 			fi
 		fi
+		if [ $db_viruses -eq 1 ]; then if [ ! -r genomes/viral.1.genomic.gbff.gz ]; then echo Missing file viral.1.genomic.gbff.gz; exit 1; fi; fi
+		if [ $db_viruses -eq 1 ]; then if [ ! -r genomes/viral.2.genomic.gbff.gz ]; then echo Missing file viral.2.genomic.gbff.gz; exit 1; fi; fi
 
 		echo Extracting protein sequences from downloaded files...
 		find ./genomes -name "*.gbff.gz" | xargs -n 1 -P $parallelConversions -i $SCRIPTDIR/gbk2faa.pl '{}' '{}'.faa
@@ -199,7 +200,6 @@ else
 		then
 			echo Downloading proGenomes database...
 			wget $wgetProgress -N -nv -P genomes http://progenomes.embl.de/data/repGenomes/representatives.proteins.fasta.gz
-
 			if [ $db_viruses -eq 1 ]
 			then
 				echo Downloading virus genomes from RefSeq...
@@ -207,6 +207,9 @@ else
 				wget $wgetProgress -N -nv -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.2.genomic.gbff.gz
 			fi
 		fi
+		if [ $db_viruses -eq 1 ]; then if [ ! -r genomes/viral.1.genomic.gbff.gz ]; then echo Missing file viral.1.genomic.gbff.gz; exit 1; fi; fi
+		if [ $db_viruses -eq 1 ]; then if [ ! -r genomes/viral.2.genomic.gbff.gz ]; then echo Missing file viral.2.genomic.gbff.gz; exit 1; fi; fi
+
 
 		echo Extracting protein sequences from downloaded files...
 		gunzip -c genomes/representatives.proteins.fasta.gz | perl -lne 'if(/>(\d+)\./){print ">",++$c,"_",$1}else{y/BZ/DE/;s/[^ARNDCQEGHILKMFPSTWYV]//gi;print if length}' > genomes/representatives.proteins.fasta.gz.faa

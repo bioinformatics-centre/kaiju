@@ -190,7 +190,7 @@ of allowed substitutions using option `-e`:
 ```
 kaiju -t nodes.dmp -f kaiju_db.fmi -i inputfile.fastq -a greedy -e 5
 ```
-The cutoffs for minimum required match length and match score can be changed using the options `-m` and `-s`.
+The cutoffs for minimum required match length and match score can be changed using the options `-m` (default: 11) and `-s` (default: 65).
 
 If the input sequences are already protein sequences, use option `-p` to disable translation of the input.
 
