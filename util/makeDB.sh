@@ -18,29 +18,32 @@ exponentSA_NR=5
 DL=1
 
 usage() {
+s=" "
+tab="    "
 echo
 echo This program creates a protein reference database and index for Kaiju.
 echo Several source databases can be used and one of these options must be set:
 echo
-echo -r    all complete bacterial and archaeal genomes in the NCBI RefSeq database
+echo -e "$s" -r  all complete bacterial and archaeal genomes in the NCBI RefSeq database
 echo
-echo -p    all proteins belonging to the set of representative genomes
-echo       from the proGenomes database
+echo -e "$s" -p  all proteins belonging to the set of representative genomes
+echo -e "$tab"   from the proGenomes database
 echo
-echo -n    NCBI BLAST non-redundant protein database \"nr\":
-echo       only Archaea, bacteria, and viruses
+echo -e "$s" -n  NCBI BLAST non-redundant protein database \"nr\":
+echo -e "$tab"   only Archaea, bacteria, and viruses
 echo
-echo -e    NCBI BLAST non-redundant protein database \"nr\":
-echo  	  	like -n, but additionally including fungi and microbial eukaryotes
+echo -e "$s" -e   NCBI BLAST non-redundant protein database \"nr\":
+echo -e "$tab"   like -n, but additionally including fungi and microbial eukaryotes
 echo
 echo Additional options:
-echo -v    additionally add viral genomes from RefSeq,
-echo       when using the RefSeq or proGenomes database
 echo
-echo -t X  set number of parallel threads for index construction to X \(default:5\)
-echo       The more threads are used, the higher the memory requirement becomes.
+echo -e "$s" -v    additionally add viral genomes from RefSeq,
+echo -e "$tab"   when using the RefSeq or proGenomes database
 echo
-echo --noDL  do not download files, but use the existing files in the folder.
+echo -e "$s" -t X  set number of parallel threads for index construction to X \(default:5\)
+echo -e "$tab"   The more threads are used, the higher the memory requirement becomes.
+echo
+echo -e "$s" --noDL  do not download files, but use the existing files in the folder.
 echo
 }
 
@@ -91,7 +94,7 @@ while :; do
     shift
 done
 
-[ $db_refseq -eq 1 -o $db_progenomes -eq 1 -o $db_nr -eq 1 -o $db_euk -eq 1 ] || { echo "Error: Use one of the options -r, -p, -n pr -e"; usage; exit 1; }
+[ $db_refseq -eq 1 -o $db_progenomes -eq 1 -o $db_nr -eq 1 -o $db_euk -eq 1 ] || { echo "Error: Use one of the options -r, -p, -n or -e"; usage; exit 1; }
 
 #check if necessary programs are in the PATH
 command -v awk >/dev/null 2>/dev/null || { echo Error: awk not found; exit 1; }
