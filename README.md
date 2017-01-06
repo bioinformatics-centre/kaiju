@@ -268,13 +268,15 @@ kaijuReport -t nodes.dmp -n names.dmp -i kaiju.out -r genus -m 1 -u -o kaiju.out
 ```
 
 ###Adding taxa names
-The program `addTaxonNames` adds the name that corresponds to the taxon id in
+The program `addTaxonNames` appends the name that corresponds to the taxon id in
 Kaiju's output file as a last column to the output.
 ```
-addTaxonNames -t nodes.dmp -n names.dmp -i kaiju.out -o kaiju-names.out
+addTaxonNames -t nodes.dmp -n names.dmp -i kaiju.out -o kaiju.names.out
 ```
-Option `-u` will omit unclassified reads.
-Option `-p` will print the full taxon path instead of just the taxon name.
+Option `-u` will omit unclassified reads.  
+Option `-p` will print the full taxon path instead of just the taxon name.  
+Option `-r` will print the path containing only to the specified ranks. For example,
+`-r phylum,genus` will append the names of phylum and genus to the end of each line.
 
 ###Merging outputs
 The program `mergeOutputs` can merge two tab-separated output files in the
