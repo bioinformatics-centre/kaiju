@@ -142,91 +142,99 @@ int main(int argc, char** argv) {
 		size_t found = line.find('\t');
 		found = line.find('\t',found+1);
 		size_t end = line.find_first_not_of("0123456789",found+1);
+		uint64_t taxonid;
 		try {
-			uint64_t taxonid = stoul(line.substr(found,end-found));
-			if(nodes.count(taxonid)==0) {
-				std::cerr << "Warning: Taxon ID " << taxonid << " in output file is not contained in taxonomic tree file "<< nodes_filename << ".\n";
-				continue;
-			}
-			if(node2name.count(taxonid)==0) {
-				std::cerr << "Warning: Taxon ID " << taxonid << " in output file is not found in file "<< names_filename << ".\n";
-				continue;
-			}
-			if(full_path || specified_ranks) {
-				if(node2path.count(taxonid)>0) { // look if path is already saved
-					*out_stream << line << '\t' << node2path.at(taxonid) << "\n";
-					continue;
-				}
-				std::deque<std::string> lineage; // for full_path
-				std::map<std::string,std::string> curr_rank_values;
-				if(specified_ranks) { //set the values for all specified ranks to NA, which will be overwritten by the actual values if they are found
-					for(auto it : ranks_list) {
-						curr_rank_values.emplace(it,"NA");
-					}
-				}
-				//  go from leaf to root starting at taxonid and gather values for ranks
-				uint64_t id = taxonid;
-				while(nodes.count(id)>0 && id != nodes.at(id)) {
-					std::string taxon_name;
-					if(specified_ranks) {
-						if(node2rank.count(id)==0 || node2rank.at(id)=="no rank") {  // no rank name
-							id = nodes.at(id);
-							continue;
-						}
-						std::string rank_name = node2rank.at(id);
-						if(ranks_set.count(rank_name)==0) { // rank name is not in specified list of ranks
-							id = nodes.at(id);
-							continue;
-						}
-						if(node2name.count(id)==0) {
-							std::cerr << "Warning: Taxon ID " << id << " is not found in file "<< names_filename << ".\n";
-							taxon_name = "no name";
-						}
-						else {
-							taxon_name = node2name.at(id);
-						}
-						curr_rank_values[rank_name] = taxon_name;
-					}
-					else { //full path
-						if(node2name.count(id)==0) {
-							std::cerr << "Warning: Taxon ID " << id << " is not found in file "<< names_filename << ".\n";
-							taxon_name = "no name";
-						}
-						else {
-							taxon_name = node2name.at(id);
-						}
-						lineage.push_front(taxon_name);
-					}
-					id = nodes.at(id);
-				} // end while
-
-				// assemble lineage into one string
-				std::string lineage_text;
-				if(specified_ranks) {
-					for(auto it : ranks_list) {
-						lineage_text += curr_rank_values[it];
-						lineage_text += "; ";
-					}
-				}
-				else { // full path
-					for(auto  itl : lineage) {
-						lineage_text += itl;
-						lineage_text += "; ";
-					}
-				}
-				// now lineage_text contains the final lineage for the taxon
-				node2path.emplace(taxonid,lineage_text);
-				*out_stream << line << '\t' << lineage_text << "\n";
-			}
-			else {
-				*out_stream << line << '\t' << node2name.at(taxonid) << "\n";
-			}
+			taxonid = stoul(line.substr(found,end-found));
 		}
 		catch(const std::invalid_argument& ia) {
-			std::cerr << "Found bad taxon id in line: " << line << std::endl;
+			std::cerr << "Error: Found bad taxon id in line: " << line << std::endl;
+			*out_stream << line << "\n";
+			continue;
 		}
 		catch (const std::out_of_range& oor) {
-			std::cerr << "Found bad taxon id (out of range error) in line: " << line << std::endl;
+			std::cerr << "Error: Found bad taxon id (out of range error) in line: " << line << std::endl;
+			*out_stream << line << "\n";
+			continue;
+		}
+
+		if(nodes.count(taxonid)==0) {
+			std::cerr << "Warning: Taxon ID " << taxonid << " in output file is not contained in taxonomic tree file "<< nodes_filename << ".\n";
+			*out_stream << line << "\n";
+			continue;
+		}
+		if(node2name.count(taxonid)==0) {
+			std::cerr << "Warning: Taxon ID " << taxonid << " in output file is not found in file "<< names_filename << ".\n";
+			*out_stream << line << "\n";
+			continue;
+		}
+		if(full_path || specified_ranks) {
+			if(node2path.count(taxonid)>0) { // look if path is already saved
+				*out_stream << line << '\t' << node2path.at(taxonid) << "\n";
+				continue;
+			}
+			std::deque<std::string> lineage; // for full_path
+			std::map<std::string,std::string> curr_rank_values;
+			if(specified_ranks) { //set the values for all specified ranks to NA, which will be overwritten by the actual values if they are found
+				for(auto it : ranks_list) {
+					curr_rank_values.emplace(it,"NA");
+				}
+			}
+			//  go from leaf to root starting at taxonid and gather values for ranks
+			uint64_t id = taxonid;
+			while(nodes.count(id)>0 && id != nodes.at(id)) {
+				std::string taxon_name;
+				if(specified_ranks) {
+					if(node2rank.count(id)==0 || node2rank.at(id)=="no rank") {  // no rank name
+						id = nodes.at(id);
+						continue;
+					}
+					std::string rank_name = node2rank.at(id);
+					if(ranks_set.count(rank_name)==0) { // rank name is not in specified list of ranks
+						id = nodes.at(id);
+						continue;
+					}
+					if(node2name.count(id)==0) {
+						std::cerr << "Warning: Taxon ID " << id << " is not found in file "<< names_filename << ".\n";
+						taxon_name = "no name";
+					}
+					else {
+						taxon_name = node2name.at(id);
+					}
+					curr_rank_values[rank_name] = taxon_name;
+				}
+				else { //full path
+					if(node2name.count(id)==0) {
+						std::cerr << "Warning: Taxon ID " << id << " is not found in file "<< names_filename << ".\n";
+						taxon_name = "no name";
+					}
+					else {
+						taxon_name = node2name.at(id);
+					}
+					lineage.push_front(taxon_name);
+				}
+				id = nodes.at(id);
+			} // end while
+
+			// assemble lineage into one string
+			std::string lineage_text;
+			if(specified_ranks) {
+				for(auto it : ranks_list) {
+					lineage_text += curr_rank_values[it];
+					lineage_text += "; ";
+				}
+			}
+			else { // full path
+				for(auto  itl : lineage) {
+					lineage_text += itl;
+					lineage_text += "; ";
+				}
+			}
+			// now lineage_text contains the final lineage for the taxon
+			node2path.emplace(taxonid,lineage_text);
+			*out_stream << line << '\t' << lineage_text << "\n";
+		}
+		else {
+			*out_stream << line << '\t' << node2name.at(taxonid) << "\n";
 		}
 	}  // end while getline
 
