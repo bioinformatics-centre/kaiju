@@ -266,6 +266,7 @@ or for showing genera comprising at least 1 percent of all classified reads:
 ```
 kaijuReport -t nodes.dmp -n names.dmp -i kaiju.out -r genus -m 1 -u -o kaiju.out.summary
 ```
+Option `-p` will print the full taxon path instead of just the taxon name.
 
 ###Adding taxa names
 The program `addTaxonNames` appends the name that corresponds to the taxon id in

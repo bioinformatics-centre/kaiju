@@ -16,6 +16,7 @@
 #include <functional>
 #include <utility>
 #include <stdexcept>
+#include <inttypes.h>
 
 #include "version.hpp"
 #include "util.hpp"
@@ -39,13 +40,14 @@ int main(int argc, char** argv) {
 	int min_read_count = 0;
 
 	bool filter_unclassified = false;
+	bool full_path = false;
 	bool verbose = false;
 	std::string rank;
 
 	// ------------------------------------------- START -------------------------------------------
 	// Read command line params
 	int c;
-	while ((c = getopt (argc, argv, "hvur:n:t:i:o:m:c:")) != -1) {
+	while ((c = getopt (argc, argv, "hpvur:n:t:i:o:m:c:")) != -1) {
 		switch (c)  {
 			case 'h':
 				usage(argv[0]);
@@ -55,6 +57,8 @@ int main(int argc, char** argv) {
 				filter_unclassified = true; break;
 			case 'r':
 				rank = optarg; break;
+			case 'p':
+				full_path = true; break;
 			case 'o':
 				out_filename = optarg; break;
 			case 'n':
@@ -158,10 +162,10 @@ int main(int argc, char** argv) {
 				node2hitcount[taxonid] = 1;
 			}
 		catch(const std::invalid_argument& ia) {
-			std::cerr << "Found bad taxon id in line: " << line << std::endl;
+			std::cerr << "Error: Found bad taxon id in line: " << line << std::endl;
 		}
 		catch (const std::out_of_range& oor) {
-			std::cerr << "Found bad taxon id (out of range error) in line: " << line << std::endl;
+			std::cerr << "Error: Found bad taxon id (out of range error) in line: " << line << std::endl;
 		}
 	}
 	if(in_file.is_open()) in_file.close();
@@ -199,7 +203,7 @@ int main(int argc, char** argv) {
 			if((int)count >= min_read_count) {
 				float percent = (float)it.second/(float)totalreads*100;
 				if(percent >= min_percent)
-					sorted_count2ids.insert(std::pair<uint64_t,uint64_t>(count,id));
+					sorted_count2ids.emplace(count,id);
 				else
 					below_percent += count;
 			} else {
@@ -220,30 +224,33 @@ int main(int argc, char** argv) {
 	above -= viruses;
 
 	for(auto it : sorted_count2ids) {
-			std::string name;
-			if(node2name.count(it.second)==0) {
-				std::cerr << "Warning: Taxon ID " << it.second << " in output file is not contained in names file "<< names_filename << ".\n";
-				name = "taxonid:"; name += std::to_string(it.second);
+		std::string name;
+		if(full_path) {
+			uint64_t id = it.second;
+			while(nodes.count(id)>0 && id != nodes.at(id)) {
+				name = getTaxonNameFromId(node2name, id, names_filename) + "; " + name;
+				id = nodes.at(id);
 			}
-			else {
-				name = node2name[it.second];
-			}
-		float percent = (float)it.first/(float)totalreads*100;
-		fprintf(report_file,"%9.6f\t%9lu\t%s\n", percent, it.first, name.c_str() );
+		}
+		else {
+			name = getTaxonNameFromId(node2name, it.second, names_filename);
+		}
+		float percent = (float)it.first/(float)totalreads*100.0f;
+		fprintf(report_file,"%9.6f\t%9" PRIu64 "\t%s\n", percent, it.first, name.c_str() );
 	}
 
 	fprintf(report_file,"-------------------------------------------\n");
-	fprintf(report_file,"%9.6f\t%9lu\tViruses\n", (float)viruses/(float)totalreads*100.0, viruses);
-	fprintf(report_file,"%9.6f\t%9lu\tclassified above rank %s \n", (float)above/(float)totalreads*100.0, above, rank.c_str());
+	fprintf(report_file,"%9.6f\t%9" PRIu64 "\tViruses\n", (float)viruses/(float)totalreads*100.0, viruses);
+	fprintf(report_file,"%9.6f\t%9" PRIu64 "\tclassified above rank %s \n", (float)above/(float)totalreads*100.0, above, rank.c_str());
 	if(min_read_count > 0)
-		fprintf(report_file,"%9.6f\t%9lu\tbelong to a %s having less than %i reads\n", (float)below_reads/(float)totalreads*100.0, below_reads, rank.c_str(), min_read_count);
+		fprintf(report_file,"%9.6f\t%9" PRIu64 "\tbelong to a %s having less than %i reads\n", (float)below_reads/(float)totalreads*100.0, below_reads, rank.c_str(), min_read_count);
 	if(min_percent > 0.0)
-		fprintf(report_file,"%9.6f\t%9lu\tbelong to a %s with less than %g%% of all reads\n", (float)below_percent/(float)totalreads*100.0, below_percent, rank.c_str(), min_percent);
+		fprintf(report_file,"%9.6f\t%9" PRIu64 "\tbelong to a %s with less than %g%% of all reads\n", (float)below_percent/(float)totalreads*100.0, below_percent, rank.c_str(), min_percent);
 	fprintf(report_file,"-------------------------------------------\n");
 	if(filter_unclassified)
-		fprintf(report_file,"%9.6f\t%9lu\tunclassified\n", (float)unclassified/(float)(totalreads+unclassified)*100.0, unclassified );
+		fprintf(report_file,"%9.6f\t%9" PRIu64 "\tunclassified\n", (float)unclassified/(float)(totalreads+unclassified)*100.0, unclassified );
 	else
-		fprintf(report_file,"%9.6f\t%9lu\tunclassified\n", (float)unclassified/(float)(totalreads)*100.0, unclassified );
+		fprintf(report_file,"%9.6f\t%9" PRIu64 "\tunclassified\n", (float)unclassified/(float)(totalreads)*100.0, unclassified );
 
 	fclose(report_file);
 
@@ -269,6 +276,7 @@ void usage(char *progname) {
 	fprintf(stderr, "   -m FLOAT      Number in [0, 100], denoting the minimum required percentage for the taxon to be reported (default: 0.0)\n");
 	fprintf(stderr, "   -c INT        Integer number > 0, denoting the minimum required number of reads for the taxon to be reported (default: 0)\n");
 	fprintf(stderr, "   -u            Unclassified reads are not counted for the total reads when calculating percentages for classified reads.\n");
+	fprintf(stderr, "   -p            Print full taxon path.\n");
 	fprintf(stderr, "   -v            Enable verbose output.\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Only one of the options -m and -c may be used at a time.\n");

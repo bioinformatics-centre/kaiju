@@ -193,23 +193,11 @@ int main(int argc, char** argv) {
 						id = nodes.at(id);
 						continue;
 					}
-					if(node2name.count(id)==0) {
-						std::cerr << "Warning: Taxon ID " << id << " is not found in file "<< names_filename << ".\n";
-						taxon_name = "no name";
-					}
-					else {
-						taxon_name = node2name.at(id);
-					}
+					taxon_name = getTaxonNameFromId(node2name, id, names_filename);
 					curr_rank_values[rank_name] = taxon_name;
 				}
 				else { //full path
-					if(node2name.count(id)==0) {
-						std::cerr << "Warning: Taxon ID " << id << " is not found in file "<< names_filename << ".\n";
-						taxon_name = "no name";
-					}
-					else {
-						taxon_name = node2name.at(id);
-					}
+					taxon_name = getTaxonNameFromId(node2name, id, names_filename);
 					lineage.push_front(taxon_name);
 				}
 				id = nodes.at(id);

@@ -18,5 +18,6 @@ std::string getCurrentTime();
 void parseNodesDmp(std::unordered_map<uint64_t,uint64_t> &, std::ifstream &);
 void parseNodesDmpWithRank(std::unordered_map<uint64_t,uint64_t> &, std::unordered_map<uint64_t,std::string> &, std::ifstream &);
 void parseNamesDmp(std::unordered_map<uint64_t,std::string> &, std::ifstream &);
+std::string getTaxonNameFromId(std::unordered_map<uint64_t,std::string> &, uint64_t, std::string &);
 
 #endif

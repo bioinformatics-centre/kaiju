@@ -105,3 +105,17 @@ void parseNamesDmp(std::unordered_map<uint64_t,std::string> & names, std::ifstre
 
 
 }
+
+
+std::string getTaxonNameFromId(std::unordered_map<uint64_t,std::string> & node2name, uint64_t id, std::string & names_filename) {
+	std::string taxon_name;
+	if(node2name.count(id)==0) {
+		std::cerr << "Warning: Taxon ID " << id << " is not found in file "<< names_filename << "." << std::endl;
+		taxon_name = "taxonid:"; taxon_name += std::to_string(id);
+	}
+	else {
+		taxon_name = node2name.at(id);
+	}
+	return taxon_name;
+}
+
