@@ -140,6 +140,7 @@ int main(int argc, char** argv) {
 	std::map<uint64_t, uint64_t> node2hitcount;
 	uint64_t unclassified = 0;
 	uint64_t totalreads = 0;
+	uint64_t total_virus_reads = 0;
 	std::string line;
 	while(std::getline(in_file,line)) {
 
@@ -155,6 +156,9 @@ int main(int argc, char** argv) {
 			if(nodes.count(taxonid)==0) {
 				std::cerr << "Warning: Taxon ID " << taxonid << " in output file is not contained in taxonomic tree file "<< nodes_filename << ".\n";
 				continue;
+			}
+			if(is_ancestor(nodes,taxonid_viruses,taxonid)) {
+				total_virus_reads++;
 			}
 			if(node2hitcount.count(taxonid)>0)
 				node2hitcount[taxonid]++;
@@ -184,44 +188,53 @@ int main(int argc, char** argv) {
 	if(filter_unclassified)
 		totalreads -= unclassified;
 
-	// go through node2summarizedhits and for each node check if rank is right, then print count
-	uint64_t sum = 0;
-	uint64_t below_percent = 0;
-	uint64_t below_reads = 0;
-	if(verbose) std::cerr << "Writing to file " << out_filename << std::endl;
-	FILE * report_file = fopen(out_filename.c_str(),"w");
-	if(report_file==NULL) {  std::cerr << "Could not open file " << out_filename << " for writing" << std::endl; exit(EXIT_FAILURE); }
-	fprintf(report_file,"        %%\t    reads\t%s\n",rank.c_str());
-	fprintf(report_file,"-------------------------------------------\n");
+
+	// Go through node2summarizedhits and check each node at the specified rank
+	// if it is above threshold, then add it to a sorted map for later printing
+	// Viruses are omitted here.
+	uint64_t reads_at_rank_sum = 0;
+	uint64_t reads_at_rank_below_percent_threshold = 0;
+	uint64_t reads_at_rank_below_count_threshold = 0;
 
 	std::multimap<uint64_t,uint64_t ,std::greater<uint64_t>> sorted_count2ids;
 	for(auto it : node2summarizedhits) {
 		uint64_t id = it.first;
 		uint64_t count = it.second;
-		assert(node2rank.count(id)>0);
-		if(rank.compare(node2rank[id])==0) {
+		if(is_ancestor(nodes,taxonid_viruses,id)) {
+			continue;
+		}
+		if(node2rank.count(id)==0) { std::cerr << "Error: No rank specified for taxonid " << id << std::endl; continue; }
+		if(rank == node2rank[id]) {
 			if((int)count >= min_read_count) {
 				float percent = (float)it.second/(float)totalreads*100;
 				if(percent >= min_percent)
 					sorted_count2ids.emplace(count,id);
 				else
-					below_percent += count;
+					reads_at_rank_below_percent_threshold += count;
 			} else {
-				below_reads += count;
+				reads_at_rank_below_count_threshold += count;
 			}
-			sum += count;
+			reads_at_rank_sum += count;
 		}
 	}
-	if(filter_unclassified)
-		assert(totalreads >= sum);
-	else
-		assert(totalreads >= unclassified + sum);
 
-	uint64_t above = (filter_unclassified) ? totalreads - sum  : totalreads - unclassified - sum;
+	if(filter_unclassified)
+		assert(totalreads >= reads_at_rank_sum);
+	else
+		assert(totalreads >= unclassified + reads_at_rank_sum);
 
 	uint64_t viruses = (node2summarizedhits.count(taxonid_viruses) > 0) ?  node2summarizedhits[taxonid_viruses] : 0;
+	assert(total_virus_reads==viruses);
 
+	uint64_t above = (filter_unclassified) ? totalreads - reads_at_rank_sum  : totalreads - unclassified - reads_at_rank_sum;
 	above -= viruses;
+
+	/* ---------- print output ---------------- */
+	if(verbose) std::cerr << "Writing to file " << out_filename << std::endl;
+	FILE * report_file = fopen(out_filename.c_str(),"w");
+	if(report_file==NULL) {  std::cerr << "Could not open file " << out_filename << " for writing" << std::endl; exit(EXIT_FAILURE); }
+	fprintf(report_file,"        %%\t    reads\t%s\n",rank.c_str());
+	fprintf(report_file,"-------------------------------------------\n");
 
 	for(auto it : sorted_count2ids) {
 		std::string name;
@@ -241,11 +254,11 @@ int main(int argc, char** argv) {
 
 	fprintf(report_file,"-------------------------------------------\n");
 	fprintf(report_file,"%9.6f\t%9" PRIu64 "\tViruses\n", (float)viruses/(float)totalreads*100.0, viruses);
-	fprintf(report_file,"%9.6f\t%9" PRIu64 "\tclassified above rank %s \n", (float)above/(float)totalreads*100.0, above, rank.c_str());
+	fprintf(report_file,"%9.6f\t%9" PRIu64 "\tcannot be assigned to a %s \n", (float)above/(float)totalreads*100.0, above, rank.c_str());
 	if(min_read_count > 0)
-		fprintf(report_file,"%9.6f\t%9" PRIu64 "\tbelong to a %s having less than %i reads\n", (float)below_reads/(float)totalreads*100.0, below_reads, rank.c_str(), min_read_count);
+		fprintf(report_file,"%9.6f\t%9" PRIu64 "\tbelong to a %s having less than %i reads\n", (float)reads_at_rank_below_count_threshold/(float)totalreads*100.0, reads_at_rank_below_count_threshold, rank.c_str(), min_read_count);
 	if(min_percent > 0.0)
-		fprintf(report_file,"%9.6f\t%9" PRIu64 "\tbelong to a %s with less than %g%% of all reads\n", (float)below_percent/(float)totalreads*100.0, below_percent, rank.c_str(), min_percent);
+		fprintf(report_file,"%9.6f\t%9" PRIu64 "\tbelong to a %s with less than %g%% of all reads\n", (float)reads_at_rank_below_percent_threshold/(float)totalreads*100.0, reads_at_rank_below_percent_threshold, rank.c_str(), min_percent);
 	fprintf(report_file,"-------------------------------------------\n");
 	if(filter_unclassified)
 		fprintf(report_file,"%9.6f\t%9" PRIu64 "\tunclassified\n", (float)unclassified/(float)(totalreads+unclassified)*100.0, unclassified );

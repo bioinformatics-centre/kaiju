@@ -1,7 +1,7 @@
 CC = gcc
 CXX = g++
 CFLAGS = -g -O3 -DNDEBUG -Wall -Wno-uninitialized
-CXXFLAGS = -ansi -pedantic -O3 -pthread -std=c++11 -DNDEBUG -g -Wall -Wconversion -Wno-unused-function
+CXXFLAGS = -ansi -pedantic -O3 -pthread -std=c++11 -g -Wall -Wconversion -Wno-unused-function
 LDLIBS = -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
 INCLUDES	= -I./include/ProducerConsumerQueue/src -I./include/ncbi-blast+
 

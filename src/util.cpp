@@ -27,6 +27,40 @@ std::string getCurrentTime() {
 	return std::string(buffer);
 }
 
+/* returns true if node1 is ancestor of node2  or if node1==node2*/
+bool is_ancestor(std::unordered_map<uint64_t,uint64_t> & nodes, const std::string & id1, const std::string & id2) {
+
+		uint64_t node1;
+		uint64_t node2;
+		try {
+			node1 = stoul(id1);
+			node2 = stoul(id2);
+		}
+		catch(const std::invalid_argument& ia) {
+			std::cerr << "Error: Bad number in taxon id" << std::endl;
+			return false;
+		}
+		catch (const std::out_of_range& oor) {
+			std::cerr << "Error: Bad number (out of range error) in taxon id" << std::endl;
+			return false;
+		}
+
+		return is_ancestor(nodes,node1,node2);
+}
+
+/* returns true if node1 is ancestor of node2  or if node1==node2*/
+bool is_ancestor(std::unordered_map<uint64_t,uint64_t> & nodes, uint64_t node1, uint64_t node2) {
+		/* climb up from node 2 and return true if encountering node 1 */
+		while(nodes.count(node2)>0 && node2 != nodes.at(node2)) {
+			if(node2==node1) {
+				return true;
+			}
+			node2 = nodes.at(node2);
+		}
+
+		return false;
+}
+
 void parseNodesDmp(std::unordered_map<uint64_t,uint64_t> & nodes, std::ifstream & nodes_file) {
 		std::string line;
 		while(std::getline(nodes_file, line)) {
