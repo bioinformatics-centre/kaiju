@@ -1,7 +1,6 @@
 /* This file is part of Kaiju, Copyright 2015,2016 Peter Menzel and Anders Krogh,
  * Kaiju is licensed under the GPLv3, see the file LICENSE. */
 
-#include <getopt.h>
 #include <stdint.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -40,7 +39,7 @@ int main(int argc, char** argv) {
 	// --------------------- START ------------------------------------------------------------------
 	// Read command line params
 	int c;
-	while ((c = getopt (argc, argv, "hdvc:n:t:i:j:o:")) != -1) {
+	while ((c = getopt(argc, argv, "hdvc:n:t:i:j:o:")) != -1) {
 		switch (c)  {
 			case 'h':
 				usage(argv[0]);

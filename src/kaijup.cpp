@@ -2,7 +2,6 @@
  * Kaiju is licensed under the GPLv3, see the file LICENSE. */
 
 #include <stdint.h>
-#include <getopt.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>

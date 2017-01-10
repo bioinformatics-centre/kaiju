@@ -1,12 +1,15 @@
 /* This file is part of Kaiju, Copyright 2015,2016 Peter Menzel and Anders Krogh,
  * Kaiju is licensed under the GPLv3, see the file LICENSE. */
 
+#include <stdint.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <stdexcept>
 #include <iostream>
 #include <sstream>
 #include <fstream>
 #include <unordered_map>
-#include <getopt.h>
 #include <vector>
 #include <unordered_set>
 #include <iterator>
@@ -40,7 +43,7 @@ int main(int argc, char **argv) {
 	// --------------------- START ------------------------------------------------------------------
 	// Read command line params
 	int c;
-	while ((c = getopt (argc, argv, "hcdvrl:g:t:i:o:")) != -1) {
+	while ((c = getopt(argc, argv, "hcdvrl:g:t:i:o:")) != -1) {
 		switch (c)  {
 			case 'h':
 				usage(argv[0]);
