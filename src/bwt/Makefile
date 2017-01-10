@@ -31,4 +31,6 @@ clean:
 static: LDFLAGS = -static
 static: all
 
-.PHONY: clean static
+debug: all
+
+.PHONY: clean static debug
