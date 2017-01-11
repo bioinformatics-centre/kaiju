@@ -10,6 +10,9 @@
 #include <fstream>
 #include <unordered_map>
 #include <map>
+#include <set>
+#include <list>
+#include <deque>
 #include <algorithm>
 #include <string>
 #include <functional>
@@ -44,10 +47,15 @@ int main(int argc, char** argv) {
 	bool verbose = false;
 	std::string rank;
 
+	bool specified_ranks = false;
+	std::string ranks_arg;
+	std::list<std::string> ranks_list;
+	std::set<std::string> ranks_set;
+
 	// ------------------------------------------- START -------------------------------------------
 	// Read command line params
 	int c;
-	while ((c = getopt (argc, argv, "hpvur:n:t:i:o:m:c:")) != -1) {
+	while ((c = getopt (argc, argv, "hpvur:n:t:i:o:m:c:l:")) != -1) {
 		switch (c)  {
 			case 'h':
 				usage(argv[0]);
@@ -91,6 +99,9 @@ int main(int argc, char** argv) {
 									}
 									break;
 								}
+			case 'l': {
+				specified_ranks = true;
+				ranks_arg = optarg; break; }
 			default:
 				usage(argv[0]);
 		}
@@ -100,6 +111,7 @@ int main(int argc, char** argv) {
 	if(out_filename.length() == 0) { error("Please specify the name of the output file with the -o option."); usage(argv[0]); }
 	if(in_filename.length() == 0) { error("Please specify the location of the input file with the -i option."); usage(argv[0]); }
 	if(rank.length() == 0) { error("Please specify the rank (phylum, class, order, family, genus, or species) with the -r option."); usage(argv[0]); }
+	if(ranks_arg.length() > 0 && full_path) { error("Please use either option -r or -l, but not both of them."); usage(argv[0]); }
 	if(!(rank.compare("phylum")==0 || rank.compare("class")==0 || rank.compare("order")==0 || rank.compare("family")==0 || rank.compare("genus")==0 || rank.compare("species")==0)) {
 		error("Rank must be one of: phylum, class, order, family, genus, species."); usage(argv[0]);
 	}
@@ -113,6 +125,29 @@ int main(int argc, char** argv) {
 		error("Either specify minimum percent with -m or minimum read count with -c."); usage(argv[0]);
 	}
 
+	/* parse user-supplied rank list into list and set */
+	if(ranks_arg.length() > 0) {
+		size_t begin = 0;
+		size_t pos = -1;
+		std::string rankname;
+		while((pos = ranks_arg.find(",",pos+1)) != std::string::npos) {
+			rankname = ranks_arg.substr(begin,(pos - begin));
+			if(rankname.length()==0 || rankname==",") { begin=pos+1; continue; }
+			ranks_list.emplace_back(rankname);
+			ranks_set.emplace(rankname);
+			begin = pos+1;
+		}
+		rankname = ranks_arg.substr(begin);
+		if(!(rankname.length()==0 || rankname==",")) {
+			ranks_set.emplace(rankname);
+			ranks_list.emplace_back(rankname);
+		}
+
+		if(ranks_set.count(rank)==0) {
+			error("Specified rank " + rank + " is not contained in rank list supplied with option -l"); usage(argv[0]);
+		}
+
+	}
 
 
 	/* read nodes.dmp */
@@ -238,12 +273,51 @@ int main(int argc, char** argv) {
 
 	for(auto it : sorted_count2ids) {
 		std::string name;
-		if(full_path) {
+		if(full_path || specified_ranks) {
 			uint64_t id = it.second;
-			while(nodes.count(id)>0 && id != nodes.at(id)) {
-				name = getTaxonNameFromId(node2name, id, names_filename) + "; " + name;
-				id = nodes.at(id);
+			std::deque<std::string> lineage; // for full_path
+			std::map<std::string,std::string> curr_rank_values;
+			if(specified_ranks) { //set the values for all specified ranks to NA, which will be overwritten by the actual values if they are found
+				for(auto it : ranks_list) {
+					curr_rank_values.emplace(it,"NA");
+				}
 			}
+			while(nodes.count(id)>0 && id != nodes.at(id)) {
+				std::string taxon_name;
+				if(specified_ranks) {
+					if(node2rank.count(id)==0 || node2rank.at(id)=="no rank") {  // no rank name
+						id = nodes.at(id);
+						continue;
+					}
+					std::string rank_name = node2rank.at(id);
+					if(ranks_set.count(rank_name)==0) { // rank name is not in specified list of ranks
+						id = nodes.at(id);
+						continue;
+					}
+					taxon_name = getTaxonNameFromId(node2name, id, names_filename);
+					curr_rank_values[rank_name] = taxon_name;
+				}
+				else { //full path
+					taxon_name = getTaxonNameFromId(node2name, id, names_filename);
+					lineage.emplace_front(taxon_name);
+				}
+				id = nodes.at(id);
+			} // end while
+
+			// assemble lineage into one string
+			std::string lineage_text;
+			if(specified_ranks) {
+				for(auto it : ranks_list) {
+					lineage_text += curr_rank_values[it] + ";";
+				}
+			}
+			else { // full path
+				for(auto  itl : lineage) {
+					lineage_text += itl + "; ";
+				}
+			}
+			// now lineage_text contains the final lineage for the taxon
+			name = lineage_text;
 		}
 		else {
 			name = getTaxonNameFromId(node2name, it.second, names_filename);
@@ -290,6 +364,8 @@ void usage(char *progname) {
 	fprintf(stderr, "   -c INT        Integer number > 0, denoting the minimum required number of reads for the taxon to be reported (default: 0)\n");
 	fprintf(stderr, "   -u            Unclassified reads are not counted for the total reads when calculating percentages for classified reads.\n");
 	fprintf(stderr, "   -p            Print full taxon path.\n");
+	fprintf(stderr, "   -l            Print taxon path containing only ranks specified by a comma-separated list,\n");
+	fprintf(stderr, "                 for example: superkingdom,phylum,order,class,family,genus,species\n");
 	fprintf(stderr, "   -v            Enable verbose output.\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Only one of the options -m and -c may be used at a time.\n");

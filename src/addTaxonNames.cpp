@@ -85,13 +85,16 @@ int main(int argc, char** argv) {
 		std::string rankname;
 		while((pos = ranks_arg.find(",",pos+1)) != std::string::npos) {
 			rankname = ranks_arg.substr(begin,(pos - begin));
+			if(rankname.length()==0 || rankname==",") { begin=pos+1; continue; }
 			ranks_list.emplace_back(rankname);
 			ranks_set.emplace(rankname);
 			begin = pos+1;
 		}
 		rankname = ranks_arg.substr(begin);
-		ranks_set.emplace(rankname);
-		ranks_list.push_back(rankname);
+		if(!(rankname.length()==0 || rankname==",")) {
+			ranks_set.emplace(rankname);
+			ranks_list.emplace_back(rankname);
+		}
 	}
 
 	/* read nodes.dmp */
@@ -197,7 +200,7 @@ int main(int argc, char** argv) {
 				}
 				else { //full path
 					taxon_name = getTaxonNameFromId(node2name, id, names_filename);
-					lineage.push_front(taxon_name);
+					lineage.emplace_front(taxon_name);
 				}
 				id = nodes.at(id);
 			} // end while
@@ -221,7 +224,7 @@ int main(int argc, char** argv) {
 			*out_stream << line << '\t' << lineage_text << "\n";
 		}
 		else {
-			*out_stream << line << '\t' << node2name.at(taxonid) << "\n";
+			*out_stream << line << '\t' << getTaxonNameFromId(node2name, taxonid, names_filename) << "\n";
 		}
 	}  // end while getline
 
