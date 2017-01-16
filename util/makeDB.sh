@@ -5,6 +5,8 @@
 #
 SCRIPTDIR=$(dirname $0)
 
+PATH=$PATH:$SCRIPTDIR
+
 db_viruses=0
 db_refseq=0
 db_progenomes=0
@@ -110,10 +112,10 @@ failurestring="unrecognized option"
 wgetout=$(wget --show-progress 2>&1 | head -n 1)
 [ "${wgetout#*$failurestring}" != "$wgetout" ] || { wgetProgress="--show-progress"; }
 
-command -v $SCRIPTDIR/gbk2faa.pl >/dev/null 2>/dev/null || { echo Error: gbk2faa.pl not found in $SCRIPTDIR; exit 1; }
-command -v $SCRIPTDIR/mkfmi >/dev/null 2>/dev/null || { echo Error: mkfmi not found in $SCRIPTDIR; exit 1; }
-command -v $SCRIPTDIR/mkbwt >/dev/null 2>/dev/null || { echo Error: mkbwt not found in $SCRIPTDIR; exit 1; }
-command -v $SCRIPTDIR/convertNR >/dev/null 2>/dev/null || { echo Error: convertNR not found in $SCRIPTDIR; exit 1; }
+command -v gbk2faa.pl >/dev/null 2>/dev/null || { echo Error: gbk2faa.pl not found in $PATH; exit 1; }
+command -v mkfmi >/dev/null 2>/dev/null || { echo Error: mkfmi not found in $PATH; exit 1; }
+command -v mkbwt >/dev/null 2>/dev/null || { echo Error: mkbwt not found in $PATH; exit 1; }
+command -v convertNR >/dev/null 2>/dev/null || { echo Error: convertNR not found in $PATH; exit 1; }
 
 if [ $db_euk -eq 1 ]
 then
@@ -152,21 +154,21 @@ then
 	echo Converting NR file to Kaiju database
 	if [ $db_euk -eq 1 ]
 	then
-		gunzip -c nr.gz | $SCRIPTDIR/convertNR -t nodes.dmp -g prot.accession2taxid -c -o kaiju_db_nr_euk.faa -l $SCRIPTDIR/taxonlist.tsv
+		gunzip -c nr.gz | convertNR -t nodes.dmp -g prot.accession2taxid -c -o kaiju_db_nr_euk.faa -l $SCRIPTDIR/taxonlist.tsv
 		echo Creating BWT from Kaiju database
-		$SCRIPTDIR/mkbwt -e $exponentSA_NR -n $threadsBWT -a ACDEFGHIKLMNPQRSTVWY -o kaiju_db_nr_euk kaiju_db_nr_euk.faa
+		mkbwt -e $exponentSA_NR -n $threadsBWT -a ACDEFGHIKLMNPQRSTVWY -o kaiju_db_nr_euk kaiju_db_nr_euk.faa
 		echo Creating FM-index
-		$SCRIPTDIR/mkfmi kaiju_db_nr_euk
+		mkfmi kaiju_db_nr_euk
 		echo Done!
 		echo Kaiju only needs the files kaiju_db_nr_euk.fmi, nodes.dmp, and names.dmp.
 		echo The remaining files can be deleted.
 		echo
 	else
-		gunzip -c nr.gz | $SCRIPTDIR/convertNR -t nodes.dmp -g prot.accession2taxid -c -o kaiju_db_nr.faa
+		gunzip -c nr.gz | convertNR -t nodes.dmp -g prot.accession2taxid -c -o kaiju_db_nr.faa
 		echo Creating BWT from Kaiju database
-		$SCRIPTDIR/mkbwt -e $exponentSA_NR -n $threadsBWT -a ACDEFGHIKLMNPQRSTVWY -o kaiju_db_nr kaiju_db_nr.faa
+		mkbwt -e $exponentSA_NR -n $threadsBWT -a ACDEFGHIKLMNPQRSTVWY -o kaiju_db_nr kaiju_db_nr.faa
 		echo Creating FM-index
-		$SCRIPTDIR/mkfmi kaiju_db_nr
+		mkfmi kaiju_db_nr
 		echo Done!
 		echo Kaiju only needs the files kaiju_db_nr.fmi, nodes.dmp, and names.dmp.
 		echo The remaining files can be deleted.
@@ -197,7 +199,7 @@ else
 		if [ $db_viruses -eq 1 ]; then if [ ! -r genomes/viral.2.genomic.gbff.gz ]; then echo Missing file viral.2.genomic.gbff.gz; exit 1; fi; fi
 
 		echo Extracting protein sequences from downloaded files...
-		find ./genomes -name "*.gbff.gz" | xargs -n 1 -P $parallelConversions -i $SCRIPTDIR/gbk2faa.pl '{}' '{}'.faa
+		find ./genomes -name "*.gbff.gz" | xargs -n 1 -P $parallelConversions -i gbk2faa.pl '{}' '{}'.faa
 	else # must be proGenomes
 		if [ $DL -eq 1 ]
 		then
@@ -216,16 +218,16 @@ else
 
 		echo Extracting protein sequences from downloaded files...
 		gunzip -c genomes/representatives.proteins.fasta.gz | perl -lne 'if(/>(\d+)\./){print ">",++$c,"_",$1}else{y/BZ/DE/;s/[^ARNDCQEGHILKMFPSTWYV]//gi;print if length}' > genomes/representatives.proteins.fasta.gz.faa
-		find ./genomes -name "viral.*.gbff.gz" | xargs -n 1 -P $parallelConversions -i $SCRIPTDIR/gbk2faa.pl '{}' '{}'.faa
+		find ./genomes -name "viral.*.gbff.gz" | xargs -n 1 -P $parallelConversions -i gbk2faa.pl '{}' '{}'.faa
 	fi
 
 	# on-the-fly substitution of taxon IDs found in merged.dmp by their updated IDs
 	cat genomes/*.faa | perl -lsne 'BEGIN{open(F,$m);while(<F>){@F=split(/[\|\s]+/);$h{$F[0]}=$F[1]}}if(/(>\d+_)(\d+)/){print $1,defined($h{$2})?$h{$2}:$2;}else{print}' -- -m=merged.dmp  >kaiju_db.faa
 
 	echo Creating Borrows-Wheeler transform...
-	$SCRIPTDIR/mkbwt -n $threadsBWT -e $exponentSA -a ACDEFGHIKLMNPQRSTVWY -o kaiju_db kaiju_db.faa
+	mkbwt -n $threadsBWT -e $exponentSA -a ACDEFGHIKLMNPQRSTVWY -o kaiju_db kaiju_db.faa
 	echo Creating FM-Index...
-	$SCRIPTDIR/mkfmi kaiju_db
+	mkfmi kaiju_db
 	echo Done!
 	echo Kaiju only needs the files kaiju_db.fmi, nodes.dmp, and names.dmp.
 	echo The remaining files and the folder genomes/ can be deleted.
