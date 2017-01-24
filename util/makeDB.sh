@@ -108,10 +108,9 @@ command -v perl >/dev/null 2>/dev/null || { echo Error: perl not found; exit 1; 
 
 #test if option --show-progress is available for wget, then use it when downloading
 wgetProgress=""
-failurestring="unrecognized option"
-wgetout=$(wget --show-progress 2>&1 | head -n 1)
-[ "${wgetout#*$failurestring}" != "$wgetout" ] || { wgetProgress="--show-progress"; }
+wget --help | grep -q -- --show-progress && wgetProgress='--show-progress'
 
+#check that all programs from Kaiju are usable
 command -v gbk2faa.pl >/dev/null 2>/dev/null || { echo Error: gbk2faa.pl not found in $PATH; exit 1; }
 command -v mkfmi >/dev/null 2>/dev/null || { echo Error: mkfmi not found in $PATH; exit 1; }
 command -v mkbwt >/dev/null 2>/dev/null || { echo Error: mkbwt not found in $PATH; exit 1; }
@@ -132,7 +131,7 @@ set -e
 if [ $DL -eq 1 ]
 then
 	echo Downloading file taxdump.tar.gz
-	wget $wgetProgress -N -nv ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz
+	wget -N -nv $wgetProgress ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz
 fi
 [ -r taxdump.tar.gz ] || { echo Missing file taxdump.tgz; exit 1; }
 echo Extracting file taxdump.tar.gz
@@ -143,9 +142,9 @@ then
 	if [ $DL -eq 1 ]
 	then
 		echo Downloading file nr.gz
-		wget $wgetProgress -N -nv ftp://ftp.ncbi.nih.gov/blast/db/FASTA/nr.gz
+		wget -N -nv $wgetProgress ftp://ftp.ncbi.nih.gov/blast/db/FASTA/nr.gz
 		echo Downloading file prot.accession2taxid.gz
-		wget $wgetProgress -N -nv ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/prot.accession2taxid.gz
+		wget -N -nv $wgetProgress ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/prot.accession2taxid.gz
 	fi
 	[ -r nr.gz ] || { echo Missing file nr.gz; exit 1; }
 	[ -r prot.accession2taxid.gz ] || { echo Missing file prot.accession2taxid.gz; exit 1; }
@@ -191,8 +190,8 @@ else
 			if [ $db_viruses -eq 1 ]
 			then
 				echo Downloading virus genomes from RefSeq...
-				wget $wgetProgress -N -nv -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.1.genomic.gbff.gz
-				wget $wgetProgress -N -nv -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.2.genomic.gbff.gz
+				wget -N -nv $wgetProgress -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.1.genomic.gbff.gz
+				wget -N -nv $wgetProgress -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.2.genomic.gbff.gz
 			fi
 		fi
 		if [ $db_viruses -eq 1 ]; then if [ ! -r genomes/viral.1.genomic.gbff.gz ]; then echo Missing file viral.1.genomic.gbff.gz; exit 1; fi; fi
@@ -204,17 +203,16 @@ else
 		if [ $DL -eq 1 ]
 		then
 			echo Downloading proGenomes database...
-			wget $wgetProgress -N -nv -P genomes http://progenomes.embl.de/data/repGenomes/representatives.proteins.fasta.gz
+			wget -N -nv $wgetProgress -P genomes http://progenomes.embl.de/data/repGenomes/representatives.proteins.fasta.gz
 			if [ $db_viruses -eq 1 ]
 			then
 				echo Downloading virus genomes from RefSeq...
-				wget $wgetProgress -N -nv -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.1.genomic.gbff.gz
-				wget $wgetProgress -N -nv -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.2.genomic.gbff.gz
+				wget -N -nv $wgetProgress -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.1.genomic.gbff.gz
+				wget -N -nv $wgetProgress -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.2.genomic.gbff.gz
 			fi
 		fi
 		if [ $db_viruses -eq 1 ]; then if [ ! -r genomes/viral.1.genomic.gbff.gz ]; then echo Missing file viral.1.genomic.gbff.gz; exit 1; fi; fi
 		if [ $db_viruses -eq 1 ]; then if [ ! -r genomes/viral.2.genomic.gbff.gz ]; then echo Missing file viral.2.genomic.gbff.gz; exit 1; fi; fi
-
 
 		echo Extracting protein sequences from downloaded files...
 		gunzip -c genomes/representatives.proteins.fasta.gz | perl -lne 'if(/>(\d+)\./){print ">",++$c,"_",$1}else{y/BZ/DE/;s/[^ARNDCQEGHILKMFPSTWYV]//gi;print if length}' > genomes/representatives.proteins.fasta.gz.faa
