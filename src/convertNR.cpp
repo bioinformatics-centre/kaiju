@@ -278,10 +278,10 @@ void usage(char *progname) {
 	fprintf(stderr, "Copyright 2015,2016 Peter Menzel, Anders Krogh\n");
 	fprintf(stderr, "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>\n");
 	fprintf(stderr, "\n");
-	fprintf(stderr, "Usage:\n   %s -t nodes.dmp -g gi_taxid_prot.dmp -i nr\n", progname);
+	fprintf(stderr, "Usage:\n   %s -t nodes.dmp -g prot.accession2taxid -i nr\n", progname);
 	fprintf(stderr, "Mandatory arguments:\n");
 	fprintf(stderr, "   -t FILENAME   Name of nodes.dmp file.\n");
-	fprintf(stderr, "   -g FILENAME   Name of gi_taxid_prot.dmp file.\n");
+	fprintf(stderr, "   -g FILENAME   Name of prot.accession2taxid file.\n");
 	fprintf(stderr, "   -o FILENAME   Name of output file.\n");
 	fprintf(stderr, "Optional arguments:\n");
 	fprintf(stderr, "   -i FILENAME   Name of NR file. If this option is not used, then the program will read from STDIN.\n");
