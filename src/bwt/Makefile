@@ -1,7 +1,7 @@
 CC = gcc
 #CFLAGS  = -g
 CFLAGS = -O3 -g -Wno-unused-result
-LDLIBS = -Wl,--whole-archive -lpthread -Wl,--no-whole-archive -lm
+LDLIBS = -lpthread -lm
 
 all: mkbwt mkfmi Makefile
 
@@ -29,6 +29,7 @@ clean:
 	rm -f mkfmi mkbwt
 
 static: LDFLAGS = -static
+static: LDLIBS = -Wl,--whole-archive -lpthread -Wl,--no-whole-archive -lm
 static: all
 
 debug: all

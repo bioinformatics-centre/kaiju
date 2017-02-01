@@ -2,7 +2,7 @@ CC = gcc
 CXX = g++
 CFLAGS = -g -O3 -DNDEBUG -Wall -Wno-uninitialized
 CXXFLAGS = -ansi -pedantic -O3 -pthread -std=c++11 -g -DNDEBUG -Wall -Wconversion -Wno-unused-function
-LDLIBS = -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
+LDLIBS = -lpthread
 INCLUDES	= -I./include/ProducerConsumerQueue/src -I./include/ncbi-blast+
 
 BLASTOBJS = include/ncbi-blast+/algo/blast/core/pattern.o \
@@ -70,6 +70,7 @@ clean:
 	$(MAKE) -C bwt/ clean
 
 static: LDFLAGS = -static
+static: LDLIBS = -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
 static: all
 
 debug: CXXFLAGS = -ansi -pedantic -O3 -pthread -std=c++11 -g -Wall -Wconversion -Wno-unused-function -Wextra
