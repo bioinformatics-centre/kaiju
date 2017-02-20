@@ -1,4 +1,4 @@
-/* This file is part of Kaiju, Copyright 2015,2016 Peter Menzel and Anders Krogh,
+/* This file is part of Kaiju, Copyright 2015-2017 Peter Menzel and Anders Krogh,
  * Kaiju is licensed under the GPLv3, see the file LICENSE. */
 
 #include "ConsumerThread.hpp"
@@ -497,6 +497,7 @@ uint64_t ConsumerThread::classify_greedyblosum() {
 			return 0;
 		}
 		match_ids.clear();
+		match_dbnames.clear();
 
 		for(auto itm : best_matches_SI) {
 			ids_from_SI(itm);
@@ -512,11 +513,13 @@ uint64_t ConsumerThread::classify_greedyblosum() {
 			ss << best_match_score << "\t" ;
 			for(auto it : match_ids) ss << it << ",";
 			ss  << "\t";
+			for(auto it : match_dbnames) ss << it << ",";
+			ss  << "\t";
 			for(auto it : best_matches) ss << it << ",";
 			extraoutput = ss.str();
 		}
 
-		uint64_t lca = (match_ids.size()==1) ?  *(match_ids.begin()) : config->lca_from_ids(node2depth, match_ids);
+		uint64_t lca = (match_ids.size()==1) ?  *(match_ids.begin()) : lca_from_ids(config,node2depth, match_ids);
 		return lca;
 
 }
@@ -583,6 +586,7 @@ uint64_t ConsumerThread::classify_length() {
 			return 0;
 		}
 		match_ids.clear();
+		match_dbnames.clear();
 		for(auto itm : longest_matches_SI) {
 			ids_from_SI_recursive(itm);
 		}
@@ -600,7 +604,7 @@ uint64_t ConsumerThread::classify_length() {
 			extraoutput = ss.str();
 		}
 
-		uint64_t lca = (match_ids.size()==1) ?  *(match_ids.begin()) : config->lca_from_ids(node2depth, match_ids);
+		uint64_t lca = (match_ids.size()==1) ?  *(match_ids.begin()) : lca_from_ids(config,node2depth, match_ids);
 		return lca;
 
 }
@@ -774,48 +778,40 @@ void ConsumerThread::ids_from_SI(SI *si) {
 	for (k=si->start; k<si->start+si->len; ++k) {
 		get_suffix(config->fmi, config->bwt->s, k, &iseq, &pos);
 		uint64_t id = ULONG_MAX;
-		// we can have either  123_4567 oder 4567 as database names
-		char * pch = strchr(config->bwt->s->ids[iseq],'_');
-		if(pch != NULL)  {
-			id = strtoul(pch+1,NULL,10);
-		}
-		else {
-			id = strtoul(config->bwt->s->ids[iseq],NULL,10);
-		}
 
-		if(id == ULONG_MAX)
-			std::cerr << "Found bad number (out of range error) in database sequence name: " << config->bwt->s->ids[iseq] << std::endl;
-		else
-			match_ids.insert(id);
+		// we can have either  AX1235.1_4567, WP_12345.1_987 (Acc.Ver_taxonid) or 987 (only taxonid) as database names
+		// look for the last occurence of _
+		char * pch = strrchr(config->bwt->s->ids[iseq],'_');
+		if(pch != NULL)  { //found _, then use number after _
+			id = strtoul(pch+1,NULL,10);
+			if(id == ULONG_MAX) {
+				std::cerr << "Found bad number (out of range error) in database sequence name: " << config->bwt->s->ids[iseq] << std::endl;
+				continue;
+			}
+			// extract db name
+			if(config->verbose) {
+				match_dbnames.emplace(config->bwt->s->ids[iseq],pch-config->bwt->s->ids[iseq]);
+			}
+		}
+		else { // no _ found, use the whole database name as taxonid
+			id = strtoul(config->bwt->s->ids[iseq],NULL,10);
+			if(id == ULONG_MAX) {
+				std::cerr << "Found bad number (out of range error) in database sequence name: " << config->bwt->s->ids[iseq] << std::endl;
+				continue;
+			}
+		}
+		match_ids.insert(id);
 	}
 }
 
 void ConsumerThread::ids_from_SI_recursive(SI *si) {
 	SI * si_it = si;
 	while(si_it) {
-		IndexType k, pos;
-		int iseq;
-		for (k=si_it->start; k<si_it->start+si_it->len; ++k) {
-			get_suffix(config->fmi, config->bwt->s, k, &iseq, &pos);
 
-			uint64_t id = ULONG_MAX;
+		ids_from_SI(si_it);
 
-			// we can have either  123_4567 oder 4567 as database names
-			char * pch = strchr(config->bwt->s->ids[iseq],'_');
-			if(pch != NULL)  { //found _, then use number after _
-				id = strtoul(pch+1,NULL,10);
-			}
-			else { // no _ found
-				id = strtoul(config->bwt->s->ids[iseq],NULL,10);
-			}
-
-			if(id == ULONG_MAX)
-				std::cerr << "Found bad number (out of range error) in database sequence name: " << config->bwt->s->ids[iseq] << std::endl;
-			else
-				match_ids.insert(id);
-		} // end for
 		si_it = si_it->samelen;
-	} // end while all SI with same length
+	}
 }
 
 void ConsumerThread::flush_output() {

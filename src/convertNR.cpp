@@ -1,4 +1,4 @@
-/* This file is part of Kaiju, Copyright 2015,2016 Peter Menzel and Anders Krogh,
+/* This file is part of Kaiju, Copyright 2015-2017 Peter Menzel and Anders Krogh,
  * Kaiju is licensed under the GPLv3, see the file LICENSE. */
 
 #include <stdint.h>
@@ -37,13 +37,13 @@ int main(int argc, char **argv) {
 	std::unordered_set<uint64_t> include_ids;
 	bool verbose = false;
 	bool debug = false;
-	bool addcount = false;
+	bool addAcc = false;
 	Config * config = new Config();
 
 	// --------------------- START ------------------------------------------------------------------
 	// Read command line params
 	int c;
-	while ((c = getopt(argc, argv, "hcdvrl:g:t:i:o:")) != -1) {
+	while ((c = getopt(argc, argv, "ahdvrl:g:t:i:o:")) != -1) {
 		switch (c)  {
 			case 'h':
 				usage(argv[0]);
@@ -51,8 +51,8 @@ int main(int argc, char **argv) {
 				debug = true; break;
 			case 'v':
 				verbose = true; break;
-			case 'c':
-				addcount = true; break;
+			case 'a':
+				addAcc = true; break;
 			case 'l':
 				list_filename = optarg; break;
 			case 't':
@@ -185,12 +185,12 @@ int main(int argc, char **argv) {
 	bool skip = true;
 	bool first = true;
 	std::ostringstream output;
-	uint64_t fa_counter = 1;
 	uint64_t outlinecount = 0;
 	std::set<uint64_t> ids;
 	while(getline(inputfile.is_open() ? inputfile : std::cin, line)){
 		if(line.length() == 0) { continue; }
 		if(line[0]=='>') {
+			std::string first_acc;
 			ids.clear();
 			if(debug) std::cerr << "processing line " << line << std::endl;
 			skip = true;
@@ -199,6 +199,7 @@ int main(int argc, char **argv) {
 				// acc is between start and end
 				std::string acc = line.substr(start, end - start);
 				if(acc2taxid.count(acc)>0 && acc2taxid.at(acc)>0 && nodes.count(acc2taxid.at(acc))>0) {
+					if(addAcc && first_acc.length()==0) { first_acc = acc; } // use first Accession that has taxon id as first part of DB identifier
 					if(debug) std::cerr << "Accession " << acc << " belongs to taxon id " << acc2taxid.at(acc)  << std::endl;
 					ids.insert(acc2taxid.at(acc));
 				}
@@ -214,7 +215,7 @@ int main(int argc, char **argv) {
 
 			if(ids.size()>0) {
 				bool keep = false;
-				uint64_t lca = (ids.size()==1) ?  *(ids.begin()) : config->lca_from_ids(node2depth, ids);
+				uint64_t lca = (ids.size()==1) ?  *(ids.begin()) : lca_from_ids(config,node2depth, ids);
 				if(debug) std::cerr << "LCA=" << lca << std::endl;
 				if(nodes.count(lca)==0) { std::cerr << "Taxon ID " << lca << " not found in taxonomy!" << std::endl; continue; }
 				uint64_t id = lca;
@@ -228,8 +229,8 @@ int main(int argc, char **argv) {
 				if(keep) {
 					if(!first) { output << "\n";  } else { first = false; }
 					output << ">";
-					if(addcount) output << fa_counter++ << "_";
-					output << lca << "\n"; //endl;
+					if(addAcc) output << first_acc << "_";
+					output << lca << "\n";
 					skip = false;
 					outlinecount++;
 				}
@@ -284,6 +285,7 @@ void usage(char *progname) {
 	fprintf(stderr, "   -g FILENAME   Name of prot.accession2taxid file.\n");
 	fprintf(stderr, "   -o FILENAME   Name of output file.\n");
 	fprintf(stderr, "Optional arguments:\n");
+	fprintf(stderr, "   -a            Prefix taxon ID in database names with the first Accession.Ver\n");
 	fprintf(stderr, "   -i FILENAME   Name of NR file. If this option is not used, then the program will read from STDIN.\n");
 	fprintf(stderr, "   -l FILENAME   Name of file with taxon IDs. These IDs must be contained in nodes.dmp and denote the extracted clades from the NR file.\n");
 	exit(EXIT_FAILURE);

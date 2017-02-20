@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# This file is part of Kaiju, Copyright 2015,2016 Peter Menzel and Anders Krogh
+# This file is part of Kaiju, Copyright 2015-2017 Peter Menzel and Anders Krogh
 # Kaiju is licensed under the GPLv3, see the file LICENSE.
 #
 SCRIPTDIR=$(dirname $0)
@@ -153,7 +153,7 @@ then
 	echo Converting NR file to Kaiju database
 	if [ $db_euk -eq 1 ]
 	then
-		gunzip -c nr.gz | convertNR -t nodes.dmp -g prot.accession2taxid -c -o kaiju_db_nr_euk.faa -l $SCRIPTDIR/taxonlist.tsv
+		gunzip -c nr.gz | convertNR -t nodes.dmp -g prot.accession2taxid -a -o kaiju_db_nr_euk.faa -l $SCRIPTDIR/taxonlist.tsv
 		echo Creating BWT from Kaiju database
 		mkbwt -e $exponentSA_NR -n $threadsBWT -a ACDEFGHIKLMNPQRSTVWY -o kaiju_db_nr_euk kaiju_db_nr_euk.faa
 		echo Creating FM-index
@@ -163,7 +163,7 @@ then
 		echo The remaining files can be deleted.
 		echo
 	else
-		gunzip -c nr.gz | convertNR -t nodes.dmp -g prot.accession2taxid -c -o kaiju_db_nr.faa
+		gunzip -c nr.gz | convertNR -t nodes.dmp -g prot.accession2taxid -a -o kaiju_db_nr.faa
 		echo Creating BWT from Kaiju database
 		mkbwt -e $exponentSA_NR -n $threadsBWT -a ACDEFGHIKLMNPQRSTVWY -o kaiju_db_nr kaiju_db_nr.faa
 		echo Creating FM-index
@@ -215,12 +215,12 @@ else
 		if [ $db_viruses -eq 1 ]; then if [ ! -r genomes/viral.2.genomic.gbff.gz ]; then echo Missing file viral.2.genomic.gbff.gz; exit 1; fi; fi
 
 		echo Extracting protein sequences from downloaded files...
-		gunzip -c genomes/representatives.proteins.fasta.gz | perl -lne 'if(/>(\d+)\./){print ">",++$c,"_",$1}else{y/BZ/DE/;s/[^ARNDCQEGHILKMFPSTWYV]//gi;print if length}' > genomes/representatives.proteins.fasta.gz.faa
+		gunzip -c genomes/representatives.proteins.fasta.gz | perl -lne 'if(/>(\d+)\.(\S+)/){print ">",$2,"_",$1}else{y/BZ/DE/;s/[^ARNDCQEGHILKMFPSTWYV]//gi;print if length}' > genomes/representatives.proteins.fasta.gz.faa
 		find ./genomes -name "viral.*.gbff.gz" | xargs -n 1 -P $parallelConversions -i gbk2faa.pl '{}' '{}'.faa
 	fi
 
 	# on-the-fly substitution of taxon IDs found in merged.dmp by their updated IDs
-	cat genomes/*.faa | perl -lsne 'BEGIN{open(F,$m);while(<F>){@F=split(/[\|\s]+/);$h{$F[0]}=$F[1]}}if(/(>\d+_)(\d+)/){print $1,defined($h{$2})?$h{$2}:$2;}else{print}' -- -m=merged.dmp  >kaiju_db.faa
+	cat genomes/*.faa | perl -lsne 'BEGIN{open(F,$m);while(<F>){@F=split(/[\|\s]+/);$h{$F[0]}=$F[1]}}if(/(>.+)_(\d+)/){print $1,"_",defined($h{$2})?$h{$2}:$2;}else{print}' -- -m=merged.dmp  >kaiju_db.faa
 
 	echo Creating Borrows-Wheeler transform...
 	mkbwt -n $threadsBWT -e $exponentSA -a ACDEFGHIKLMNPQRSTVWY -o kaiju_db kaiju_db.faa

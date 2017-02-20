@@ -1,4 +1,4 @@
-/* This file is part of Kaiju, Copyright 2015,2016 Peter Menzel and Anders Krogh,
+/* This file is part of Kaiju, Copyright 2015-2017 Peter Menzel and Anders Krogh,
  * Kaiju is licensed under the GPLv3, see the file LICENSE. */
 
 #ifndef CONFIG_H
@@ -54,7 +54,6 @@ class Config {
 		~Config();
 
 		void init();
-		uint64_t lca_from_ids(std::unordered_map<uint64_t,unsigned int> & node2depth, std::set<uint64_t> & ids);
 
 };
 

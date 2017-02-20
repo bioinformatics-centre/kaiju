@@ -1,4 +1,4 @@
-/* This file is part of Kaiju, Copyright 2015,2016 Peter Menzel and Anders Krogh,
+/* This file is part of Kaiju, Copyright 2015-2017 Peter Menzel and Anders Krogh,
  * Kaiju is licensed under the GPLv3, see the file LICENSE. */
 
 #ifndef CONSUMERTHREAD_H
@@ -28,6 +28,7 @@
 #include "include/ProducerConsumerQueue/src/ProducerConsumerQueue.hpp"
 #include "ReadItem.hpp"
 #include "Config.hpp"
+#include "util.hpp"
 
 #include "include/ncbi-blast+/algo/blast/core/blast_seg.h"
 #include "include/ncbi-blast+/algo/blast/core/blast_filter.h"
@@ -114,6 +115,7 @@ class ConsumerThread {
 	std::vector<std::string> best_matches;
 	std::vector<std::string> longest_fragments;
 	std::set<uint64_t> match_ids;
+	std::set<std::string> match_dbnames;
 
 	unsigned int best_match_score = 0;
 	std::string extraoutput = "";
