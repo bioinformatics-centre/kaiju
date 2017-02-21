@@ -600,6 +600,8 @@ uint64_t ConsumerThread::classify_length() {
 			ss << longest_match_length << "\t";
 			for(auto it : match_ids) ss << it << ",";
 			ss  << "\t";
+			for(auto it : match_dbnames) ss << it << ",";
+			ss  << "\t";
 			for(auto it : longest_fragments) ss << it << ",";
 			extraoutput = ss.str();
 		}
