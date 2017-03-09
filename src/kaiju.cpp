@@ -264,7 +264,7 @@ int main(int argc, char** argv) {
 	bool isFastQ_file2 = false;
 	std::string line_from_file;
 	line_from_file.reserve(2000);
-	std::string suffixStartCharacters = " /\t";
+	std::string suffixStartCharacters = " /\t\r";
 	std::string name;
 	std::string sequence1;
 	std::string sequence2;
