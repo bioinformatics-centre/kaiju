@@ -1,4 +1,4 @@
-#Kaiju
+# Kaiju
 
 Authors:  
 Peter Menzel <pmenzel@gmail.com>   
@@ -16,7 +16,7 @@ Kaiju can be installed locally (see below) or used via a [web server](http://kai
 
 See the release notes for all releases [here](http://kaiju.binf.ku.dk/index.html#releases).
 
-###License
+### License
 
 Copyright (c) 2015, 2016, 2017 Peter Menzel and Anders Krogh
 
@@ -34,7 +34,7 @@ You should have received a copy of the GNU General Public License
 along with the source code.  If not, see <http://www.gnu.org/licenses/>.
 
 
-##Downloading and compiling Kaiju
+## Downloading and compiling Kaiju
 Kaiju can be downloaded directly from GitHub either as a
 [compressed archive](https://github.com/bioinformatics-centre/kaiju/archive/master.tar.gz) or
 using the git command line client:
@@ -52,7 +52,7 @@ make
 Afterwards, Kaiju's executable files are available in the `kaiju/bin` directory.
 You can add this directory to your shell's `$PATH` variable or copy the files to a directory in your PATH.
 
-##Creating the reference database and index
+## Creating the reference database and index
 
 Before classification of reads, Kaiju's database index needs to be built from
 the reference protein database.  You can either create a local index based on
@@ -77,7 +77,7 @@ run in a directory having at least 80 GB of free space.
 There are several options for creating the reference database with protein
 sequences from different source databases:
 
-###1. Complete Reference Genomes from NCBI RefSeq
+### 1. Complete Reference Genomes from NCBI RefSeq
 `makeDB.sh -r`  
 Download only completely assembled and annotated reference
 genomes of Archaea and Bacteria from the NCBI RefSeq database.
@@ -87,7 +87,7 @@ Additionally, viral genomes from NCBI RefSeq can be added by using the option `-
 As of October 2016, this database contains ca. 20M protein sequences, which
 amounts to a requirement of 14GB RAM for running Kaiju.
 
-###2. Representative genomes from proGenomes
+### 2. Representative genomes from proGenomes
 `makeDB.sh -p`  
 Download the protein sequences belonging to the representative set of genomes
 from the [proGenomes](http://progenomes.embl.de/) database.
@@ -99,7 +99,7 @@ Additionally, viral genomes from NCBI RefSeq can be added by using the option `-
 As of October 2016, this database contains ca. 19M protein sequences, which
 amounts to a requirement of 13GB RAM for running Kaiju.
 
-###3. Non-redundant protein database _nr_
+### 3. Non-redundant protein database _nr_
 `makeDB.sh -n`  
 Download the _nr_ database that is used by NCBI BLAST and extract proteins belonging
 to Archaea, Bacteria and Viruses.
@@ -113,7 +113,7 @@ construction and for running Kaiju.  As of October 2016, the _nr_ database with
 option `-e` contains ca. 80M protein sequences, which amounts to a requirement
 of 43GB RAM for running Kaiju.
 
-###Index construction
+### Index construction
 
 When using option `-r`, `makeDB.sh` downloads and extracts 5 genomes from the NCBI FTP
 server in parallel. This number can be changed by modifying the appropriate
@@ -128,7 +128,7 @@ After `makeDB.sh` is finished, only the files `kaiju_db.fmi` (or `kaiju_db_nr.fm
 and `names.dmp` are needed to run Kaiju. The remaining files and the `genomes/`
 directory containing the downloaded genomes can be deleted.
 
-###Custom database
+### Custom database
 It is also possible to make a custom database from a collection of protein sequences.
 The format needs to be a FASTA file in which the headers are the numeric NCBI taxon identifiers of the protein sequences,
 which can optionally be prefixed by another identifier (e.g. a counter) followed by an underscore, for example:
@@ -153,7 +153,7 @@ which creates the file proteins.fmi that is used by Kaiju.
 Note that the protein sequences may only contain the uppercase characters of the standard 20 amino acids, all other
 characters need to be removed.
 
-##Running Kaiju
+## Running Kaiju
 Kaiju requires at least three arguments:
 ```
 kaiju -t nodes.dmp -f kaiju_db.fmi -i inputfile.fastq
@@ -185,7 +185,7 @@ Kaiju can use multiple parallel threads, which can be specified with the `-z` op
 kaiju -z 25 -t nodes.dmp -f kaiju_db.fmi -i inputfile.fastq -o kaiju.out
 ```
 
-###Run modes
+### Run modes
 The default run mode is **MEM**, which only considers exact matches.
 For using the **Greedy** mode, which allows mismatches, set the mode via the option `-a` and the number
 of allowed substitutions using option `-e`:
@@ -202,7 +202,7 @@ Enabling this option is always recommended in order to avoid false positive
 matches caused by spurious matches due to simple repeat patterns or other
 sequencing noise.
 
-###Output format
+### Output format
 Kaiju will print one line for each read or read pair.
 The default output format contains three columns separated by tabs.
 Using the option `-v` enables the verbose output, which will print additional columns:
@@ -215,10 +215,10 @@ Using the option `-v` enables the verbose output, which will print additional co
 6. the accession numbers of all database sequences with the best match
 7. matching fragment sequence(s)
 
-NB: Since the _nr_ database aggregates multiple genes of identical sequences, only the first accession number 
+NB: Since the _nr_ database aggregates multiple genes of identical sequences, only the first accession number
 for each sequence is kept in Kaiju's database and therefore also in the output file.
 
-##Classification accuracy
+## Classification accuracy
 
 The accuracy of the classification depends both on the choice of the reference
 database and the chosen options when running Kaiju. These choices also affect
@@ -240,8 +240,8 @@ match score (`-s`) in Greedy mode governs the trade-off between sensitivity and
 precision of the classification. Please refer to the paper for a discussion on
 this topic.
 
-##Helper programs
-###Creating input file for Krona
+## Helper programs
+### Creating input file for Krona
 The program `kaiju2krona` can be used to convert Kaiju's tab-separated output file
 into a tab-separated text file, which can be imported into [Krona](https://github.com/marbl/Krona/wiki/KronaTools). It requires the `nodes.dmp`
 and `names.dmp` files from the NCBI taxonomy for mapping the taxon identifiers from Kaiju's
@@ -255,7 +255,7 @@ Krona's `ktImportText` program:
 ktImportText -o kaiju.out.html kaiju.out.krona
 ```
 
-###Creating classification summary
+### Creating classification summary
 The program `kaijuReport` can convert Kaiju's tab-separated output file into a
 summary report file for a given taxonomic rank, e.g., genus. It requires the
 `nodes.dmp` and `names.dmp` files for mapping the taxon identifiers from
@@ -274,7 +274,7 @@ kaijuReport -t nodes.dmp -n names.dmp -i kaiju.out -r genus -m 1 -u -o kaiju.out
 ```
 Option `-p` will print the full taxon path instead of just the taxon name.
 
-###Adding taxa names
+### Adding taxa names
 The program `addTaxonNames` appends the name that corresponds to the taxon id in
 Kaiju's output file as a last column to the output.
 ```
@@ -285,7 +285,7 @@ Option `-p` will print the full taxon path instead of just the taxon name.
 Option `-r` will print the path containing only to the specified ranks. For example,
 `-r phylum,genus` will append the names of phylum and genus to the end of each line.
 
-###Merging outputs
+### Merging outputs
 The program `mergeOutputs` can merge two tab-separated output files in the
 column format (see above) used by Kaiju and Kraken. Only the first three columns are used.
 
@@ -315,7 +315,7 @@ first input file (specified by `-i`).  This behaviour can be changed using the
 
 Options `lca` and `lowest` require the path to the file `nodes.dmp` by using the `-t` option.
 
-###KaijuX and KaijuP
+### KaijuX and KaijuP
 
 The programs `kaijux` and `kaijup` can be used for finding the best matching
 database sequence for each query sequence without taxonomic classification,
