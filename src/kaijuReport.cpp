@@ -365,7 +365,7 @@ void usage(char *progname) {
 	fprintf(stderr, "   -u            Unclassified reads are not counted for the total reads when calculating percentages for classified reads.\n");
 	fprintf(stderr, "   -p            Print full taxon path.\n");
 	fprintf(stderr, "   -l            Print taxon path containing only ranks specified by a comma-separated list,\n");
-	fprintf(stderr, "                 for example: superkingdom,phylum,order,class,family,genus,species\n");
+	fprintf(stderr, "                 for example: superkingdom,phylum,class,order,family,genus,species\n");
 	fprintf(stderr, "   -v            Enable verbose output.\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Only one of the options -m and -c may be used at a time.\n");
