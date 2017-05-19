@@ -31,6 +31,8 @@ enum Mode { MEM, GREEDYBLOSUM };
 class Config {
 	public:
 		Mode mode;
+		bool use_Evalue;
+		double min_Evalue;
 		bool debug;
 		bool SEG = false;
 		SegParameters * blast_seg_params;

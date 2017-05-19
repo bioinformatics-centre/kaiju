@@ -38,6 +38,10 @@ extern "C" {
 #include "./bwt/bwt.h"
 }
 
+const double LN_2 = 0.6931471805;
+/* using values for ungapped BLOSUM62 matrix from ncbi-blast+/algo/blast/core/blast_stat.c:263 */
+const double LAMBDA = 0.3176;
+const double LN_K = -2.009915479;  // K = 0.134
 
 class Fragment {
 	public:
@@ -119,6 +123,8 @@ class ConsumerThread {
 
 	unsigned int best_match_score = 0;
 	std::string extraoutput = "";
+
+	double query_len;
 
 	Config * config;
 	std::ostringstream output;

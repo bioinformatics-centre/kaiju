@@ -76,11 +76,14 @@ int main(int argc, char** argv) {
 	bool paired  = false;
 	bool input_is_protein = false;
 	bool SEG_check = false;
+	bool use_Evalue = false;
+
+	double min_Evalue = 0.01;
 
 	// --------------------- START ------------------------------------------------------------------
 	// Read command line params
 	int c;
-	while ((c = getopt(argc, argv, "a:hdpxvn:m:e:l:t:f:i:j:s:z:o:")) != -1) {
+	while ((c = getopt(argc, argv, "a:hdpxvn:m:e:E:l:t:f:i:j:s:z:o:")) != -1) {
 		switch (c)  {
 			case 'a': {
 									if("mem" == std::string(optarg)) mode = MEM;
@@ -159,6 +162,19 @@ int main(int argc, char** argv) {
 									}
 									break;
 								}
+			case 'E': {
+									try {
+										min_Evalue = std::stod(optarg);
+										use_Evalue = true;
+									}
+									catch(const std::invalid_argument& ia) {
+										std::cerr << "Invalid numerical argument in -e " << optarg << std::endl;
+									}
+									catch (const std::out_of_range& oor) {
+										std::cerr << "Invalid numerical argument in -e " << optarg << std::endl;
+									}
+									break;
+								}
 			case 'z': {
 									try {
 										num_threads = std::stoi(optarg);
@@ -184,13 +200,17 @@ int main(int argc, char** argv) {
 	if(fmi_filename.length() == 0) { error("Please specify the location of the FMI file, using the -f option."); usage(argv[0]); }
 	if(in1_filename.length() == 0) { error("Please specify the location of the input file, using the -i option."); usage(argv[0]); }
 	if(paired && input_is_protein) { error("Protein input only supports one input file."); usage(argv[0]); }
+	if(use_Evalue && mode != GREEDYBLOSUM ) { error("E-value calculation is only available in Greedy mode. Use option: -a greedy"); usage(argv[0]); }
 
 	if(debug) {
 		std::cerr << "Parameters: \n";
-		std::cerr << "  minimum fragment length for matches: " << min_fragment_length << "\n";
-		std::cerr << "  minimum blosum score for matches: " << min_score << "\n";
+		std::cerr << "  minimum match length: " << min_fragment_length << "\n";
+		std::cerr << "  minimum blosum62 score for matches: " << min_score << "\n";
+		std::cerr << "  seed length for greedy matches: " << seed_length << "\n";
+		if(use_Evalue)
+			std::cerr << "  minimum E-value: " << min_Evalue << "\n";
 		std::cerr << "  max number of mismatches within a match: "  << mismatches << "\n";
-		std::cerr << "  run mode: "  << mode << "\n";
+		std::cerr << "  run mode: "  << ((mode==MEM) ? "MEM" : "Greedy") << "\n";
 		std::cerr << "  input file 1: " << in1_filename << "\n";
 		if(in2_filename.length() > 0)
 			std::cerr << "  input file 2: " << in2_filename << "\n";
@@ -206,6 +226,8 @@ int main(int argc, char** argv) {
 	config->seed_length = seed_length;
 	config->mismatches = mismatches;
 	config->SEG = SEG_check;
+	config->use_Evalue = use_Evalue;
+	config->min_Evalue = min_Evalue;
 
 	if(verbose) std::cerr << getCurrentTime() << " Reading database" << std::endl;
 
@@ -438,6 +460,7 @@ void usage(char *progname) {
 	fprintf(stderr, "   -e INT        Number of mismatches allowed in Greedy mode (default: 0)\n");
 	fprintf(stderr, "   -m INT        Minimum match length (default: 11)\n");
 	fprintf(stderr, "   -s INT        Minimum match score in Greedy mode (default: 65)\n");
+	fprintf(stderr, "   -E FLOAT      Minimum E-value in Greedy mode\n");
 	fprintf(stderr, "   -x            Enable SEG low complexity filter\n");
 	fprintf(stderr, "   -p            Input sequences are protein sequences\n");
 	fprintf(stderr, "   -v            Enable verbose output\n");

@@ -204,10 +204,10 @@ void ConsumerThread::getAllFragmentsBits(const std::string & line) {
 				if(config->mode==GREEDYBLOSUM) {
 					unsigned int score = calcScore(translations[index]);
 					if(score >= config->min_score)
-						fragments.insert(std::pair<unsigned int,Fragment *>(score,new Fragment(translations[index])));
+						fragments.emplace(score,new Fragment(translations[index]));
 				}
 				else {
-					fragments.insert(std::pair<unsigned int,Fragment *>(translations[index].length(),new Fragment(translations[index])));
+					fragments.emplace(translations[index].length(),new Fragment(translations[index]));
 				}
 			}
 			translations[index].clear();
@@ -222,10 +222,10 @@ void ConsumerThread::getAllFragmentsBits(const std::string & line) {
 			if(config->mode==GREEDYBLOSUM) {
 				unsigned int score = calcScore(translations[i]);
 				if(score >= config->min_score)
-					fragments.insert(std::pair<unsigned int,Fragment *>(score,new Fragment(translations[i])));
+					fragments.emplace(score,new Fragment(translations[i]));
 			}
 			else {
-				fragments.insert(std::pair<unsigned int,Fragment *>(translations[i].length(),new Fragment(translations[i])));
+				fragments.emplace(translations[i].length(),new Fragment(translations[i]));
 			}
 		}
 		translations[i].clear();
@@ -241,10 +241,10 @@ void ConsumerThread::getAllFragmentsBits(const std::string & line) {
 				if(config->mode==GREEDYBLOSUM) {
 					unsigned int score = calcScore(translations[index]);
 					if(score >= config->min_score)
-						fragments.insert(std::pair<unsigned int,Fragment *>(score,new Fragment(translations[index])));
+						fragments.emplace(score,new Fragment(translations[index]));
 				}
 				else {
-					fragments.insert(std::pair<unsigned int,Fragment *>(translations[index].length(),new Fragment(translations[index])));
+					fragments.emplace(translations[index].length(),new Fragment(translations[index]));
 				}
 			}
 			translations[index].clear();
@@ -259,10 +259,10 @@ void ConsumerThread::getAllFragmentsBits(const std::string & line) {
 			if(config->mode==GREEDYBLOSUM) {
 				unsigned int score = calcScore(translations[i]);
 				if(score >= config->min_score)
-					fragments.insert(std::pair<unsigned int,Fragment *>(score,new Fragment(translations[i])));
+					fragments.emplace(score,new Fragment(translations[i]));
 			}
 			else {
-				fragments.insert(std::pair<unsigned int,Fragment *>(translations[i].length(),new Fragment(translations[i])));
+				fragments.emplace(translations[i].length(),new Fragment(translations[i]));
 			}
 		}
 	}
@@ -299,11 +299,11 @@ Fragment * ConsumerThread::getNextFragment(unsigned int min_score) {
 					if(config->mode == GREEDYBLOSUM) {
 						unsigned int score = calcScore(f->seq,start,length,0);
 						if(score >= config->min_score) {
-							fragments.insert(std::pair<unsigned int,Fragment *>(score,new Fragment(f->seq.substr(start,length),true)));
+							fragments.emplace(score,new Fragment(f->seq.substr(start,length),true));
 						}
 					}
 					else {
-						fragments.insert(std::pair<unsigned int,Fragment *>(length,new Fragment(f->seq.substr(start,length),true)));
+						fragments.emplace(length,new Fragment(f->seq.substr(start,length),true));
 					}
 				}
 				start = curr_loc->ssr->right + 1;
@@ -313,11 +313,11 @@ Fragment * ConsumerThread::getNextFragment(unsigned int min_score) {
 				if(config->mode == GREEDYBLOSUM) {
 					unsigned int score = calcScore(f->seq,start,len_last_piece,0);
 					if(score >= config->min_score) {
-						fragments.insert(std::pair<unsigned int,Fragment *>(score,new Fragment(f->seq.substr(start,len_last_piece),true)));
+						fragments.emplace(score,new Fragment(f->seq.substr(start,len_last_piece),true));
 					}
 				}
 				else {
-					fragments.insert(std::pair<unsigned int,Fragment *>(len_last_piece,new Fragment(f->seq.substr(start,len_last_piece),true)));
+					fragments.emplace(len_last_piece,new Fragment(f->seq.substr(start,len_last_piece),true));
 				}
 			}
 
@@ -375,7 +375,7 @@ void ConsumerThread::addAllMismatchVariantsAtPosSI(const Fragment * f, unsigned 
 				fragment[pos] = itv;
 				int diff = b62[aa2int[(uint8_t)origchar]][aa2int[(uint8_t)itv]] - blosum62diag[aa2int[(uint8_t)itv]];
 				if(config->debug) std::cerr << "Adding fragment   " << fragment << " with mismatch at pos " << pos << " ,diff " << f->diff+diff << ", max score " << score_after_subst << "\n";
-				fragments.insert(std::pair<unsigned int,Fragment *>(score_after_subst,new Fragment(fragment,f->num_mm+1, pos, f->diff + diff,siarrayupd[0],siarrayupd[1],si->ql+1)));
+				fragments.emplace(score_after_subst,new Fragment(fragment,f->num_mm+1, pos, f->diff + diff,siarrayupd[0],siarrayupd[1],si->ql+1));
 			}
 			else if(config->debug) {
 				fragment[pos] = itv;
@@ -496,6 +496,23 @@ uint64_t ConsumerThread::classify_greedyblosum() {
 		if(best_matches_SI.empty()) {
 			return 0;
 		}
+
+		if(config->use_Evalue) {
+			//calc e-value and only return match if > cutoff
+
+			double bitscore = (LAMBDA * best_match_score - LN_K) / LN_2;
+			double Evalue = (double)config->bwt->len * query_len * pow(2, -1 * bitscore);
+			if(config->debug) std::cerr << "E-value = " << Evalue << std::endl;
+
+			if(Evalue > config->min_Evalue) {
+				for(auto itm : best_matches_SI) {
+					free(itm);
+				}
+				return 0;
+			}
+		}
+
+
 		match_ids.clear();
 		match_dbnames.clear();
 
@@ -637,6 +654,7 @@ void ConsumerThread::doWork() {
 		extraoutput = "";
 
 		if(config->input_is_protein) {
+			query_len = static_cast<double>(item->sequence1.length());
 			for (auto & c: item->sequence1) {
 				c = (char)toupper(c);
 			}
@@ -649,11 +667,11 @@ void ConsumerThread::doWork() {
 					if(config->mode==GREEDYBLOSUM) {
 						unsigned int score = calcScore(subseq);
 						if(score >= config->min_score) {
-							fragments.insert(std::pair<unsigned int,Fragment *>(score,new Fragment(subseq)));
+							fragments.emplace(score,new Fragment(subseq));
 						}
 					}
 					else {
-						fragments.insert(std::pair<unsigned int,Fragment *>((unsigned int)subseq.length(),new Fragment(subseq)));
+						fragments.emplace((unsigned int)subseq.length(),new Fragment(subseq));
 					}
 				}
 				start = pos+1;
@@ -665,18 +683,20 @@ void ConsumerThread::doWork() {
 				if(config->mode==GREEDYBLOSUM) {
 					unsigned int score = calcScore(subseq);
 					if(score >= config->min_score) {
-						fragments.insert(std::pair<unsigned int,Fragment *>(score,new Fragment(subseq)));
+						fragments.emplace(score,new Fragment(subseq));
 					}
 				}
 				else {
-					fragments.insert(std::pair<unsigned int,Fragment *>((unsigned int)subseq.length(),new Fragment(subseq)));
+					fragments.emplace((unsigned int)subseq.length(),new Fragment(subseq));
 				}
 			}
 		}
 		else { // normal mode with DNA input
+			query_len = static_cast<double>(item->sequence1.length()) / 3.0;
 			if(config->debug) std::cerr << "Getting fragments for read: "<< item->sequence1 << "\n";
 			getAllFragmentsBits(item->sequence1);
 			if(item->paired) {
+				query_len += static_cast<double>(item->sequence2.length()) / 3.0;
 				if(config->debug) std::cerr << "Getting fragments for 2nd read: " << item->sequence2 << "\n";
 				getAllFragmentsBits(item->sequence2);
 			}
