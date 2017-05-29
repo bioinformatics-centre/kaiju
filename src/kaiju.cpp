@@ -4,7 +4,7 @@
   Authors: Peter Menzel <pmenzel@gmail.com> and
            Anders Krogh <krogh@binf.ku.dk>
 
-  Copyright (C) 2015,2016 Peter Menzel and Anders Krogh
+  Copyright (C) 2015-2017 Peter Menzel and Anders Krogh
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -69,6 +69,8 @@ int main(int argc, char** argv) {
 	int min_fragment_length = 11;
 	int seed_length = 7;
 	int mismatches  = 0;
+	bool use_Evalue = false;
+	double min_Evalue = 0.01;
 
 	int num_threads = 1;
 	bool verbose = false;
@@ -76,9 +78,6 @@ int main(int argc, char** argv) {
 	bool paired  = false;
 	bool input_is_protein = false;
 	bool SEG_check = false;
-	bool use_Evalue = false;
-
-	double min_Evalue = 0.01;
 
 	// --------------------- START ------------------------------------------------------------------
 	// Read command line params
@@ -168,10 +167,10 @@ int main(int argc, char** argv) {
 										use_Evalue = true;
 									}
 									catch(const std::invalid_argument& ia) {
-										std::cerr << "Invalid numerical argument in -e " << optarg << std::endl;
+										std::cerr << "Invalid numerical argument in -E " << optarg << std::endl;
 									}
 									catch (const std::out_of_range& oor) {
-										std::cerr << "Invalid numerical argument in -e " << optarg << std::endl;
+										std::cerr << "Invalid numerical argument in -E " << optarg << std::endl;
 									}
 									break;
 								}
@@ -442,7 +441,7 @@ int main(int argc, char** argv) {
 
 void usage(char *progname) {
 	fprintf(stderr, "Kaiju %s\n",KAIJUVERSION);
-	fprintf(stderr, "Copyright 2015,2016 Peter Menzel, Anders Krogh\n");
+	fprintf(stderr, "Copyright 2015-2017 Peter Menzel, Anders Krogh\n");
 	fprintf(stderr, "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Usage:\n   %s -t nodes.dmp -f kaiju_db.fmi -i reads.fastq [-j reads2.fastq]\n", progname);

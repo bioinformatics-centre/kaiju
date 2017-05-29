@@ -1,4 +1,4 @@
-/* This file is part of Kaiju, Copyright 2015,2016 Peter Menzel and Anders Krogh,
+/* This file is part of Kaiju, Copyright 2015-2017 Peter Menzel and Anders Krogh,
  * Kaiju is licensed under the GPLv3, see the file LICENSE. */
 
 #include "ConsumerThreadp.hpp"
@@ -14,6 +14,8 @@ void ConsumerThreadp::doWork() {
 			delete item;
 			continue;
 		}
+
+		query_len = static_cast<double>(item->sequence1.length());
 
 		for (auto & c: item->sequence1) {
 			c = (char)toupper(c);

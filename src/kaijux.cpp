@@ -1,4 +1,4 @@
-/* This file is part of Kaiju, Copyright 2015,2016 Peter Menzel and Anders Krogh,
+/* This file is part of Kaiju, Copyright 2015-2017 Peter Menzel and Anders Krogh,
  * Kaiju is licensed under the GPLv3, see the file LICENSE. */
 
 #include <unistd.h>
@@ -42,6 +42,8 @@ int main(int argc, char** argv) {
 	int min_fragment_length = 11;
 	int seed_length = 7;
 	int mismatches  = 0;
+	bool use_Evalue = false;
+	double min_Evalue = 0.01;
 
 	int num_threads = 1;
 	bool verbose = false;
@@ -49,10 +51,11 @@ int main(int argc, char** argv) {
 	bool paired  = false;
 	bool SEG_check = false;
 
+
 	// --------------------- START ------------------------------------------------------------------
 	// Read command line params
 	int c;
-	while ((c = getopt(argc, argv, "a:hdxvn:m:e:l:f:i:j:s:z:o:")) != -1) {
+	while ((c = getopt(argc, argv, "a:hdxvn:m:e:E:l:f:i:j:s:z:o:")) != -1) {
 		switch (c)  {
 			case 'a': {
 									if("mem" == std::string(optarg)) mode = MEM;
@@ -127,6 +130,19 @@ int main(int argc, char** argv) {
 									}
 									break;
 								}
+			case 'E': {
+									try {
+										min_Evalue = std::stod(optarg);
+										use_Evalue = true;
+									}
+									catch(const std::invalid_argument& ia) {
+										std::cerr << "Invalid numerical argument in -E " << optarg << std::endl;
+									}
+									catch (const std::out_of_range& oor) {
+										std::cerr << "Invalid numerical argument in -E " << optarg << std::endl;
+									}
+									break;
+								}
 			case 'z': {
 									try {
 										num_threads = std::stoi(optarg);
@@ -150,13 +166,17 @@ int main(int argc, char** argv) {
 	if(seed_length < 7) { error("Seed length must be >= 7."); usage(argv[0]); }
 	if(fmi_filename.length() == 0) { error("Please specify the location of the FMI file, using the -f option."); usage(argv[0]); }
 	if(in1_filename.length() == 0) { error("Please specify the location of the input file, using the -i option."); usage(argv[0]); }
+	if(use_Evalue && mode != GREEDYBLOSUM ) { error("E-value calculation is only available in Greedy mode. Use option: -a greedy"); usage(argv[0]); }
 
 	if(debug) {
 		std::cerr << "Parameters: \n";
-		std::cerr << "  minimum fragment length for matches: " << min_fragment_length << "\n";
-		std::cerr << "  minimum blosum score for matches: " << min_score << "\n";
+		std::cerr << "  minimum match length: " << min_fragment_length << "\n";
+		std::cerr << "  minimum blosum62 score for matches: " << min_score << "\n";
+		std::cerr << "  seed length for greedy matches: " << seed_length << "\n";
+		if(use_Evalue)
+			std::cerr << "  minimum E-value: " << min_Evalue << "\n";
 		std::cerr << "  max number of mismatches within a match: "  << mismatches << "\n";
-		std::cerr << "  run mode: "  << mode << "\n";
+		std::cerr << "  run mode: "  << ((mode==MEM) ? "MEM" : "Greedy") << "\n";
 		std::cerr << "  input file 1: " << in1_filename << "\n";
 		if(in2_filename.length() > 0)
 			std::cerr << "  input file 2: " << in2_filename << "\n";
@@ -170,6 +190,8 @@ int main(int argc, char** argv) {
 	config->seed_length = seed_length;
 	config->mismatches = mismatches;
 	config->SEG = SEG_check;
+	config->use_Evalue = use_Evalue;
+	config->min_Evalue = min_Evalue;
 
 	if(verbose) std::cerr << getCurrentTime() << " Reading database" << std::endl;
 
@@ -371,7 +393,7 @@ int main(int argc, char** argv) {
 
 void usage(char *progname) {
 	fprintf(stderr, "Kaiju %s\n",KAIJUVERSION);
-	fprintf(stderr, "Copyright 2015,2016 Peter Menzel, Anders Krogh\n");
+	fprintf(stderr, "Copyright 2015-2017 Peter Menzel, Anders Krogh\n");
 	fprintf(stderr, "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Usage:\n   %s -f proteins.fmi -i reads.fastq [-j reads2.fastq]\n", progname);
@@ -388,6 +410,7 @@ void usage(char *progname) {
 	fprintf(stderr, "   -e INT        Number of mismatches allowed in Greedy mode (default: 0)\n");
 	fprintf(stderr, "   -m INT        Minimum match length (default: 11)\n");
 	fprintf(stderr, "   -s INT        Minimum match score in Greedy mode (default: 65)\n");
+	fprintf(stderr, "   -E FLOAT      Minimum E-value in Greedy mode\n");
 	fprintf(stderr, "   -x            Enable SEG low complexity filter\n");
 	fprintf(stderr, "   -v            Enable verbose output.\n");
 	//fprintf(stderr, "   -d            Enable debug output.\n");

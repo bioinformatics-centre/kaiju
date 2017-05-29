@@ -1,4 +1,4 @@
-/* This file is part of Kaiju, Copyright 2015,2016 Peter Menzel and Anders Krogh,
+/* This file is part of Kaiju, Copyright 2015-2017 Peter Menzel and Anders Krogh,
  * Kaiju is licensed under the GPLv3, see the file LICENSE. */
 
 #include "ConsumerThreadx.hpp"
@@ -79,6 +79,22 @@ void ConsumerThreadx::classify_greedyblosum() {
 		if(best_matches_SI.empty()) {
 			return;
 		}
+
+		if(config->use_Evalue) {
+			//calc e-value and only return match if > cutoff
+
+			double bitscore = (LAMBDA * best_match_score - LN_K) / LN_2;
+			double Evalue = config->db_length * query_len * pow(2, -1 * bitscore);
+			if(config->debug) std::cerr << "E-value = " << Evalue << std::endl;
+
+			if(Evalue > config->min_Evalue) {
+				for(auto itm : best_matches_SI) {
+					free(itm);
+				}
+				return;
+			}
+		}
+		
 		match_ids.clear();
 
 		for(auto itm : best_matches_SI) {
@@ -188,9 +204,12 @@ void ConsumerThreadx::doWork() {
 
 		extraoutput = "";
 
+		query_len = static_cast<double>(item->sequence1.length()) / 3.0;
+
 		if(config->debug) std::cerr << "Getting fragments for read: "<< item->sequence1 << "\n";
 		getAllFragmentsBits(item->sequence1);
 		if(item->paired) {
+			query_len += static_cast<double>(item->sequence2.length()) / 3.0;
 			if(config->debug) std::cerr << "Getting fragments for 2nd read: " << item->sequence2 << "\n";
 			getAllFragmentsBits(item->sequence2);
 		}
