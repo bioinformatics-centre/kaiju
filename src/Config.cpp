@@ -17,7 +17,10 @@ Config::~Config() { // Destructor
 }
 
 void Config::init() {
+	db_length = (double)(bwt->len - bwt->nseq);
+
 	astruct = alloc_AlphabetStruct(bwt->alphabet,0,0);
+
 	if(SEG) {
 		blast_seg_params = SegParametersNewAa();
 		blast_seg_params->overlaps = TRUE;

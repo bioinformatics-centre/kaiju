@@ -501,7 +501,7 @@ uint64_t ConsumerThread::classify_greedyblosum() {
 			//calc e-value and only return match if > cutoff
 
 			double bitscore = (LAMBDA * best_match_score - LN_K) / LN_2;
-			double Evalue = (double)config->bwt->len * query_len * pow(2, -1 * bitscore);
+			double Evalue = config->db_length * query_len * pow(2, -1 * bitscore);
 			if(config->debug) std::cerr << "E-value = " << Evalue << std::endl;
 
 			if(Evalue > config->min_Evalue) {

@@ -42,6 +42,7 @@ class Config {
 		unsigned int min_fragment_length;
 		unsigned int min_score;
 		unsigned int seed_length;
+		double db_length;
 		std::ostream * out_stream;
 		std::unordered_map<uint64_t,uint64_t> * nodes;
 
