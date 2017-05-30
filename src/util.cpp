@@ -3,6 +3,10 @@
 
 #include "util.hpp"
 
+extern "C" {
+#include "./bwt/bwt.h"
+}
+
 void error(const std::string e) {
 	std::cerr << "Error: " << e << std::endl << std::endl;
 }
@@ -50,6 +54,8 @@ bool is_ancestor(std::unordered_map<uint64_t,uint64_t> & nodes, const std::strin
 
 /* returns true if node1 is ancestor of node2  or if node1==node2*/
 bool is_ancestor(std::unordered_map<uint64_t,uint64_t> & nodes, uint64_t node1, uint64_t node2) {
+		if(nodes.count(node1)==0) { std::cerr << "Taxon ID " << node1 << " not found in taxonomy!" << std::endl; return false; }
+		if(nodes.count(node2)==0) { std::cerr << "Taxon ID " << node2 << " not found in taxonomy!" << std::endl; return false; }
 		/* climb up from node 2 and return true if encountering node 1 */
 		while(nodes.count(node2)>0 && node2 != nodes.at(node2)) {
 			if(node2==node1) {
@@ -223,3 +229,15 @@ uint64_t lca_from_ids(Config * config, std::unordered_map<uint64_t,unsigned int>
 
 }
 
+void readFMI(std::string fmi_filename, Config * config) {
+
+	if(config->verbose) std::cerr << " Reading index from file " << fmi_filename << std::endl;
+	FILE * fp = fopen(fmi_filename.c_str(),"r");
+	if(!fp) { error("Could not open file " + fmi_filename); exit(EXIT_FAILURE); }
+	BWT * b = readIndexes(fp);
+	fclose(fp);
+	if(config->debug) fprintf(stderr,"BWT of length %ld has been read with %d sequences, alphabet=%s\n", b->len, b->nseq, b->alphabet);
+	config->bwt = b;
+	config->fmi = b->f;
+
+}

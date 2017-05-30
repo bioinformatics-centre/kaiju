@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string>
 #include <stdexcept>
 #include <iostream>
 #include <sstream>
@@ -19,11 +20,13 @@
 #include "util.hpp"
 
 void usage(char *progname);
-bool has_parent(uint64_t id, uint64_t parent, std::unordered_map<uint64_t,uint64_t> & nodes);
 
 int main(int argc, char **argv) {
 
-	std::unordered_map<uint64_t,uint64_t> nodes;
+	Config * config = new Config();
+
+	std::unordered_map<uint64_t,uint64_t> * nodes = new std::unordered_map<uint64_t,uint64_t>();
+
 	std::unordered_map<uint64_t,unsigned int> node2depth;
 	std::unordered_map<std::string,uint64_t> acc2taxid;
 
@@ -38,7 +41,6 @@ int main(int argc, char **argv) {
 	bool verbose = false;
 	bool debug = false;
 	bool addAcc = false;
-	Config * config = new Config();
 
 	// --------------------- START ------------------------------------------------------------------
 	// Read command line params
@@ -71,33 +73,16 @@ int main(int argc, char **argv) {
 	if(acc_taxid_filename.length() == 0) { error("Please specify the location of the prot.accession2taxid file, using the -g option."); usage(argv[0]); }
 	if(out_filename.length() == 0) { error("Please specify the name of the output file, using the -o option."); usage(argv[0]); }
 
-	config->nodes = &nodes;
+	config->nodes = nodes;
 	config->debug = debug;
 	config->verbose = verbose;
 
-	std::ifstream mapfile;
-	mapfile.open(nodes_filename);
-	if(!mapfile.is_open()) { std::cerr << "Error: Could not open file " << nodes_filename << std::endl; usage(argv[0]); }
-	std::cerr << "Reading taxonomic tree from file " << nodes_filename << std::endl;
-	std::string line;
-	while(getline(mapfile, line)) {
-		if(line.length() == 0) { continue; }
-		try {
-			size_t end = line.find_first_not_of("0123456789");
-			uint64_t node = stoul(line.substr(0,end));
-			size_t start = line.find_first_of("0123456789",end);
-			end = line.find_first_not_of("0123456789",start+1);
-			uint64_t parent = stoul(line.substr(start,end-start));
-			nodes.emplace(node,parent);
-		}
-		catch(const std::invalid_argument& ia) {
-			std::cerr << "Found bad number in line: " << line << std::endl;
-		}
-		catch (const std::out_of_range& oor) {
-			std::cerr << "Found bad number (out of range error) in line: " << line << std::endl;
-		}
-	}
-	mapfile.close();
+	std::ifstream nodes_file;
+	nodes_file.open(nodes_filename.c_str());
+	if(!nodes_file.is_open()) { error("Could not open file " + nodes_filename); exit(EXIT_FAILURE); }
+	if(verbose) std::cerr << " Reading taxonomic tree from file " << nodes_filename << std::endl;
+	parseNodesDmp(*nodes,nodes_file);
+	nodes_file.close();
 
 	if(list_filename.length()==0) {
 		std::cerr << "No taxa list specified, using Archaea, Bacteria, and Viruses." << std::endl;
@@ -108,7 +93,7 @@ int main(int argc, char **argv) {
 	else {
 		std::ifstream list_file;
 		list_file.open(list_filename);
-		if(!list_file.is_open()) { std::cerr << "Error: Could not open file " << list_filename << std::endl; usage(argv[0]); }
+		if(!list_file.is_open()) { error("Could not open file " + list_filename); exit(EXIT_FAILURE); }
 		std::cerr << "Reading taxa from file " << list_filename << std::endl;
 		std::string line;
 		while(getline(list_file, line)) {
@@ -124,7 +109,7 @@ int main(int argc, char **argv) {
 			try {
 				uint64_t taxid = stoul(line.substr(start,end-start));
 				if(debug)	std::cerr << "Found taxon id " << taxid << ", start=" << start << " end = " <<end<< std::endl;
-				if(nodes.count(taxid) > 0) {
+				if(nodes->count(taxid) > 0) {
 					include_ids.insert(taxid);
 				}
 				else {
@@ -145,8 +130,9 @@ int main(int argc, char **argv) {
 
 	std::ifstream acc_taxid_file;
 	acc_taxid_file.open(acc_taxid_filename);
-	if(!acc_taxid_file.is_open()) { std::cerr << "Error: Could not open file " << acc_taxid_filename << std::endl; usage(argv[0]); }
+	if(!acc_taxid_file.is_open()) { error("Could not open file " + acc_taxid_filename); exit(EXIT_FAILURE); }
 	std::cerr << "Reading accession to taxon id map from file " << acc_taxid_filename << std::endl;
+	std::string line;
 	getline(acc_taxid_file, line); // skip header line
 	while(getline(acc_taxid_file, line)) {
 		if(line.length() == 0) { continue; }
@@ -172,13 +158,13 @@ int main(int argc, char **argv) {
 	std::ifstream inputfile;
 	if(nr_filename.length()>0) {
 		inputfile.open(nr_filename);
-		if(!inputfile.is_open()) { std::cerr << "Error: Could not open file " << nr_filename << std::endl; usage(argv[0]); }
+		if(!inputfile.is_open()) { error("Could not open file " + nr_filename); exit(EXIT_FAILURE); }
 	}
 
 	if(verbose) std::cerr << "Writing to file " << out_filename << std::endl;
 	std::ofstream out_file;
 	out_file.open(out_filename);
-	if(!out_file.is_open()) {  std::cerr << "Error: Could not open file " << out_filename << " for writing!" << std::endl; usage(argv[0]); }
+	if(!out_file.is_open()) {  error("Could not open file " + out_filename + " for writing."); exit(EXIT_FAILURE); }
 
 	std::cerr << "Processing NR file " << nr_filename << std::endl;
 
@@ -198,7 +184,7 @@ int main(int argc, char **argv) {
 			while((end = line.find(' ',start)) != std::string::npos) {
 				// acc is between start and end
 				std::string acc = line.substr(start, end - start);
-				if(acc2taxid.count(acc)>0 && acc2taxid.at(acc)>0 && nodes.count(acc2taxid.at(acc))>0) {
+				if(acc2taxid.count(acc)>0 && acc2taxid.at(acc)>0 && nodes->count(acc2taxid.at(acc))>0) {
 					if(addAcc && first_acc.length()==0) { first_acc = acc; } // use first Accession that has taxon id as first part of DB identifier
 					if(debug) std::cerr << "Accession " << acc << " belongs to taxon id " << acc2taxid.at(acc)  << std::endl;
 					ids.insert(acc2taxid.at(acc));
@@ -217,14 +203,14 @@ int main(int argc, char **argv) {
 				bool keep = false;
 				uint64_t lca = (ids.size()==1) ?  *(ids.begin()) : lca_from_ids(config,node2depth, ids);
 				if(debug) std::cerr << "LCA=" << lca << std::endl;
-				if(nodes.count(lca)==0) { std::cerr << "Taxon ID " << lca << " not found in taxonomy!" << std::endl; continue; }
+				if(nodes->count(lca)==0) { std::cerr << "Taxon ID " << lca << " not found in taxonomy!" << std::endl; continue; }
 				uint64_t id = lca;
-				while(nodes.count(id)>0 && id != 1) {
+				while(nodes->count(id)>0 && id != 1) {
 					if(include_ids.count(id) > 0) {
 						keep = true;
 						break;
 					}
-					id = nodes.at(id);
+					id = nodes->at(id);
 				}
 				if(keep) {
 					if(!first) { output << "\n";  } else { first = false; }
@@ -261,18 +247,6 @@ int main(int argc, char **argv) {
 
 	return EXIT_SUCCESS;
 }
-
-bool has_parent(uint64_t id, uint64_t parent, std::unordered_map<uint64_t,uint64_t> & nodes) {
-
-	if(nodes.count(id)==0) { std::cerr << "Taxon ID " << id << " not found in taxonomy!" << std::endl; return false; }
-	if(nodes.count(parent)==0) { std::cerr << "Taxon ID " << parent << " not found in taxonomy!" << std::endl; return false; }
-	while(nodes.count(id)>0 && id != 1) {
-		if(id == parent) { return true; }
-		id = nodes.at(id);
-	}
-	return false;
-}
-
 
 void usage(char *progname) {
 	fprintf(stderr, "Kaiju %s\n",KAIJUVERSION);

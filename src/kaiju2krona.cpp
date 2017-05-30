@@ -62,14 +62,14 @@ int main(int argc, char** argv) {
 
 	std::ifstream nodes_file;
 	nodes_file.open(nodes_filename);
-	if(!nodes_file.is_open()) { std::cerr << "Error: Could not open file " << nodes_filename << std::endl; usage(argv[0]); }
+	if(!nodes_file.is_open()) { error("Could not open file " + nodes_filename); exit(EXIT_FAILURE); }
 	if(verbose) std::cerr << "Reading taxonomic tree from file " << nodes_filename << std::endl;
 	parseNodesDmp(nodes,nodes_file);
 	nodes_file.close();
 
 	std::ifstream names_file;
 	names_file.open(names_filename);
-	if(!names_file.is_open()) { std::cerr << "Error: Could not open file " << names_filename << std::endl; usage(argv[0]); }
+	if(!names_file.is_open()) { error("Could not open file " + names_filename); usage(argv[0]); }
 	if(verbose) std::cerr << "Reading taxon names from file " << names_filename << std::endl;
 	parseNamesDmp(node2name,names_file);
 	names_file.close();
@@ -78,7 +78,7 @@ int main(int argc, char** argv) {
 
 	std::ifstream in1_file;
 	in1_file.open(in1_filename);
-	if(!in1_file.is_open()) {  std::cerr << "Could not open file " << in1_filename << std::endl; exit(EXIT_FAILURE); }
+	if(!in1_file.is_open()) {  error("Could not open file " + in1_filename); exit(EXIT_FAILURE); }
 
 	std::unordered_map<uint64_t, uint64_t> node2hitcount;
 	long num_unclassified = 0;
@@ -117,7 +117,7 @@ int main(int argc, char** argv) {
 	if(verbose) std::cerr << "Writing to file " << out_filename << std::endl;
 	std::ofstream krona_file;
 	krona_file.open(out_filename);
-	if(!krona_file.is_open()) {  std::cerr << "Could not open file " << out_filename << " for writing" << std::endl; exit(EXIT_FAILURE); }
+	if(!krona_file.is_open()) {  error("Could not open file " + out_filename + " for writing"); exit(EXIT_FAILURE); }
 	for(auto  it : node2hitcount) {
 		uint64_t id = it.first;
 		if(nodes.count(id)==0) {
@@ -153,7 +153,7 @@ int main(int argc, char** argv) {
 
 void usage(char *progname) {
 	fprintf(stderr, "Kaiju %s\n",KAIJUVERSION);
-	fprintf(stderr, "Copyright 2015,2016 Peter Menzel, Anders Krogh\n");
+	fprintf(stderr, "Copyright 2015-2017 Peter Menzel, Anders Krogh\n");
 	fprintf(stderr, "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Usage:\n   %s -t nodes.dmp -n names.dmp -i kaiju.out -o kaiju2krona.out\n", progname);

@@ -232,21 +232,12 @@ int main(int argc, char** argv) {
 
 	std::ifstream nodes_file;
 	nodes_file.open(nodes_filename.c_str());
-	if(!nodes_file.is_open()) { std::cerr << "Error: Could not open file " << nodes_filename << std::endl; usage(argv[0]); }
+	if(!nodes_file.is_open()) { error("Could not open file " + nodes_filename); exit(EXIT_FAILURE); }
 	if(verbose) std::cerr << " Reading taxonomic tree from file " << nodes_filename << std::endl;
 	parseNodesDmp(*nodes,nodes_file);
 	nodes_file.close();
 
-	{
-	if(verbose) std::cerr << " Reading index from file " << fmi_filename << std::endl;
-	FILE * fp = fopen(fmi_filename.c_str(),"r");
-	if (!fp) { std::cerr << "Could not open file " << fmi_filename << std::endl; usage(argv[0]); }
-	BWT * b = readIndexes(fp);
-	fclose(fp);
-	if(debug) fprintf(stderr,"BWT of length %ld has been read with %d sequences, alphabet=%s\n", b->len,b->nseq, b->alphabet);
-	config->bwt = b;
-	config->fmi = b->f;
-	}
+	readFMI(fmi_filename,config);
 
 	config->init();
 
@@ -254,7 +245,7 @@ int main(int argc, char** argv) {
 		if(verbose) std::cerr << "Output file: " << output_filename << std::endl;
 		std::ofstream * read2id_file = new std::ofstream();
 		read2id_file->open(output_filename);
-		if(!read2id_file->is_open()) {  std::cerr << "Could not open file " << output_filename << " for writing" << std::endl; exit(EXIT_FAILURE); }
+		if(!read2id_file->is_open()) {  error("Could not open file " + output_filename + " for writing"); exit(EXIT_FAILURE); }
 		config->out_stream = read2id_file;
 	}
 	else {
@@ -273,10 +264,10 @@ int main(int argc, char** argv) {
 	std::ifstream in1_file, in2_file;
 	in1_file.open(in1_filename);
 
-	if(!in1_file.is_open()) {  std::cerr << "Could not open file " << in1_filename << std::endl; exit(EXIT_FAILURE); }
+	if(!in1_file.is_open()) {  error("Could not open file " + in1_filename); exit(EXIT_FAILURE); }
 	if(in2_filename.length() > 0) {
 		in2_file.open(in2_filename);
-		if(!in2_file.is_open()) {  std::cerr << "Could not open file " << in2_filename << std::endl; exit(EXIT_FAILURE); }
+		if(!in2_file.is_open()) {  error("Could not open file " + in2_filename); exit(EXIT_FAILURE); }
 	}
 
 	bool firstline_file1 = true;
@@ -302,7 +293,7 @@ int main(int argc, char** argv) {
 				isFastQ_file1 = true;
 			}
 			else if(fileTypeIdentifier != '>') {
-				std::cerr << "Auto-detection of file type for file " << in1_filename << " failed."  << std::endl;
+				error("Auto-detection of file type for file " + in1_filename + " failed.");
 				exit(EXIT_FAILURE);
 			}
 			firstline_file1 = false;
@@ -344,7 +335,7 @@ int main(int argc, char** argv) {
 			while(line_from_file.length() == 0) {
 				if(!getline(in2_file,line_from_file)) {
 					//that's the border case where file1 has more entries than file2
-					std::cerr << "Error: File " << in1_filename <<" contains more reads then file " << in2_filename  <<std::endl;
+					error("File " + in1_filename + " contains more reads then file " + in2_filename);
 					in1_file.close();
 					in2_file.close();
 					exit(EXIT_FAILURE);
@@ -356,7 +347,7 @@ int main(int argc, char** argv) {
 					isFastQ_file2 = true;
 				}
 				else if(fileTypeIdentifier != '>') {
-					std::cerr << "Auto-detection of file type for file " << in2_filename << " failed."  << std::endl;
+					error("Auto-detection of file type for file " + in2_filename + " failed.");
 					exit(EXIT_FAILURE);
 				}
 				firstline_file2 = false;
@@ -368,7 +359,7 @@ int main(int argc, char** argv) {
 				size_t n = line_from_file.find_first_of(suffixStartCharacters);
 				if(n != std::string::npos) { line_from_file.erase(n); }
 				if(name != line_from_file) {
-					std::cerr << "Error: Read names are not identical between the two input files. Probably reads are not in the same order in both files." << std::endl;
+					error("Read names are not identical between the two input files. Probably reads are not in the same order in both files.");
 					in1_file.close();
 					in2_file.close();
 					exit(EXIT_FAILURE);

@@ -186,16 +186,7 @@ int main(int argc, char** argv) {
 
 	if(verbose) std::cerr << getCurrentTime() << " Reading database" << std::endl;
 
-	{
-	if(verbose) std::cerr << " Reading FM Index from file " << fmi_filename << std::endl;
-	FILE * fp = fopen(fmi_filename.c_str(),"r");
-	if (!fp) { std::cerr << "Could not open file " << fmi_filename << std::endl; usage(argv[0]); }
-  BWT * b = readIndexes(fp);
-	fclose(fp);
-	if(debug) fprintf(stderr,"BWT of length %ld has been read with %d sequencs, alphabet=%s\n", b->len,b->nseq, b->alphabet);
-	config->bwt = b;
-	config->fmi = b->f;
-	}
+	readFMI(fmi_filename,config);
 
 	config->init();
 
@@ -203,7 +194,7 @@ int main(int argc, char** argv) {
 		std::cerr << "Output file: " << output_filename << std::endl;
 		std::ofstream * read2id_file = new std::ofstream();
 		read2id_file->open(output_filename);
-		if(!read2id_file->is_open()) {  std::cerr << "Could not open file " << output_filename << " for writing" << std::endl; exit(EXIT_FAILURE); }
+		if(!read2id_file->is_open()) {  error("Could not open file " + output_filename + " for writing"); exit(EXIT_FAILURE); }
 		config->out_stream = read2id_file;
 	}
 	else {
@@ -222,7 +213,7 @@ int main(int argc, char** argv) {
 	std::ifstream in1_file;
 	in1_file.open(in1_filename);
 
-	if(!in1_file.is_open()) {  std::cerr << "Could not open file " << in1_filename << std::endl; exit(EXIT_FAILURE); }
+	if(!in1_file.is_open()) { error("Could not open file " + in1_filename); exit(EXIT_FAILURE); }
 
 	bool isFastQ = false;
 	bool firstline = true;
@@ -241,7 +232,7 @@ int main(int argc, char** argv) {
 				isFastQ = true;
 			}
 			else if(fileTypeIdentifier != '>') {
-				std::cerr << "Auto-detection of file type for file " << in1_filename << " failed."  << std::endl;
+				error("Auto-detection of file type for file " + in1_filename + " failed.");
 				exit(EXIT_FAILURE);
 			}
 			firstline = false;

@@ -4,6 +4,7 @@
 #ifndef KAIJU_UTIL_H
 #define KAIJU_UTIL_H
 
+#include <stdlib.h>
 #include <string>
 #include <iostream>
 #include <set>
@@ -36,5 +37,7 @@ bool is_ancestor(std::unordered_map<uint64_t,uint64_t> &, const std::string &, c
 bool is_ancestor(std::unordered_map<uint64_t,uint64_t> &, uint64_t, uint64_t);
 
 uint64_t lca_from_ids(Config *,std::unordered_map<uint64_t,unsigned int> &, std::set<uint64_t> &);
+
+void readFMI(std::string fmi_filename, Config * config);
 
 #endif
