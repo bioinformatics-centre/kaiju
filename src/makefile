@@ -1,7 +1,7 @@
 CC = gcc
 CXX = g++
 CFLAGS = -g -O3 -DNDEBUG -Wall -Wno-uninitialized
-CXXFLAGS = -ansi -pedantic -O3 -pthread -std=c++11 -g -DNDEBUG -Wall -Wconversion -Wno-unused-function
+CXXFLAGS = -O3 -pthread -std=c++11 -g -DNDEBUG -Wall -Wpedantic -Wconversion -Wextra -Wno-unused-function -Wno-unused-parameter
 LDLIBS = -lpthread
 INCLUDES	= -I./include/ProducerConsumerQueue/src -I./include/ncbi-blast+
 
@@ -26,6 +26,13 @@ BLASTOBJS = include/ncbi-blast+/algo/blast/core/pattern.o \
 			 include/ncbi-blast+/algo/blast/core/blast_seg.o
 
 BWTOBJS = bwt/bwt.o bwt/compactfmi.o bwt/sequence.o bwt/suffixArray.o
+
+ifeq ($(uname -s), "Darwin")
+LD_LIBS_STATIC = -Wl,-all_load -lpthread -Wl,-noall_load
+else
+LD_LIBS_STATIC = -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
+endif
+
 
 all: makefile kaiju kaiju2krona mergeOutputs kaijuReport kaijux kaijup convertNR addTaxonNames bwt/mkbwt
 	mkdir -p ../bin && cp kaiju kaijux kaijup kaiju2krona mergeOutputs kaijuReport convertNR addTaxonNames bwt/mkbwt bwt/mkfmi ../util/gbk2faa.pl ../util/makeDB.sh ../util/taxonlist.tsv ../bin/
@@ -71,10 +78,10 @@ clean:
 	$(MAKE) -C bwt/ clean
 
 static: LDFLAGS = -static
-static: LDLIBS = -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
+static: LDLIBS = $(LD_LIBS_STATIC)
 static: all
 
-debug: CXXFLAGS = -ansi -pedantic -O3 -pthread -std=c++11 -g -Wall -Wconversion -Wno-unused-function -Wextra
+debug: CXXFLAGS = -O3 -pthread -std=c++11 -g -Wall -Wpedantic -Wextra -Wconversion
 debug: all
 
 .PHONY: clean debug static
