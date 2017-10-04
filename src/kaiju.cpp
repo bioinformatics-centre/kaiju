@@ -35,7 +35,8 @@
 #include <deque>
 #include <stdexcept>
 
-#include "include/ProducerConsumerQueue/src/ProducerConsumerQueue.hpp"
+#include "ProducerConsumerQueue/src/ProducerConsumerQueue.hpp"
+#include "zstr/zstr.hpp"
 #include "ReadItem.hpp"
 #include "ConsumerThread.hpp"
 #include "Config.hpp"
@@ -261,13 +262,18 @@ int main(int argc, char** argv) {
 		threads.push_back(std::thread(&ConsumerThread::doWork,p));
 	}
 
-	std::ifstream in1_file, in2_file;
-	in1_file.open(in1_filename);
+	zstr::ifstream* in1_file = nullptr;
+	zstr::ifstream* in2_file = nullptr;
+	try {
+		in1_file = new zstr::ifstream(in1_filename);
+		if(!in1_file->good()) {  error("Could not open file " + in1_filename); exit(EXIT_FAILURE); }
+	} catch(std::exception e) { error("Could not open file " + in1_filename); exit(EXIT_FAILURE); }
 
-	if(!in1_file.is_open()) {  error("Could not open file " + in1_filename); exit(EXIT_FAILURE); }
 	if(in2_filename.length() > 0) {
-		in2_file.open(in2_filename);
-		if(!in2_file.is_open()) {  error("Could not open file " + in2_filename); exit(EXIT_FAILURE); }
+		try {
+			in2_file = new zstr::ifstream(in2_filename);
+			if(!in2_file->good()) {  error("Could not open file " + in2_filename); exit(EXIT_FAILURE); }
+		} catch(std::exception e) { error("Could not open file " + in2_filename); exit(EXIT_FAILURE); }
 	}
 
 	bool firstline_file1 = true;
@@ -285,7 +291,7 @@ int main(int argc, char** argv) {
 
 	if(verbose) std::cerr << getCurrentTime() << " Start classification using " << num_threads << " threads." << std::endl;
 
-	while(getline(in1_file,line_from_file)) {
+	while(getline(*in1_file,line_from_file)) {
 		if(line_from_file.length() == 0) { continue; }
 		if(firstline_file1) {
 			char fileTypeIdentifier = line_from_file[0];
@@ -306,12 +312,12 @@ int main(int argc, char** argv) {
 			if(n != std::string::npos) { line_from_file.erase(n); }
 			name = line_from_file;
 			// read sequence line
-			getline(in1_file,line_from_file);
+			getline(*in1_file,line_from_file);
 			sequence1 = line_from_file;
 			// skip + lin
-			in1_file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+			in1_file->ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 			// skip quality score line
-			in1_file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+			in1_file->ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 		}
 		else { //FASTA
 			// remove '>' from beginning of line
@@ -322,8 +328,8 @@ int main(int argc, char** argv) {
 			name = line_from_file;
 			// read lines until next entry starts or file terminates
 			sequence1.clear();
-			while(!(in1_file.peek()=='>' || in1_file.peek()==EOF)) {
-				getline(in1_file,line_from_file);
+			while(!(in1_file->peek()=='>' || in1_file->peek()==EOF)) {
+				getline(*in1_file,line_from_file);
 				sequence1.append(line_from_file);
 			}
 		} // end FASTA
@@ -333,11 +339,9 @@ int main(int argc, char** argv) {
 		if(paired) {
 			line_from_file = "";
 			while(line_from_file.length() == 0) {
-				if(!getline(in2_file,line_from_file)) {
+				if(!getline(*in2_file,line_from_file)) {
 					//that's the border case where file1 has more entries than file2
 					error("File " + in1_filename + " contains more reads then file " + in2_filename);
-					in1_file.close();
-					in2_file.close();
 					exit(EXIT_FAILURE);
 				}
 			}
@@ -360,17 +364,15 @@ int main(int argc, char** argv) {
 				if(n != std::string::npos) { line_from_file.erase(n); }
 				if(name != line_from_file) {
 					error("Read names are not identical between the two input files. Probably reads are not in the same order in both files.");
-					in1_file.close();
-					in2_file.close();
 					exit(EXIT_FAILURE);
 				}
 				// read sequence line
-				getline(in2_file,line_from_file);
+				getline(*in2_file,line_from_file);
 				sequence2 = line_from_file;
 				// skip + line
-				in2_file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+				in2_file->ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 				// skip quality score line
-				in2_file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+				in2_file->ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 			}
 			else { // FASTA
 				// remove '>' from beginning of line
@@ -380,13 +382,11 @@ int main(int argc, char** argv) {
 				if(n != std::string::npos) { line_from_file.erase(n); }
 				if(name != line_from_file) {
 					std::cerr << "Error: Read names are not identical between the two input files" << std::endl;
-					in1_file.close();
-					in2_file.close();
 					exit(EXIT_FAILURE);
 				}
 				sequence2.clear();
-				while(!(in2_file.peek()=='>' || in2_file.peek()==EOF)) {
-					getline(in2_file,line_from_file);
+				while(!(in2_file->peek()=='>' || in2_file->peek()==EOF)) {
+					getline(*in2_file,line_from_file);
 					sequence2.append(line_from_file);
 				}
 			}
@@ -401,13 +401,13 @@ int main(int argc, char** argv) {
 
 	myWorkQueue->pushedLast();
 
-	if(in1_file.is_open()) in1_file.close();
+	delete in1_file;
 
-	if(paired && in2_file.is_open()) {
-		if(getline(in2_file,line_from_file) && line_from_file.length()>0) {
+	if(paired && in2_file->good()) {
+		if(getline(*in2_file,line_from_file) && line_from_file.length()>0) {
 			std::cerr << "Warning: File " << in2_filename <<" has more reads then file " << in1_filename  <<std::endl;
 		}
-		in2_file.close();
+		delete in2_file;
 	}
 
 	while(!threads.empty()) {

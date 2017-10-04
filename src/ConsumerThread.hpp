@@ -25,17 +25,17 @@
 #include <functional>
 #include <locale>
 
-#include "include/ProducerConsumerQueue/src/ProducerConsumerQueue.hpp"
 #include "ReadItem.hpp"
 #include "Config.hpp"
 #include "util.hpp"
 
-#include "include/ncbi-blast+/algo/blast/core/blast_seg.h"
-#include "include/ncbi-blast+/algo/blast/core/blast_filter.h"
-#include "include/ncbi-blast+/algo/blast/core/blast_encoding.h"
+#include "ProducerConsumerQueue/src/ProducerConsumerQueue.hpp"
+#include "algo/blast/core/blast_seg.h"
+#include "algo/blast/core/blast_filter.h"
+#include "algo/blast/core/blast_encoding.h"
 
 extern "C" {
-#include "./bwt/bwt.h"
+#include "bwt/bwt.h"
 }
 
 const double LN_2 = 0.6931471805;

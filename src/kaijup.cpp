@@ -13,7 +13,9 @@
 #include <deque>
 #include <stdexcept>
 
-#include "include/ProducerConsumerQueue/src/ProducerConsumerQueue.hpp"
+#include "zstr/zstr.hpp"
+#include "ProducerConsumerQueue/src/ProducerConsumerQueue.hpp"
+
 #include "ReadItem.hpp"
 #include "ConsumerThreadp.hpp"
 #include "Config.hpp"
@@ -21,7 +23,7 @@
 #include "util.hpp"
 
 extern "C" {
-#include "./bwt/bwt.h"
+#include "bwt/bwt.h"
 }
 
 
@@ -210,10 +212,14 @@ int main(int argc, char** argv) {
 		threads.push_back(std::thread(&ConsumerThreadp::doWork,p));
 	}
 
-	std::ifstream in1_file;
-	in1_file.open(in1_filename);
-
-	if(!in1_file.is_open()) { error("Could not open file " + in1_filename); exit(EXIT_FAILURE); }
+	zstr::ifstream* in1_file = NULL;
+	try {
+		in1_file = new zstr::ifstream(in1_filename);
+		if(!in1_file->good()) {  error("Could not open file " + in1_filename); exit(EXIT_FAILURE); }
+	}
+	catch(std::exception e) {
+		error("Could not open file " + in1_filename); exit(EXIT_FAILURE);
+	}
 
 	bool isFastQ = false;
 	bool firstline = true;
@@ -225,7 +231,7 @@ int main(int argc, char** argv) {
 
 	if(verbose) std::cerr << getCurrentTime() << " Start search using " << num_threads << " threads." << std::endl;
 
-	while(getline(in1_file,line_from_file)) {
+	while(getline(*in1_file,line_from_file)) {
 		if(firstline) {
 			char fileTypeIdentifier = line_from_file[0];
 			if(fileTypeIdentifier == '@') {
@@ -242,12 +248,12 @@ int main(int argc, char** argv) {
 			line_from_file.erase(line_from_file.begin());
 			name = line_from_file;
 			// read sequence line
-			getline(in1_file,line_from_file);
+			getline(*in1_file,line_from_file);
 			sequence = line_from_file;
 			// skip + line
-			in1_file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+			in1_file->ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 			// skip quality score line
-			in1_file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+			in1_file->ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 		}
 		else { //FASTA
 			// remove '>' from beginning of line
@@ -255,8 +261,8 @@ int main(int argc, char** argv) {
 			name = line_from_file;
 			// read lines until next entry starts or file terminates
 			sequence.clear();
-			while(!(in1_file.peek()=='>' || in1_file.peek()==EOF)) {
-				getline(in1_file,line_from_file);
+			while(!(in1_file->peek()=='>' || in1_file->peek()==EOF)) {
+				getline(*in1_file,line_from_file);
 				sequence.append(line_from_file);
 			}
 		} // end FASTA
@@ -269,7 +275,7 @@ int main(int argc, char** argv) {
 
 	myWorkQueue->pushedLast();
 
-	if(in1_file.is_open()) in1_file.close();
+	delete in1_file;
 
 	while(!threads.empty()) {
 		threads.front().join();
