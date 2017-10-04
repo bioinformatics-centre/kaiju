@@ -167,12 +167,7 @@ from the read names by deleting all characters after a `/` or space.  The read
 names are then compared between the first and second file and an error is
 issued if they are not identical.
 
-Kaiju can read input files in FASTQ and FASTA format.
-If the files are compressed, the shell's process substitution can be used to decompress them on the fly.
-For example for GZIP compressed files:
-```
-kaiju -i <(gunzip -c firstfile.fastq.gz) -j <(gunzip -c secondfile.fastq.gz) ...
-```
+Kaiju can read input files in FASTQ and FASTA format, which may also be gzip-compressed.
 
 By default, Kaiju will print the output to the terminal (STDOUT).
 The output can also be written to a file using the `-o` option:
@@ -298,7 +293,7 @@ Then both files can be merged:
 ```
 mergeOutputs -i kaiju.out.sort -j kraken.out.sort -o combined.out -v
 ```
-Again, process substitution can be used for sorting without creating intermediate files:
+The shell's process substitution can be used for sorting without creating intermediate files:
 ```
 mergeOutputs -i <(sort -k2,2 kaiju.out) -j <(sort -k2,2 kraken.out) -o combined.out -v
 ```

@@ -1,9 +1,9 @@
 CC = gcc
 CXX = g++
-CFLAGS = -g -O3 -DNDEBUG -Wall -Wno-uninitialized
-CXXFLAGS = -O3 -pthread -std=c++11 -g -DNDEBUG -Wall -Wpedantic -Wconversion -Wextra -Wno-unused-function -Wno-unused-parameter
-LDLIBS = -lpthread
-INCLUDES	= -I./include/ProducerConsumerQueue/src -I./include/ncbi-blast+
+CFLAGS = -O3 -DNDEBUG
+CXXFLAGS = -O3 -pthread -std=c++11 -DNDEBUG
+LDLIBS = -lpthread -lz
+INCLUDES	= -I./include -I./include/ncbi-blast+
 
 BLASTOBJS = include/ncbi-blast+/algo/blast/core/pattern.o \
 			 include/ncbi-blast+/algo/blast/core/blast_posit.o \
@@ -28,9 +28,9 @@ BLASTOBJS = include/ncbi-blast+/algo/blast/core/pattern.o \
 BWTOBJS = bwt/bwt.o bwt/compactfmi.o bwt/sequence.o bwt/suffixArray.o
 
 ifeq ($(uname -s), "Darwin")
-LD_LIBS_STATIC = -Wl,-all_load -lpthread -Wl,-noall_load
+LD_LIBS_STATIC = -Wl,-all_load -lpthread -lz -Wl,-noall_load
 else
-LD_LIBS_STATIC = -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
+LD_LIBS_STATIC = -Wl,--whole-archive -lpthread -lz -Wl,--no-whole-archive
 endif
 
 
@@ -82,6 +82,7 @@ static: LDLIBS = $(LD_LIBS_STATIC)
 static: all
 
 debug: CXXFLAGS = -O3 -pthread -std=c++11 -g -Wall -Wpedantic -Wextra -Wconversion
+debug: CFLAGS = -g -O3 -Wall -Wno-uninitialized
 debug: all
 
 .PHONY: clean debug static
