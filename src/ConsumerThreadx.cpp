@@ -194,6 +194,10 @@ void ConsumerThreadx::doWork() {
 	while(myWorkQueue->pop(&item)) {
 		assert(item != NULL);
 		read_count++;
+		if(read_count > 20000) {
+			flush_output();
+			read_count = 0;
+		}
 
 		if((!item->paired && item->sequence1.length() < config->min_fragment_length*3) ||
 			(item->paired && item->sequence1.length() < config->min_fragment_length*3 && item->sequence2.length() < config->min_fragment_length*3)) {
@@ -244,11 +248,6 @@ void ConsumerThreadx::doWork() {
 
 		clearFragments();
 
-		if(read_count==40000) {
-			flush_output();
-			read_count = 0;
-		}
-
 	}
 
 	flush_output();
@@ -260,6 +259,9 @@ void ConsumerThreadx::ids_from_SI(SI *si) {
 	IndexType k, pos;
 	int iseq;
 	for (k=si->start; k<si->start+si->len; ++k) {
+		if(match_ids.size() > config->max_match_ids) {
+			break;
+		}
 		get_suffix(config->fmi, config->bwt->s, k, &iseq, &pos);
 		match_ids.insert(config->bwt->s->ids[iseq]);
 	}
@@ -271,6 +273,9 @@ void ConsumerThreadx::ids_from_SI_recursive(SI *si) {
 		IndexType k, pos;
 		int iseq;
 		for (k=si_it->start; k<si_it->start+si_it->len; ++k) {
+			if(match_ids.size() > config->max_match_ids) {
+				break;
+			}
 			get_suffix(config->fmi, config->bwt->s, k, &iseq, &pos);
 			match_ids.insert(config->bwt->s->ids[iseq]);
 		} // end for

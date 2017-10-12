@@ -8,6 +8,10 @@ void ConsumerThreadp::doWork() {
 	while(myWorkQueue->pop(&item)) {
 		assert(item != NULL);
 		read_count++;
+		if(read_count > 20000) {
+			flush_output();
+			read_count = 0;
+		}
 
 		if(item->sequence1.length() < config->min_fragment_length) {
 			output << "U\t" << item->name << "\t0\n";
@@ -82,11 +86,6 @@ void ConsumerThreadp::doWork() {
 		delete item;
 
 		clearFragments();
-
-		if(read_count==40000) {
-			flush_output();
-			read_count = 0;
-		}
 
 	}
 

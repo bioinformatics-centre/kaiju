@@ -211,7 +211,10 @@ Using the option `-v` enables the verbose output, which will print additional co
 7. matching fragment sequence(s)
 
 NB: Since the _nr_ database aggregates multiple genes of identical sequences, only the first accession number
-for each sequence is kept in Kaiju's database and therefore also in the output file.
+for each sequence in the database is kept in Kaiju's database and therefore also in the output file.
+
+The number of taxon identifiers (column 5) and accession numbers (column 5) is limited to 20 entries each in
+order to reduce large outputs produced by highly abundant protein sequences in _nr_, e.g. from HIV.
 
 ## Classification accuracy
 

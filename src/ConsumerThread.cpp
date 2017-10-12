@@ -512,7 +512,6 @@ uint64_t ConsumerThread::classify_greedyblosum() {
 			}
 		}
 
-
 		match_ids.clear();
 		match_dbnames.clear();
 
@@ -633,6 +632,10 @@ void ConsumerThread::doWork() {
 	while(myWorkQueue->pop(&item)) {
 		assert(item != NULL);
 		read_count++;
+		if(read_count > 20000) {
+			flush_output();
+			read_count = 0;
+		}
 
 		if(config->input_is_protein) {
 			if(item->sequence1.length() < config->min_fragment_length) {
@@ -735,11 +738,6 @@ void ConsumerThread::doWork() {
 
 		clearFragments();
 
-		if(read_count==40000) {
-			flush_output();
-			read_count = 0;
-		}
-
 	}
 
 	flush_output();
@@ -781,7 +779,7 @@ void ConsumerThread::eval_match_scores(SI *si, Fragment * frag) {
 			best_matches.push_back(frag->seq.substr(si->qi,si->ql));
 		}
 	}
-	else if(score == best_match_score) {
+	else if(score == best_match_score && best_matches_SI.size() < config->max_matches_SI) {
 		best_matches_SI.push_back(si);
 		if(config->verbose)
 			best_matches.push_back(frag->seq.substr(si->qi,si->ql));
@@ -798,6 +796,12 @@ void ConsumerThread::ids_from_SI(SI *si) {
 	IndexType k, pos;
 	int iseq;
 	for (k=si->start; k<si->start+si->len; ++k) {
+
+		// too many match ids affect AM and runtime, so use a limit now
+		if(match_ids.size() > config->max_match_ids) {
+			break;
+		}
+
 		get_suffix(config->fmi, config->bwt->s, k, &iseq, &pos);
 		uint64_t id = ULONG_MAX;
 
@@ -811,7 +815,7 @@ void ConsumerThread::ids_from_SI(SI *si) {
 				continue;
 			}
 			// extract db name
-			if(config->verbose) {
+			if(config->verbose && match_dbnames.size() < config->max_match_acc) {
 				match_dbnames.emplace(config->bwt->s->ids[iseq],pch-config->bwt->s->ids[iseq]);
 			}
 		}

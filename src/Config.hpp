@@ -31,6 +31,9 @@ enum Mode { MEM, GREEDYBLOSUM };
 class Config {
 	public:
 		Mode mode;
+		size_t max_matches_SI = 20; // maximum number of best matches with same score, used for LCA and output
+		size_t max_match_ids = 20; // maximum number of ids to print, used for LCA and output
+		size_t max_match_acc = 20; // maximum number of ids to print, used for LCA and output
 		bool use_Evalue;
 		double min_Evalue;
 		bool debug;
