@@ -209,13 +209,16 @@ void ConsumerThreadx::doWork() {
 		extraoutput = "";
 
 		query_len = static_cast<double>(item->sequence1.length()) / 3.0;
-
-		if(config->debug) std::cerr << "Getting fragments for read: "<< item->sequence1 << "\n";
-		getAllFragmentsBits(item->sequence1);
+		if(item->sequence1.length() >= config->min_fragment_length*3) {
+			if(config->debug) std::cerr << "Getting fragments for read: "<< item->sequence1 << "\n";
+			getAllFragmentsBits(item->sequence1);
+		}
 		if(item->paired) {
 			query_len += static_cast<double>(item->sequence2.length()) / 3.0;
-			if(config->debug) std::cerr << "Getting fragments for 2nd read: " << item->sequence2 << "\n";
-			getAllFragmentsBits(item->sequence2);
+			if(item->sequence2.length() >= config->min_fragment_length*3) {
+				if(config->debug) std::cerr << "Getting fragments for 2nd read: " << item->sequence2 << "\n";
+				getAllFragmentsBits(item->sequence2);
+			}
 		}
 		if(config->debug) std::cerr << fragments.size()  << " fragments found in the read."<< "\n";
 
