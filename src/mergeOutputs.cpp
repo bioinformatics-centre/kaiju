@@ -118,10 +118,11 @@ int main(int argc, char** argv) {
 		if(index2 == std::string::npos) { std::cerr << "Error Could not parse line " << count << " in file " << in1_filename << std::endl; break; }
 		std::string name1 = line.substr(index1+1,index2-index1-1);
 		size_t end = line.find_first_not_of("0123456789",index2+1);
-		if(end == std::string::npos) { if(index2 < line.length()-1) end=line.length()-1; else { std::cerr << "Error Could not parse line " << count << " in file " << in1_filename << std::endl; break; }}
+		if(end == std::string::npos) { if(index2 < line.length()-1){ end=line.length()-1;} else { std::cerr << "Error Could not parse line " << count << " in file " << in1_filename << std::endl; break; }}
+		else { end -= 1; }
 		std::string taxon_id1 = line.substr(index2+1,end-index2);
 
-		//if(debug) std::cerr << "Name1=" << name1 <<" ID1=" << taxon_id1 << std::endl;
+		//if(debug) std::cerr << "Name1=" << name1 <<" ID1=>" << taxon_id1 <<"<" << std::endl;
 
 		if(!getline(in2_file,line)) {
 			//that's the border case where file1 has more entries than file2
@@ -138,10 +139,11 @@ int main(int argc, char** argv) {
 		if(index2 == std::string::npos) { std::cerr << "Error Could not parse line " << count << " in file " << in2_filename << std::endl; break; }
 		std::string name2 = line.substr(index1+1,index2-index1-1);
 		end = line.find_first_not_of("0123456789",index2+1);
-		if(end == std::string::npos) { if(index2 < line.length()-1) end=line.length()-1; else { std::cerr << "Error Could not parse line " << count << " in file " << in2_filename << std::endl; break; }}
+		if(end == std::string::npos) { if(index2 < line.length()-1) { end=line.length()-1;} else { std::cerr << "Error Could not parse line " << count << " in file " << in2_filename << std::endl; break; }}
+		else { end -= 1; }
 		std::string taxon_id2 = line.substr(index2+1,end-index2);
 
-		//if(debug) std::cerr << "Name2=" << name1 <<" ID2=" << taxon_id2 << std::endl;
+		//if(debug) std::cerr << "Name2=" << name1 <<" ID2=>" << taxon_id2 << "<"<< std::endl;
 
 		if(name1 != name2) {
 			std::cerr << "Error: Read names are not identical between the two input files on line " << count << std::endl;
@@ -178,12 +180,12 @@ int main(int argc, char** argv) {
 					else {
 						lca = calc_lca(nodes, taxon_id1, taxon_id2);
 					}
-					if(lca=="0") { std::cerr << "Error while calculating lowest node of " << taxon_id1 << " and " << taxon_id2 << " in line " << count << std::endl; break; }
+					if(lca=="0") { std::cerr << "Error while calculating lowest node of " << taxon_id1 << " and " << taxon_id2 << " in line " << count << ", setting taxon id to " << taxon_id1 << std::endl; lca=taxon_id1; }
 				}
 				else {
 					assert(conflict=="lca");
 					lca = calc_lca(nodes, taxon_id1, taxon_id2);
-					if(lca=="0") { std::cerr << "Error while calculating LCA of " << taxon_id1 << " and " << taxon_id2 << " in line " << count << std::endl; break; }
+					if(lca=="0") { std::cerr << "Error while calculating lowest node of " << taxon_id1 << " and " << taxon_id2 << " in line " << count << ", setting taxon id to " << taxon_id1 << std::endl; lca=taxon_id1; }
 					if(debug) std::cerr << "LCA of "<< taxon_id1 << " and " << taxon_id2 << " is "  << lca << std::endl;
 				}
 			}
@@ -282,12 +284,25 @@ std::string calc_lca(std::unordered_map<uint64_t,uint64_t> & nodes, const std::s
 			node2 = stoul(id2);
 		}
 		catch(const std::invalid_argument& ia) {
-			std::cerr << "Bad number in taxon id" << std::endl;
-			return 0;
+			std::cerr << "Warning: Bad number in taxon id" << std::endl;
+			return "0";
 		}
 		catch (const std::out_of_range& oor) {
-			std::cerr << "Bad number (out of range error) in taxon id" << std::endl;
-			return 0;
+			std::cerr << "Warning: Bad number (out of range error) in taxon id" << std::endl;
+			return "0";
+		}
+
+		if(nodes.count(node1)==0 && nodes.count(node2)==0) {
+			std::cerr << "Warning: Taxon IDs " << node1 << " and " << node2 << " from both input files are not contained in taxonomic tree.\n";
+			return "0";
+		}
+		else if(nodes.count(node1)==0) {
+			std::cerr << "Warning: Taxon ID " << node1 << " in first input file is not contained in taxonomic tree.\n";
+			return std::to_string(node2);
+		}
+		else if(nodes.count(node2)==0) {
+			std::cerr << "Warning: Taxon ID " << node2 << " in second input file is not contained in taxonomic tree.\n";
+			return std::to_string(node1);
 		}
 
 		std::set<uint64_t> lineage1;
