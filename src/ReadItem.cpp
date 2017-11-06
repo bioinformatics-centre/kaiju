@@ -3,15 +3,8 @@
 
 #include "ReadItem.hpp"
 
-ReadItem::ReadItem(std::string name, std::string sequence1) {
-	this->name = name;
-	this->sequence1 = sequence1;
-}
+ReadItem::ReadItem(const std::string & n, const std::string & s1) : name(n), sequence1(s1) { }
 
-ReadItem::ReadItem(std::string name, std::string sequence1, std::string sequence2) {
-	this->paired = true;
-	this->name = name;
-	this->sequence1 = sequence1;
-	this->sequence2 = sequence2;
-}
+ReadItem::ReadItem(const std::string & n, const std::string & s1, const std::string & s2) : name(n), sequence1(s1), sequence2(s2), paired(true) { }
+
 

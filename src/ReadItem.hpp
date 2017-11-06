@@ -9,10 +9,10 @@
 class ReadItem {
     public:
         std::string name;
-        bool paired = false;
         std::string sequence1;
         std::string sequence2;
-        ReadItem(std::string name, std::string sequence1);
-        ReadItem(std::string name, std::string sequence1, std::string sequence2);
+        bool paired = false;
+        ReadItem(const std::string &, const std::string &);
+        ReadItem(const std::string &, const std::string &, const std::string &);
 };
 #endif
