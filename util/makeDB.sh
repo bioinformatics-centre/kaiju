@@ -12,6 +12,7 @@ db_refseq=0
 db_progenomes=0
 db_nr=0
 db_euk=0
+db_mar=0
 threadsBWT=5
 parallelDL=5
 parallelConversions=5
@@ -34,8 +35,12 @@ echo
 echo  "$s" -n  NCBI BLAST non-redundant protein database \"nr\":
 echo  "$tab"   only Archaea, bacteria, and viruses
 echo
-echo  "$s" -e   NCBI BLAST non-redundant protein database \"nr\":
+echo  "$s" -e  NCBI BLAST non-redundant protein database \"nr\":
 echo  "$tab"   like -n, but additionally including fungi and microbial eukaryotes
+echo
+echo  "$s" -m  Marine Metagenomics Portal \(MMP\) marine reference databases
+echo  "$tab"   \(https://mmp.sfb.uit.no\)
+echo
 echo
 echo Additional options:
 echo
@@ -83,6 +88,9 @@ while :; do
         -r|--refseq)
             db_refseq=1
             ;;
+        -m|--mardb)
+            db_mar=1
+            ;;
         --)# End of all options.
             shift
             break
@@ -96,7 +104,7 @@ while :; do
     shift
 done
 
-[ $db_refseq -eq 1 -o $db_progenomes -eq 1 -o $db_nr -eq 1 -o $db_euk -eq 1 ] || { echo "Error: Use one of the options -r, -p, -n or -e"; usage; exit 1; }
+[ $db_refseq -eq 1 -o $db_progenomes -eq 1 -o $db_nr -eq 1 -o $db_euk -eq 1 -o $db_mar -eq 1 ] || { echo "Error: Use one of the options -r, -p, -n, -m or -e"; usage; exit 1; }
 
 #check if necessary programs are in the PATH
 command -v awk >/dev/null 2>/dev/null || { echo Error: awk not found; exit 1; }
@@ -105,6 +113,7 @@ command -v xargs >/dev/null 2>/dev/null || { echo Error: xargs not found; exit 1
 command -v tar >/dev/null 2>/dev/null || { echo Error: tar not found; exit 1; }
 command -v gunzip >/dev/null 2>/dev/null || { echo Error: gunzip not found; exit 1; }
 command -v perl >/dev/null 2>/dev/null || { echo Error: perl not found; exit 1; }
+command -v python >/dev/null 2>/dev/null || { echo Error: python not found; exit 1; }
 
 #test if option --show-progress is available for wget, then use it when downloading
 wgetProgress=""
@@ -115,6 +124,7 @@ command -v gbk2faa.pl >/dev/null 2>/dev/null || { echo Error: gbk2faa.pl not fou
 command -v mkfmi >/dev/null 2>/dev/null || { echo Error: mkfmi not found in $PATH; exit 1; }
 command -v mkbwt >/dev/null 2>/dev/null || { echo Error: mkbwt not found in $PATH; exit 1; }
 command -v convertNR >/dev/null 2>/dev/null || { echo Error: convertNR not found in $PATH; exit 1; }
+command -v convert_mar_to_kaiju.py >/dev/null 2>/dev/null || { echo Error: convert_mar_to_kaiju.py not found in $PATH; exit 1; }
 
 if [ $db_euk -eq 1 ]
 then
@@ -136,6 +146,40 @@ fi
 [ -r taxdump.tar.gz ] || { echo Missing file taxdump.tgz; exit 1; }
 echo Extracting file taxdump.tar.gz
 tar xf taxdump.tar.gz nodes.dmp names.dmp merged.dmp
+
+if [ $db_mar -eq 1 ]
+then
+	python -c "import HTSeq" 2> /dev/null || (echo Missing HTSeq library for python2. Please install; exit 1;)
+
+	if [ $DL -eq 1 ]
+	then
+		echo Downloading list of marine genomes from the Marine Metagenomics Portal \(MMP\)
+		wget -nv -O download_list.txt https://s1.sfb.uit.no/public/mar/Resources/kaiju/download_list.txt
+
+		echo Downloading necessary metadata from MMP
+		wget -nv -O MarRef.tsv https://s1.sfb.uit.no/public/mar/MarRef/Metadatabase/MarRef.v1.0/Current.tsv
+		wget -nv -O MarDB.tsv https://s1.sfb.uit.no/public/mar/MarDB/Metadatabase/MarDB.v1.0/Current.tsv
+	
+		echo Creating directory genomes/
+		mkdir -p genomes
+
+		echo Downloading Mar reference genomes from the MMP. This may take a while...
+		cat download_list.txt | xargs -P $parallelDL -n 1 wget -P genomes -nv -nc
+	fi
+
+	echo Converting MMP data to kaiju format
+	convert_mar_to_kaiju.py > kaiju_db_tmp.faa
+
+	echo On the fly substitution with merged.dmp
+	cat kaiju_db_tmp.faa | perl -lsne 'BEGIN{open(F,$m);while(<F>){@F=split(/[\|\s]+/);$h{$F[0]}=$F[1]}}if(/(>.+)_(\d+)/){print $1,"_",defined($h{$2})?$h{$2}:$2;}else{print}' -- -m=merged.dmp > kaiju_db.faa
+	rm kaiju_db_tmp.faa
+	
+	echo Building Kaiju reference
+	mkbwt -n $threadsBWT -e $exponentSA -a ABCDEFGHIJKLMNOPQRSTUVWXYZ -o kaiju_db kaiju_db.faa
+	mkfmi kaiju_db
+	exit 0
+fi
+
 
 if [ $db_nr -eq 1 -o $db_euk -eq 1 ]
 then
