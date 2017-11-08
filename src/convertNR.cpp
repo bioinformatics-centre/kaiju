@@ -13,7 +13,7 @@
 #include <unordered_map>
 #include <vector>
 #include <unordered_set>
-#include <iterator>
+#include <climits>
 
 #include "Config.hpp"
 #include "version.hpp"
@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
 	std::ifstream nodes_file;
 	nodes_file.open(nodes_filename.c_str());
 	if(!nodes_file.is_open()) { error("Could not open file " + nodes_filename); exit(EXIT_FAILURE); }
-	if(verbose) std::cerr << " Reading taxonomic tree from file " << nodes_filename << std::endl;
+	std::cerr << getCurrentTime() << " Reading taxonomic tree from file " << nodes_filename << std::endl;
 	parseNodesDmp(*nodes,nodes_file);
 	nodes_file.close();
 
@@ -126,12 +126,12 @@ int main(int argc, char **argv) {
 		list_file.close();
 	}
 
-
+	acc2taxid.reserve(400e6);
 
 	std::ifstream acc_taxid_file;
 	acc_taxid_file.open(acc_taxid_filename);
 	if(!acc_taxid_file.is_open()) { error("Could not open file " + acc_taxid_filename); exit(EXIT_FAILURE); }
-	std::cerr << "Reading accession to taxon id map from file " << acc_taxid_filename << std::endl;
+	std::cerr << getCurrentTime() << " Reading accession to taxon id map from file " << acc_taxid_filename << std::endl;
 	std::string line;
 	getline(acc_taxid_file, line); // skip header line
 	while(getline(acc_taxid_file, line)) {
@@ -139,12 +139,14 @@ int main(int argc, char **argv) {
 		try {
 			size_t start = line.find('\t',0);
 			size_t end = line.find("\t",start+1);
-			std::string acc = line.substr(start+1,end-start-1);
-			start = end+1;
-			end = line.find_first_of("\t\n",start);
-			uint64_t taxid = stoul(line.substr(start,end-start));
-//			std::cerr << acc << "\t" << taxid << "\n";
-			acc2taxid.emplace(acc,taxid);
+			//std::string acc = line.substr(start+1,end-start-1);
+			uint64_t taxid = strtoul(line.c_str() + end + 1,NULL,10);
+			if(taxid == ULONG_MAX) {
+				std::cerr << "Found bad taxid number (out of range error) in line: " << line << std::endl;
+				continue;
+			}
+			//std::cerr << acc << "\t" << taxid << "\n";
+			acc2taxid.emplace(line.substr(start+1,end-start-1),taxid);
 		}
 		catch(const std::invalid_argument& ia) {
 			std::cerr << "Found bad identifier in line: " << line << std::endl;
@@ -166,7 +168,7 @@ int main(int argc, char **argv) {
 	out_file.open(out_filename);
 	if(!out_file.is_open()) {  error("Could not open file " + out_filename + " for writing."); exit(EXIT_FAILURE); }
 
-	std::cerr << "Processing NR file " << nr_filename << std::endl;
+	std::cerr << getCurrentTime() << " Processing NR file " << nr_filename << std::endl;
 
 	bool skip = true;
 	bool first = true;
@@ -184,10 +186,11 @@ int main(int argc, char **argv) {
 			while((end = line.find(' ',start)) != std::string::npos) {
 				// acc is between start and end
 				std::string acc = line.substr(start, end - start);
-				if(acc2taxid.count(acc)>0 && acc2taxid.at(acc)>0 && nodes->count(acc2taxid.at(acc))>0) {
-					if(addAcc && first_acc.length()==0) { first_acc = acc; } // use first Accession that has taxon id as first part of DB identifier
-					if(debug) std::cerr << "Accession " << acc << " belongs to taxon id " << acc2taxid.at(acc)  << std::endl;
-					ids.insert(acc2taxid.at(acc));
+				auto pos = acc2taxid.find(acc);
+				if(pos != acc2taxid.end() && pos->second > 0 && nodes->count(pos->second)>0) {
+					if(addAcc && first_acc.empty()) { first_acc = acc; } // use first Accession that has taxon id as first part of DB identifier
+					if(debug) std::cerr << "Accession " << acc << " belongs to taxon id " << pos->second  << std::endl;
+					ids.insert(pos->second);
 				}
 				else if(verbose) { std::cerr << "Accession " << acc <<" was either not found in " << acc_taxid_filename << " or in " << nodes_filename << "\n"; }
 				//look for next ID
@@ -199,9 +202,9 @@ int main(int argc, char **argv) {
 				}
 			}
 
-			if(ids.size()>0) {
+			if(!ids.empty()) {
 				bool keep = false;
-				uint64_t lca = (ids.size()==1) ?  *(ids.begin()) : lca_from_ids(config,node2depth, ids);
+				uint64_t lca = (ids.size()==1) ?  *(ids.begin()) : lca_from_ids(config, node2depth, ids);
 				if(debug) std::cerr << "LCA=" << lca << std::endl;
 				if(nodes->count(lca)==0) { std::cerr << "Taxon ID " << lca << " not found in taxonomy!" << std::endl; continue; }
 				uint64_t id = lca;
@@ -245,6 +248,7 @@ int main(int argc, char **argv) {
 		inputfile.close();
 	out_file.close();
 
+	std::cerr << getCurrentTime() << " Finished." << std::endl;
 	return EXIT_SUCCESS;
 }
 

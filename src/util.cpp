@@ -32,7 +32,7 @@ std::string getCurrentTime() {
 }
 
 /* returns true if node1 is ancestor of node2  or if node1==node2*/
-bool is_ancestor(std::unordered_map<uint64_t,uint64_t> & nodes, const std::string & id1, const std::string & id2) {
+bool is_ancestor(const std::unordered_map<uint64_t,uint64_t> & nodes, const std::string & id1, const std::string & id2) {
 
 		uint64_t node1;
 		uint64_t node2;
@@ -53,7 +53,7 @@ bool is_ancestor(std::unordered_map<uint64_t,uint64_t> & nodes, const std::strin
 }
 
 /* returns true if node1 is ancestor of node2  or if node1==node2*/
-bool is_ancestor(std::unordered_map<uint64_t,uint64_t> & nodes, uint64_t node1, uint64_t node2) {
+bool is_ancestor(const std::unordered_map<uint64_t,uint64_t> & nodes, uint64_t node1, uint64_t node2) {
 		if(nodes.count(node1)==0) { std::cerr << "Taxon ID " << node1 << " not found in taxonomy!" << std::endl; return false; }
 		if(nodes.count(node2)==0) { std::cerr << "Taxon ID " << node2 << " not found in taxonomy!" << std::endl; return false; }
 		/* climb up from node 2 and return true if encountering node 1 */
@@ -68,6 +68,7 @@ bool is_ancestor(std::unordered_map<uint64_t,uint64_t> & nodes, uint64_t node1, 
 }
 
 void parseNodesDmp(std::unordered_map<uint64_t,uint64_t> & nodes, std::ifstream & nodes_file) {
+		nodes.reserve(2e6);
 		std::string line;
 		while(std::getline(nodes_file, line)) {
 			if(line.length() == 0) { continue; }
@@ -89,6 +90,7 @@ void parseNodesDmp(std::unordered_map<uint64_t,uint64_t> & nodes, std::ifstream 
 }
 
 void parseNodesDmpWithRank(std::unordered_map<uint64_t,uint64_t> & nodes, std::unordered_map<uint64_t,std::string> & node2rank, std::ifstream & nodes_file) {
+	nodes.reserve(2e6);
 	std::string line;
 	while(std::getline(nodes_file, line)) {
 		if(line.length() == 0) { continue; }
@@ -121,7 +123,6 @@ void parseNodesDmpWithRank(std::unordered_map<uint64_t,uint64_t> & nodes, std::u
 }
 
 void parseNamesDmp(std::unordered_map<uint64_t,std::string> & names, std::ifstream & names_file) {
-
 	std::string line;
 	while(std::getline(names_file, line)) {
 		if(line.length() == 0) { continue; }
@@ -147,7 +148,7 @@ void parseNamesDmp(std::unordered_map<uint64_t,std::string> & names, std::ifstre
 }
 
 
-std::string getTaxonNameFromId(std::unordered_map<uint64_t,std::string> & node2name, uint64_t id, std::string & names_filename) {
+std::string getTaxonNameFromId(const std::unordered_map<uint64_t,std::string> & node2name, uint64_t id, const std::string & names_filename) {
 	std::string taxon_name;
 	if(node2name.count(id)==0) {
 		std::cerr << "Warning: Taxon ID " << id << " is not found in file "<< names_filename << "." << std::endl;
@@ -159,40 +160,41 @@ std::string getTaxonNameFromId(std::unordered_map<uint64_t,std::string> & node2n
 	return taxon_name;
 }
 
-uint64_t lca_from_ids(Config * config, std::unordered_map<uint64_t,unsigned int> & node2depth, std::set<uint64_t> & ids) {
+uint64_t lca_from_ids(Config * config, std::unordered_map<uint64_t,unsigned int> & node2depth, const std::set<uint64_t> & ids) {
 
-	if(ids.size() == 1) {
+	size_t num_ids = ids.size();
+	if(num_ids == 1) {
 		return *(ids.begin());
 	}
-	size_t num_ids = ids.size();
 	uint64_t * leafs = (uint64_t *) calloc(num_ids,sizeof(uint64_t));
 	unsigned int shallowest_depth = 100000;
 	unsigned int index = 0;
-	for(auto it = ids.begin() ; it != ids.end(); ++it) {
-		uint64_t id = *it;
+	for(auto it : ids) {
 
-		if(config->nodes->count(id)==0) {
-			if(config->verbose) std::cerr << "Warning: Taxon ID " << id << " in database is not contained in taxonomic tree.\n";
+		if(config->nodes->count(it)==0) {
+			if(config->verbose) std::cerr << "Warning: Taxon ID " << it << " in database is not contained in taxonomic tree.\n";
 			num_ids--;
 			continue;
 		}
 
 		// check if this id was already seen, then skip it
-		leafs[index++] = id;
+		leafs[index++] = it;
 
 		//if id is alrady in the depth map then do not add it.
-		if(node2depth.count(id)==0) {
+		auto pos = node2depth.find(it);
+		if(pos == node2depth.end()) {
 			unsigned int depth = 1;
+			uint64_t id = it;
 			while(config->nodes->count(id)>0 && id != config->nodes->at(id)) {
 				depth++;
 				id = config->nodes->at(id);
 			}
-			node2depth.emplace(*it,depth);
+			node2depth.emplace(it,depth);
 			//cerr << "Inserting to depth map: " << *it <<" -> " << depth << endl;
 			if(depth < shallowest_depth) { shallowest_depth = depth; }
 		}
-		else if(node2depth.at(*it) < shallowest_depth) {
-			shallowest_depth = node2depth.at(*it);
+		else if(pos->second < shallowest_depth) {
+			shallowest_depth = pos->second;
 		}
 	}
 
@@ -203,9 +205,9 @@ uint64_t lca_from_ids(Config * config, std::unordered_map<uint64_t,unsigned int>
 
 	//cerr << "shallowest depth = " << shallowest_depth << endl;
 
-	for(size_t index = 0; index < num_ids; ++index) {
+	for(int index = 0; index < num_ids; ++index) {
 		for(int i = node2depth.at(leafs[index]) - shallowest_depth; i > 0; i--) {
-			leafs[index]	= config->nodes->at(leafs[index]);
+			leafs[index] = config->nodes->at(leafs[index]);
 		}
 	}
 

@@ -28,15 +28,15 @@ void parseNodesDmpWithRank(std::unordered_map<uint64_t,uint64_t> &, std::unorder
 
 void parseNamesDmp(std::unordered_map<uint64_t,std::string> &, std::ifstream &);
 
-std::string getTaxonNameFromId(std::unordered_map<uint64_t,std::string> &, uint64_t, std::string &);
+std::string getTaxonNameFromId(const std::unordered_map<uint64_t,std::string> &, uint64_t, const std::string &);
 
 /* returns true if node1 is ancestor of node2  or if node1==node2*/
-bool is_ancestor(std::unordered_map<uint64_t,uint64_t> &, const std::string &, const std::string &);
+bool is_ancestor(const std::unordered_map<uint64_t,uint64_t> &, const std::string &, const std::string &);
 
 /* returns true if node1 is ancestor of node2  or if node1==node2*/
-bool is_ancestor(std::unordered_map<uint64_t,uint64_t> &, uint64_t, uint64_t);
+bool is_ancestor(const std::unordered_map<uint64_t,uint64_t> &, uint64_t, uint64_t);
 
-uint64_t lca_from_ids(Config *,std::unordered_map<uint64_t,unsigned int> &, std::set<uint64_t> &);
+uint64_t lca_from_ids(Config *, std::unordered_map<uint64_t,unsigned int> &, const std::set<uint64_t> &);
 
 void readFMI(std::string fmi_filename, Config * config);
 
