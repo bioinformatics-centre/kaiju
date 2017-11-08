@@ -38,7 +38,7 @@ echo
 echo  "$s" -e  NCBI BLAST non-redundant protein database \"nr\":
 echo  "$tab"   like -n, but additionally including fungi and microbial eukaryotes
 echo
-echo  "$s" -m  Marine Metagenomics Portal \(MMP\) marine reference databases
+echo  "$s" -m  Marine Metagenomics Portal \(MMP\) marine reference databases, MarRef and MarDB
 echo  "$tab"   \(https://mmp.sfb.uit.no\)
 echo
 echo
@@ -155,8 +155,8 @@ then
 		echo Downloading list of marine genomes from the Marine Metagenomics Portal \(MMP\)
 		wget -nv -O download_list.txt https://s1.sfb.uit.no/public/mar/Resources/kaiju/download_list.txt
 		echo Downloading necessary metadata from MMP
-		wget -nv -O MarRef.tsv https://s1.sfb.uit.no/public/mar/MarRef/Metadatabase/MarRef.v1.0/Current.tsv
-		wget -nv -O MarDB.tsv https://s1.sfb.uit.no/public/mar/MarDB/Metadatabase/MarDB.v1.0/Current.tsv
+		wget -nv -O MarRef.tsv https://s1.sfb.uit.no/public/mar/MarRef/Metadatabase/Current.tsv
+		wget -nv -O MarDB.tsv https://s1.sfb.uit.no/public/mar/MarDB/Metadatabase/Current.tsv
 		echo Creating directory genomes/
 		mkdir -p genomes
 		echo Downloading Mar reference genomes from the MMP. This may take a while...

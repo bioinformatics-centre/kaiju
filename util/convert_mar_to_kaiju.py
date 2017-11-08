@@ -2,15 +2,12 @@
 
 # This script maps downloaded sequence data from mmp_id to taxonomic lineage using MMP metadata. 
 # The script assumes mmp_id in column 107 and taxonomic lineage in 38. 
+# Espen M. Robertsen, 2017. espen.m.robertsen@uit.no
 
 from collections import defaultdict
 import os, sys, HTSeq
 
 mapdict = defaultdict(str)
-
-# Do sys.argv check etc. Needs these files/dirs: MarRef.tsv, MarDB.tsv, nodes.dmp, genomes/.
-#if not len(sys.argv) == 5:
-#	exit("Missing arguments. Needs 'MarRef.tsv', 'MarDB.tsv', 'nodes.dmp', 'genomes/'. len(sys.argv): "+str(len(sys.argv)))
 
 # Map downloaded metadata to the defaultdict 'mapdict'
 with open ('MarRef.tsv') as marref:
@@ -38,7 +35,7 @@ with open ('nodes.dmp') as nodes:
 		data = line.split("|")
 		taxids.add(data[0].strip())
 
-# Map mmp_id from downloaded sequences to lineages and write to stdout.
+# Map mmp_id from downloaded sequences to lineages and write to stdout in Kaiju preferred format.
 processed_mmp = set()
 warnings = defaultdict(int)
 for root, dirs, files in os.walk('genomes/'):
@@ -72,4 +69,5 @@ for root, dirs, files in os.walk('genomes/'):
 				print ">"+header+"\n", seq.seq
 			processed_mmp.add(mmp_id)
 
+# Output simple statistic to stderr
 sys.stderr.write("Warnings / Sequences removed:\nDuplicates: "+str(warnings['duplicate'])+"\nAccessions with no taxonomic lineage: "+str(warnings['nolineage'])+"\nAccessions with no taxid in nodes.dmp: "+str(warnings['notax'])+"\nSequences with asterix: "+str(warnings['asterix'])+"\n") 
