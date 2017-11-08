@@ -8,6 +8,10 @@ import os, sys, HTSeq
 
 mapdict = defaultdict(str)
 
+# Do sys.argv check etc. Needs these files/dirs: MarRef.tsv, MarDB.tsv, nodes.dmp, genomes/.
+#if not len(sys.argv) == 5:
+#	exit("Missing arguments. Needs 'MarRef.tsv', 'MarDB.tsv', 'nodes.dmp', 'genomes/'. len(sys.argv): "+str(len(sys.argv)))
+
 # Map downloaded metadata to the defaultdict 'mapdict'
 with open ('MarRef.tsv') as marref:
 	for line in marref:
@@ -37,7 +41,7 @@ with open ('nodes.dmp') as nodes:
 # Map mmp_id from downloaded sequences to lineages and write to stdout.
 processed_mmp = set()
 warnings = defaultdict(int)
-for root, dirs, files in os.walk("./genomes"):
+for root, dirs, files in os.walk('genomes/'):
 	for filename in files:
 		if filename.endswith(".faa"):
 			counter = 1
