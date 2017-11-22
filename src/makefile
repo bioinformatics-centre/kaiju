@@ -81,7 +81,7 @@ static: LDFLAGS = -static
 static: LDLIBS = $(LD_LIBS_STATIC)
 static: all
 
-debug: CXXFLAGS = -O3 -pthread -std=c++11 -g -Wall -Wpedantic -Wextra -Wconversion
+debug: CXXFLAGS = -O3 -pthread -std=c++11 -g -Wall -Wpedantic -Wextra -Wconversion -fno-omit-frame-pointer
 debug: CFLAGS = -g -O3 -Wall -Wno-uninitialized
 debug: all
 
