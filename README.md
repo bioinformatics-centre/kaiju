@@ -113,6 +113,12 @@ construction and for running Kaiju.  As of October 2016, the _nr_ database with
 option `-e` contains ca. 80M protein sequences, which amounts to a requirement
 of 43GB RAM for running Kaiju.
 
+### 4. Mar databases from the Marine Metagenomics Portal
+`makeDB.sh -m`  
+Download the protein sequences belonging to the genomes
+from the [MarRef and MarDB databases](https://mmp.sfb.uit.no/).
+This dataset specifically covers marine metagenomics.
+
 ### Index construction
 
 When using option `-r`, `makeDB.sh` downloads and extracts 5 genomes from the NCBI FTP
