@@ -30,7 +30,7 @@ void ConsumerThreadp::doWork() {
 			if(pos-start >= config->min_fragment_length) {
 				std::string subseq =  item->sequence1.substr(start,pos-start);
 				//cerr << "subseq=" << subseq << endl;
-				if(config->mode==GREEDYBLOSUM) {
+				if(config->mode==GREEDY) {
 					const unsigned int score = calcScore(subseq);
 					if(score >= config->min_score) {
 						fragments.insert(std::pair<unsigned int,Fragment *>(score,new Fragment(subseq)));
@@ -46,7 +46,7 @@ void ConsumerThreadp::doWork() {
 		//add remaining sequence, which corresponds to the whole sequence if no invalid char was found
 		std::string subseq = item->sequence1.substr(start,item->sequence1.length()-start);
 		if(subseq.length() >= config->min_fragment_length) {
-			if(config->mode==GREEDYBLOSUM) {
+			if(config->mode==GREEDY) {
 				const unsigned int score = calcScore(subseq);
 				if(score >= config->min_score) {
 					fragments.insert(std::pair<unsigned int,Fragment *>(score,new Fragment(subseq)));
@@ -69,7 +69,7 @@ void ConsumerThreadp::doWork() {
 		if(config->mode == MEM) {
 			classify_length();
 		}
-		else if(config->mode == GREEDYBLOSUM) {
+		else if(config->mode == GREEDY) {
 			classify_greedyblosum();
 		}
 		else { // this should not happen

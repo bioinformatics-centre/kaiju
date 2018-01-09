@@ -225,7 +225,7 @@ void ConsumerThreadx::doWork() {
 		if(config->mode == MEM) {
 			classify_length();
 		}
-		else if(config->mode == GREEDYBLOSUM) {
+		else if(config->mode == GREEDY) {
 			classify_greedyblosum();
 		}
 		else { // this should not happen

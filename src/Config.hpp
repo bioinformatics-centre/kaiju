@@ -26,26 +26,30 @@ extern "C" {
 }
 
 
-enum Mode { MEM, GREEDYBLOSUM };
+enum Mode { MEM, GREEDY };
 
 class Config {
 	public:
-		Mode mode;
+		Mode mode = MEM;
 		size_t max_matches_SI = 20; // maximum number of best matches with same score, used for LCA and output
 		size_t max_match_ids = 20; // maximum number of ids to print, used for LCA and output
-		size_t max_match_acc = 20; // maximum number of ids to print, used for LCA and output
-		bool use_Evalue;
-		double min_Evalue;
-		bool debug;
+		size_t max_match_acc = 20; // maximum number of accession numbers to print, used for LCA and output
+
+		bool debug = false;
+		bool verbose = false;
+
 		bool SEG = false;
-		SegParameters * blast_seg_params;
-		bool verbose;
-		bool input_is_protein;
-		unsigned int mismatches;
-		unsigned int min_fragment_length;
-		unsigned int min_score;
-		unsigned int seed_length;
+		bool input_is_protein = false;
+		unsigned int min_fragment_length = 11; // in MEM and Greedy modes
+		unsigned int mismatches = 0; // in Greedy mode
+		unsigned int min_score = 65; // in Greedy mode
+		unsigned int seed_length = 7; // in Greedy mode
+		bool use_Evalue = false; // can only be used in Greedy mode
+		double min_Evalue = 0.01; // can only be used in Greedy mode
 		double db_length;
+
+		SegParameters * blast_seg_params;
+
 		std::ostream * out_stream;
 		std::unordered_map<uint64_t,uint64_t> * nodes;
 

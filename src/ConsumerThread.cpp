@@ -201,7 +201,7 @@ void ConsumerThread::getAllFragmentsBits(const std::string & line) {
 			size_t index = count%3;
 			// finished one of the translations, so add it to fragments
 			if(translations[index].length() >= config->min_fragment_length) {
-				if(config->mode==GREEDYBLOSUM) {
+				if(config->mode==GREEDY) {
 					unsigned int score = calcScore(translations[index]);
 					if(score >= config->min_score)
 						fragments.emplace(score,new Fragment(translations[index]));
@@ -219,7 +219,7 @@ void ConsumerThread::getAllFragmentsBits(const std::string & line) {
 	for(unsigned int i = 0; i<=2; i++) {
 		//add remaining stuff to fragments
 		if(translations[i].length() >= config->min_fragment_length) {
-			if(config->mode==GREEDYBLOSUM) {
+			if(config->mode==GREEDY) {
 				unsigned int score = calcScore(translations[i]);
 				if(score >= config->min_score)
 					fragments.emplace(score,new Fragment(translations[i]));
@@ -238,7 +238,7 @@ void ConsumerThread::getAllFragmentsBits(const std::string & line) {
 			size_t index = count%3;
 			// finished one of the translations, so add it to fragments
 			if(translations[index].length() >= config->min_fragment_length) {
-				if(config->mode==GREEDYBLOSUM) {
+				if(config->mode==GREEDY) {
 					unsigned int score = calcScore(translations[index]);
 					if(score >= config->min_score)
 						fragments.emplace(score,new Fragment(translations[index]));
@@ -256,7 +256,7 @@ void ConsumerThread::getAllFragmentsBits(const std::string & line) {
 	for(unsigned int i = 0; i<=2; i++) {
 		//add remaining stuff to fragments
 		if(translations[i].length() >= config->min_fragment_length) {
-			if(config->mode==GREEDYBLOSUM) {
+			if(config->mode==GREEDY) {
 				unsigned int score = calcScore(translations[i]);
 				if(score >= config->min_score)
 					fragments.emplace(score,new Fragment(translations[i]));
@@ -296,7 +296,7 @@ Fragment * ConsumerThread::getNextFragment(unsigned int min_score) {
 				size_t length = curr_loc->ssr->left - start;
 				if(config->debug) std::cerr << "SEG region: " << curr_loc->ssr->left << " - " << curr_loc->ssr->right << " = " << f->seq.substr(curr_loc->ssr->left,curr_loc->ssr->right - curr_loc->ssr->left + 1) << std::endl;
 				if(length > config->min_fragment_length) {
-					if(config->mode == GREEDYBLOSUM) {
+					if(config->mode == GREEDY) {
 						unsigned int score = calcScore(f->seq,start,length,0);
 						if(score >= config->min_score) {
 							fragments.emplace(score,new Fragment(f->seq.substr(start,length),true));
@@ -310,7 +310,7 @@ Fragment * ConsumerThread::getNextFragment(unsigned int min_score) {
 			} while((curr_loc=curr_loc->next) != NULL);
 			size_t len_last_piece = f->seq.length() - start;
 			if(len_last_piece > config->min_fragment_length) {
-				if(config->mode == GREEDYBLOSUM) {
+				if(config->mode == GREEDY) {
 					unsigned int score = calcScore(f->seq,start,len_last_piece,0);
 					if(score >= config->min_score) {
 						fragments.emplace(score,new Fragment(f->seq.substr(start,len_last_piece),true));
@@ -345,7 +345,7 @@ Fragment * ConsumerThread::getNextFragment(unsigned int min_score) {
 //to be used by greedyblosum
 void ConsumerThread::addAllMismatchVariantsAtPosSI(const Fragment * f, unsigned int pos, size_t erase_pos = std::string::npos,SI * si = NULL) {
 
-	assert(config->mode==GREEDYBLOSUM);
+	assert(config->mode==GREEDY);
 	assert(pos < erase_pos);
 	assert(f->num_mm == 0 || pos < f->pos_lastmm);
 
@@ -667,7 +667,7 @@ void ConsumerThread::doWork() {
 				if(pos-start >= config->min_fragment_length) {
 					std::string subseq =  item->sequence1.substr(start,pos-start);
 					//std::cerr << "subseq=" << subseq << endl;
-					if(config->mode==GREEDYBLOSUM) {
+					if(config->mode==GREEDY) {
 						unsigned int score = calcScore(subseq);
 						if(score >= config->min_score) {
 							fragments.emplace(score,new Fragment(subseq));
@@ -683,7 +683,7 @@ void ConsumerThread::doWork() {
 			//add remaining sequence, which corresponds to the whole sequence if no invalid char was found
 			std::string subseq = item->sequence1.substr(start,item->sequence1.length()-start);
 			if(subseq.length() >= config->min_fragment_length) {
-				if(config->mode==GREEDYBLOSUM) {
+				if(config->mode==GREEDY) {
 					unsigned int score = calcScore(subseq);
 					if(score >= config->min_score) {
 						fragments.emplace(score,new Fragment(subseq));
@@ -714,7 +714,7 @@ void ConsumerThread::doWork() {
 		if(config->mode == MEM) {
 			lca = classify_length();
 		}
-		else if(config->mode == GREEDYBLOSUM) {
+		else if(config->mode == GREEDY) {
 			lca = classify_greedyblosum();
 		}
 		else { // this should not happen

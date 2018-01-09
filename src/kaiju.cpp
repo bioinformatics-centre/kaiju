@@ -57,37 +57,26 @@ int main(int argc, char** argv) {
 
 	std::unordered_map<uint64_t,uint64_t> * nodes = new std::unordered_map<uint64_t,uint64_t>();
 
-	std::string nodes_filename = "";
-	std::string fmi_filename = "";
-	std::string sa_filename = "";
-	std::string in1_filename = "";
-	std::string in2_filename = "";
+	std::string nodes_filename;
+	std::string fmi_filename;
+	std::string sa_filename;
+	std::string in1_filename;
+	std::string in2_filename;
 	std::string output_filename;
-
-	Mode mode = MEM;
-
-	int min_score = 65;
-	int min_fragment_length = 11;
-	int seed_length = 7;
-	int mismatches  = 0;
-	bool use_Evalue = false;
-	double min_Evalue = 0.01;
 
 	int num_threads = 1;
 	bool verbose = false;
 	bool debug = false;
 	bool paired  = false;
-	bool input_is_protein = false;
-	bool SEG_check = false;
 
 	// --------------------- START ------------------------------------------------------------------
 	// Read command line params
 	int c;
-	while ((c = getopt(argc, argv, "a:hdpxvn:m:e:E:l:t:f:i:j:s:z:o:")) != -1) {
+	while ((c = getopt(argc, argv, "a:hdpxXvn:m:e:E:l:t:f:i:j:s:z:o:")) != -1) {
 		switch (c)  {
 			case 'a': {
-									if("mem" == std::string(optarg)) mode = MEM;
-									else if("greedy" == std::string(optarg)) mode = GREEDYBLOSUM;
+									if("mem" == std::string(optarg)) config->mode = MEM;
+									else if("greedy" == std::string(optarg)) config->mode = GREEDY;
 									else { std::cerr << "-a must be a valid mode.\n"; usage(argv[0]); }
 									break;
 								}
@@ -98,9 +87,11 @@ int main(int argc, char** argv) {
 			case 'v':
 				verbose = true; break;
 			case 'p':
-				input_is_protein = true; break;
+				config->input_is_protein = true; break;
 			case 'x':
-				SEG_check = true; break;
+				config->SEG = true; break;
+			case 'X':
+				config->SEG = false; break;
 			case 'o':
 				output_filename = optarg; break;
 			case 'f':
@@ -116,7 +107,9 @@ int main(int argc, char** argv) {
 								}
 			case 'l': {
 									try {
-										seed_length = std::stoi(optarg);
+										int seed_length = std::stoi(optarg);
+										if(seed_length < 7) { error("Seed length must be >= 7."); usage(argv[0]); }
+										config->seed_length = (unsigned int)seed_length;
 									}
 									catch(const std::invalid_argument& ia) {
 										std::cerr << "Invalid argument in -l " << optarg << std::endl;
@@ -128,7 +121,9 @@ int main(int argc, char** argv) {
 								}
 			case 's': {
 									try {
-										min_score = std::stoi(optarg);
+										int min_score = std::stoi(optarg);
+										if(min_score <= 0) { error("Min Score (-s) must be greater than 0."); usage(argv[0]); }
+										config->min_score = (unsigned int)min_score;
 									}
 									catch(const std::invalid_argument& ia) {
 										std::cerr << "Invalid argument in -s " << optarg << std::endl;
@@ -140,7 +135,9 @@ int main(int argc, char** argv) {
 								}
 			case 'm': {
 									try {
-										min_fragment_length = std::stoi(optarg);
+										int min_fragment_length = std::stoi(optarg);
+										if(min_fragment_length <= 0) { error("Min fragment length (-m) must be greater than 0."); usage(argv[0]); }
+										config->min_fragment_length = (unsigned int)min_fragment_length;
 									}
 									catch(const std::invalid_argument& ia) {
 										std::cerr << "Invalid argument in -m " << optarg << std::endl;
@@ -152,7 +149,9 @@ int main(int argc, char** argv) {
 								}
 			case 'e': {
 									try {
-										mismatches = std::stoi(optarg);
+										int mismatches = std::stoi(optarg);
+										if(mismatches < 0) { error("Number of mismatches must be >= 0."); usage(argv[0]); }
+										config->mismatches = (unsigned int)mismatches;
 									}
 									catch(const std::invalid_argument& ia) {
 										std::cerr << "Invalid numerical argument in -e " << optarg << std::endl;
@@ -164,8 +163,9 @@ int main(int argc, char** argv) {
 								}
 			case 'E': {
 									try {
-										min_Evalue = std::stod(optarg);
-										use_Evalue = true;
+										config->min_Evalue = std::stod(optarg);
+										if(config->min_Evalue <= 0.0) { error("E-value threshold must be greater than 0."); usage(argv[0]); }
+										config->use_Evalue = true;
 									}
 									catch(const std::invalid_argument& ia) {
 										std::cerr << "Invalid numerical argument in -E " << optarg << std::endl;
@@ -178,6 +178,7 @@ int main(int argc, char** argv) {
 			case 'z': {
 									try {
 										num_threads = std::stoi(optarg);
+										if(num_threads <= 0) {  error("Number of threads (-z) must be greater than 0."); usage(argv[0]); }
 									}
 									catch(const std::invalid_argument& ia) {
 										std::cerr << "Invalid argument in -z " << optarg << std::endl;
@@ -191,43 +192,29 @@ int main(int argc, char** argv) {
 								usage(argv[0]);
 		}
 	}
-	if(min_score <= 0) { error("Min Score (-s) must be greater than 0."); usage(argv[0]); }
-	if(num_threads <= 0) {  error("Number of threads (-z) must be greater than 0."); usage(argv[0]); }
-	if(min_fragment_length <= 0) { error("Min fragment length (-m) must be greater than 0."); usage(argv[0]); }
-	if(mismatches < 0) { error("Number of mismatches must be >= 0."); usage(argv[0]); }
-	if(seed_length < 7) { error("Seed length must be >= 7."); usage(argv[0]); }
 	if(nodes_filename.length() == 0) { error("Please specify the location of the nodes.dmp file, using the -t option."); usage(argv[0]); }
 	if(fmi_filename.length() == 0) { error("Please specify the location of the FMI file, using the -f option."); usage(argv[0]); }
 	if(in1_filename.length() == 0) { error("Please specify the location of the input file, using the -i option."); usage(argv[0]); }
-	if(paired && input_is_protein) { error("Protein input only supports one input file."); usage(argv[0]); }
-	if(use_Evalue && mode != GREEDYBLOSUM ) { error("E-value calculation is only available in Greedy mode. Use option: -a greedy"); usage(argv[0]); }
+	if(paired && config->input_is_protein) { error("Protein input only supports one input file."); usage(argv[0]); }
+	if(config->use_Evalue && config->mode != GREEDY ) { error("E-value calculation is only available in Greedy mode. Use option: -a greedy"); usage(argv[0]); }
 
 	if(debug) {
 		std::cerr << "Parameters: \n";
-		std::cerr << "  minimum match length: " << min_fragment_length << "\n";
-		std::cerr << "  minimum blosum62 score for matches: " << min_score << "\n";
-		std::cerr << "  seed length for greedy matches: " << seed_length << "\n";
-		if(use_Evalue)
-			std::cerr << "  minimum E-value: " << min_Evalue << "\n";
-		std::cerr << "  max number of mismatches within a match: "  << mismatches << "\n";
-		std::cerr << "  run mode: "  << ((mode==MEM) ? "MEM" : "Greedy") << "\n";
+		std::cerr << "  minimum match length: " << config->min_fragment_length << "\n";
+		std::cerr << "  minimum blosum62 score for matches: " << config->min_score << "\n";
+		std::cerr << "  seed length for greedy matches: " << config->seed_length << "\n";
+		if(config->use_Evalue)
+			std::cerr << "  minimum E-value: " << config->min_Evalue << "\n";
+		std::cerr << "  max number of mismatches within a match: "  << config->mismatches << "\n";
+		std::cerr << "  run mode: "  << ((config->mode==MEM) ? "MEM" : "Greedy") << "\n";
 		std::cerr << "  input file 1: " << in1_filename << "\n";
 		if(in2_filename.length() > 0)
 			std::cerr << "  input file 2: " << in2_filename << "\n";
 	}
 
-	config->mode = mode;
 	config->nodes = nodes;
 	config->debug = debug;
 	config->verbose = verbose;
-	config->input_is_protein = input_is_protein;
-	config->min_score = min_score;
-	config->min_fragment_length = min_fragment_length;
-	config->seed_length = seed_length;
-	config->mismatches = mismatches;
-	config->SEG = SEG_check;
-	config->use_Evalue = use_Evalue;
-	config->min_Evalue = min_Evalue;
 
 	if(verbose) std::cerr << getCurrentTime() << " Reading database" << std::endl;
 
