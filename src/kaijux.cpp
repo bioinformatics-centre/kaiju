@@ -1,4 +1,4 @@
-/* This file is part of Kaiju, Copyright 2015-2017 Peter Menzel and Anders Krogh,
+/* This file is part of Kaiju, Copyright 2015-2018 Peter Menzel and Anders Krogh,
  * Kaiju is licensed under the GPLv3, see the file LICENSE. */
 
 #include <unistd.h>
@@ -383,13 +383,14 @@ void usage(char *progname) {
 	fprintf(stderr, "Optional arguments:\n");
 	fprintf(stderr, "   -j FILENAME   Name of second input file for paired-end reads\n");
 	fprintf(stderr, "   -o FILENAME   Name of output file. If not specified, output will be printed to STDOUT\n");
-	fprintf(stderr, "   -z INT        Number of parallel threads (default: 1)\n");
-	fprintf(stderr, "   -a STRING     Run mode, either \"mem\"  or \"greedy\" (default: mem)\n");
-	fprintf(stderr, "   -e INT        Number of mismatches allowed in Greedy mode (default: 0)\n");
+	fprintf(stderr, "   -z INT        Number of parallel threads for classification (default: 1)\n");
+	fprintf(stderr, "   -a STRING     Run mode, either \"mem\"  or \"greedy\" (default: greedy)\n");
+	fprintf(stderr, "   -e INT        Number of mismatches allowed in Greedy mode (default: 3)\n");
 	fprintf(stderr, "   -m INT        Minimum match length (default: 11)\n");
 	fprintf(stderr, "   -s INT        Minimum match score in Greedy mode (default: 65)\n");
 	fprintf(stderr, "   -E FLOAT      Minimum E-value in Greedy mode\n");
-	fprintf(stderr, "   -x            Enable SEG low complexity filter\n");
+	fprintf(stderr, "   -x            Enable SEG low complexity filter (enabled by default)\n");
+	fprintf(stderr, "   -X            Disable SEG low complexity filter\n");
 	fprintf(stderr, "   -v            Enable verbose output.\n");
 	//fprintf(stderr, "   -d            Enable debug output.\n");
 	exit(EXIT_FAILURE);
