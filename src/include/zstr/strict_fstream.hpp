@@ -19,6 +19,9 @@ namespace strict_fstream
 
 /// Overload of error-reporting function, to enable use with VS.
 /// Ref: http://stackoverflow.com/a/901316/717706
+//
+// https://github.com/mateidavid/zstr/pull/7
+// https://github.com/mateidavid/zstr/pull/6/files
 static std::string strerror()
 {
     std::string buff(80, '\0');
@@ -27,7 +30,7 @@ static std::string strerror()
     {
         buff = "Unknown error";
     }
-#elif (_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600) && ! _GNU_SOURCE
+#elif (_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600) && ! _GNU_SOURCE || defined(__APPLE__)
 // XSI-compliant strerror_r()
     if (strerror_r(errno, &buff[0], buff.size()) != 0)
     {
@@ -200,3 +203,4 @@ public:
 } // namespace strict_fstream
 
 #endif
+
