@@ -235,7 +235,7 @@ else
 		if [ $db_viruses -eq 1 ]; then if [ ! -r genomes/viral.2.genomic.gbff.gz ]; then echo Missing file viral.2.genomic.gbff.gz; exit 1; fi; fi
 
 		echo Extracting protein sequences from downloaded files...
-		find ./genomes -name "*.gbff.gz" | xargs -n 1 -P $parallelConversions -i gbk2faa.pl '{}' '{}'.faa
+		find ./genomes -name "*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX gbk2faa.pl XX XX.faa
 	else # must be proGenomes
 		if [ $DL -eq 1 ]
 		then
@@ -253,7 +253,7 @@ else
 
 		echo Extracting protein sequences from downloaded files...
 		gunzip -c genomes/representatives.proteins.fasta.gz | perl -lne 'if(/>(\d+)\.(\S+)/){print ">",$2,"_",$1}else{y/BZ/DE/;s/[^ARNDCQEGHILKMFPSTWYV]//gi;print if length}' > genomes/representatives.proteins.fasta.gz.faa
-		find ./genomes -name "viral.*.gbff.gz" | xargs -n 1 -P $parallelConversions -i gbk2faa.pl '{}' '{}'.faa
+		find ./genomes -name "viral.*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX gbk2faa.pl XX XX.faa
 	fi
 
 	# on-the-fly substitution of taxon IDs found in merged.dmp by their updated IDs
