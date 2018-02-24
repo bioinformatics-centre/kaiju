@@ -4,6 +4,6 @@
 #ifndef KAIJU_VERSION_H
 #define KAIJU_VERSION_H
 
-#define KAIJUVERSION "1.6.1"
+#define KAIJUVERSION "1.6.2"
 
 #endif

@@ -18,7 +18,7 @@ See the release notes for all releases [here](http://kaiju.binf.ku.dk/index.html
 
 ### License
 
-Copyright (c) 2015, 2016, 2017 Peter Menzel and Anders Krogh
+Copyright (c) 2015-2018 Peter Menzel and Anders Krogh
 
 Kaiju is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -84,19 +84,19 @@ genomes of Archaea and Bacteria from the NCBI RefSeq database.
 
 Additionally, viral genomes from NCBI RefSeq can be added by using the option `-v`.
 
-As of October 2016, this database contains ca. 20M protein sequences, which
-amounts to a requirement of 14GB RAM for running Kaiju.
+As of February 2018, this database contains ca. 33M protein sequences, which
+amounts to a requirement of 21GB RAM for running Kaiju.
 
 ### 2. Representative genomes from proGenomes
 `makeDB.sh -p`  
 Download the protein sequences belonging to the representative set of genomes
 from the [proGenomes](http://progenomes.embl.de/) database.
-This dataset generally covers a broader phylogenenic range compared to the RefSeq dataset,
+This dataset generally covers a broader phylogenetic range compared to the RefSeq dataset,
 and is therefore recommended, especially for environmental samples.
 
 Additionally, viral genomes from NCBI RefSeq can be added by using the option `-v`.
 
-As of October 2016, this database contains ca. 19M protein sequences, which
+As of February 2018, this database contains ca. 19M protein sequences, which
 amounts to a requirement of 13GB RAM for running Kaiju.
 
 ### 3. Non-redundant protein database _nr_
@@ -109,9 +109,9 @@ Download the _nr_ database as above, but additionally include proteins from fung
 The complete taxon list for this option is in the file `bin/taxonlist.tsv`.
 
 Because the _nr_ database contains more proteins, more RAM is needed for index
-construction and for running Kaiju.  As of October 2016, the _nr_ database with
-option `-e` contains ca. 80M protein sequences, which amounts to a requirement
-of 43GB RAM for running Kaiju.
+construction and for running Kaiju.  As of February 2018, the _nr_ database with
+option `-e` contains ca. 124M protein sequences, which amounts to a requirement
+of 68GB RAM for running Kaiju.
 
 ### 4. Mar databases from the Marine Metagenomics Portal
 `makeDB.sh -m`  
@@ -204,10 +204,11 @@ NB: The thresholds for minimum match length and score are still applied.
 
 If the input sequences are already protein sequences, use option `-p` to disable translation of the input.
 
-Option `-x` can be used to enable filtering of query sequences containing
+Option `-x` enables filtering of query sequences containing
 low-complexity regions by using the SEG algorithm from the blast+ package.
-Enabling this option is always recommended in order to avoid false positive
-matches caused by spurious matches due to simple repeat patterns or other
+It is enabled by default and can be disabled by the `-X` option.  SEG filtering
+is always recommended in order to avoid false positive taxon assignments that
+are caused by spurious matches due to simple repeat patterns or other
 sequencing noise.
 
 ### Output format
@@ -239,8 +240,7 @@ For highest sensitivity, it is recommended to use the _nr_ database (+eukaryotes
 as a reference database because it is the most comprehensive set of protein
 sequences. Alternatively, use proGenomes over Refseq for increased sensitivity.
 
-Additionally, Greedy run mode, for example, with 5 allowed mismatches,
-yields a higher sensitivity compared with MEM mode.
+Greedy run mode yields a higher sensitivity compared with MEM mode.
 
 For fastest classification, use MEM mode and multiple parallel threads
 (`-z`); and for lowest memory usage use the proGenomes reference
@@ -317,7 +317,7 @@ The output file will be in the same column format as the input files (but only
 contain the first three columns) and it will have the same length as the input
 files (which also have to be of same length).  In the case of conflicting taxon
 identifiers for a classified read in both input files, `mergeOutputs` will use the identifier found in the
-first input file (specified by `-i`).  This behaviour can be changed using the
+first input file (specified by `-i`).  This behavior can be changed using the
 `-c` option, which can take four possible values:
 - `1`: use taxon identifier from the first input file (default)
 - `2`: use taxon identifier from the second input file

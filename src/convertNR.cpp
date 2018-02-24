@@ -265,7 +265,7 @@ void usage(char *progname) {
 	fprintf(stderr, "Optional arguments:\n");
 	fprintf(stderr, "   -a            Prefix taxon ID in database names with the first Accession.Ver\n");
 	fprintf(stderr, "   -i FILENAME   Name of NR file. If this option is not used, then the program will read from STDIN.\n");
-	fprintf(stderr, "   -l FILENAME   Name of file with taxon IDs. These IDs must be contained in nodes.dmp and denote the extracted clades from the NR file.\n");
+	fprintf(stderr, "   -l FILENAME   Name of file containing IDs of taxa that will be extracted from the NR file. The IDs must be contained in nodes.dmp.\n");
 	exit(EXIT_FAILURE);
 }
 
