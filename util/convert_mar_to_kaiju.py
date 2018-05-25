@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # This script maps downloaded sequence data from mmp_id to taxonomic lineage using MMP metadata. 
 # The script assumes mmp_id in column 107 and taxonomic lineage in 38. 
