@@ -5,7 +5,7 @@
 #
 SCRIPTDIR=$(dirname $0)
 
-PATH=$PATH:$SCRIPTDIR
+PATH=$SCRIPTDIR:$PATH
 
 db_viruses=0
 db_refseq=0
@@ -44,8 +44,7 @@ echo
 echo
 echo Additional options:
 echo
-echo  "$s" -v    additionally add viral genomes from RefSeq,
-echo  "$tab"   when using the RefSeq or proGenomes database
+echo  "$s" -v    viral genomes from RefSeq, can also be used together with -n or -p
 echo
 echo  "$s" -t X  set number of parallel threads for index construction to X \(default:5\)
 echo  "$tab"     The more threads are used, the higher the memory requirement becomes.
@@ -104,7 +103,7 @@ while :; do
     shift
 done
 
-[ $db_refseq -eq 1 -o $db_progenomes -eq 1 -o $db_nr -eq 1 -o $db_euk -eq 1 -o $db_mar -eq 1 ] || { echo "Error: Use one of the options -r, -p, -n, -m or -e"; usage; exit 1; }
+[ $db_viruses -eq 1 -o $db_refseq -eq 1 -o $db_progenomes -eq 1 -o $db_nr -eq 1 -o $db_euk -eq 1 -o $db_mar -eq 1 ] || { echo "Error: Use one of the options -r, -p, -n, -v, -m or -e"; usage; exit 1; }
 
 #check if necessary programs are in the PATH
 command -v awk >/dev/null 2>/dev/null || { echo Error: awk not found; exit 1; }
@@ -233,10 +232,10 @@ else
 		fi
 		if [ $db_viruses -eq 1 ]; then if [ ! -r genomes/viral.1.genomic.gbff.gz ]; then echo Missing file viral.1.genomic.gbff.gz; exit 1; fi; fi
 		if [ $db_viruses -eq 1 ]; then if [ ! -r genomes/viral.2.genomic.gbff.gz ]; then echo Missing file viral.2.genomic.gbff.gz; exit 1; fi; fi
-
 		echo Extracting protein sequences from downloaded files...
 		find ./genomes -name "*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX gbk2faa.pl XX XX.faa
-	else # must be proGenomes
+	elif [ $db_progenomes -eq 1 ]
+	then
 		if [ $DL -eq 1 ]
 		then
 			echo Downloading proGenomes database...
@@ -250,9 +249,20 @@ else
 		fi
 		if [ $db_viruses -eq 1 ]; then if [ ! -r genomes/viral.1.genomic.gbff.gz ]; then echo Missing file viral.1.genomic.gbff.gz; exit 1; fi; fi
 		if [ $db_viruses -eq 1 ]; then if [ ! -r genomes/viral.2.genomic.gbff.gz ]; then echo Missing file viral.2.genomic.gbff.gz; exit 1; fi; fi
-
 		echo Extracting protein sequences from downloaded files...
 		gunzip -c genomes/representatives.proteins.fasta.gz | perl -lne 'if(/>(\d+)\.(\S+)/){print ">",$2,"_",$1}else{y/BZ/DE/;s/[^ARNDCQEGHILKMFPSTWYV]//gi;print if length}' > genomes/representatives.proteins.fasta.gz.faa
+		find ./genomes -name "viral.*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX gbk2faa.pl XX XX.faa
+	elif [ $db_viruses -eq 1 ]
+	then
+		if [ $DL -eq 1 ]
+		then
+			echo Downloading virus genomes from RefSeq...
+			wget -N -nv $wgetProgress -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.1.genomic.gbff.gz
+			wget -N -nv $wgetProgress -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.2.genomic.gbff.gz
+		fi
+		if [ ! -r genomes/viral.1.genomic.gbff.gz ]; then echo Missing file viral.1.genomic.gbff.gz; exit 1; fi;
+		if [ ! -r genomes/viral.2.genomic.gbff.gz ]; then echo Missing file viral.2.genomic.gbff.gz; exit 1; fi;
+		echo Extracting protein sequences from downloaded files...
 		find ./genomes -name "viral.*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX gbk2faa.pl XX XX.faa
 	fi
 

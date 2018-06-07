@@ -99,7 +99,14 @@ Additionally, viral genomes from NCBI RefSeq can be added by using the option `-
 As of February 2018, this database contains ca. 19M protein sequences, which
 amounts to a requirement of 13GB RAM for running Kaiju.
 
-### 3. Non-redundant protein database _nr_
+### 3. Virus Genomes from NCBI RefSeq
+`makeDB.sh -v`  
+This will only download viral genomes from NCBI RefSeq.
+
+As of February 2018, this database contains ca. 310k protein sequences, which
+amounts to a requirement of 260MB RAM for running Kaiju.
+
+### 4. Non-redundant protein database _nr_
 `makeDB.sh -n`  
 Download the _nr_ database that is used by NCBI BLAST and extract proteins belonging
 to Archaea, Bacteria and Viruses.
@@ -113,7 +120,7 @@ construction and for running Kaiju.  As of February 2018, the _nr_ database with
 option `-e` contains ca. 124M protein sequences, which amounts to a requirement
 of 68GB RAM for running Kaiju.
 
-### 4. Mar databases from the Marine Metagenomics Portal
+### 5. Mar databases from the Marine Metagenomics Portal
 `makeDB.sh -m`  
 Download the protein sequences belonging to the genomes
 from the [MarRef and MarDB databases](https://mmp.sfb.uit.no/).
