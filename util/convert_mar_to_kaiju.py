@@ -1,73 +1,175 @@
 #!/usr/bin/env python
+"""
+This script maps downloaded sequence data from mmp_id to taxonomic lineage
+using MMP metadata.
 
-# This script maps downloaded sequence data from mmp_id to taxonomic lineage using MMP metadata. 
-# The script assumes mmp_id in column 107 and taxonomic lineage in 38. 
-# Espen M. Robertsen, 2017. espen.m.robertsen@uit.no
+The script assumes mmp_id in column 107 and taxonomic lineage in 38.
 
-from collections import defaultdict
-import os, sys, HTSeq
+Espen M. Robertsen, 2017. espen.m.robertsen@uit.no
+"""
 
-mapdict = defaultdict(str)
+import argparse
+import os
+import sys
+from collections import Counter
 
-# Map downloaded metadata to the defaultdict 'mapdict'
-with open ('MarRef.tsv') as marref:
-	for line in marref:
-		if line.startswith("base_ID"):
-			continue
-		records = line.strip().split("\t")
-		lineage = records[37].split('|')
-		lineage = lineage[-1]
-		mapdict[records[106]] = lineage
 
-with open ('MarDB.tsv') as mardb:
-	for line in mardb:
-		if line.startswith("base_ID"):
-			continue
-		records = line.strip().split("\t")
-		lineage = records[37].split('|')
-		lineage = lineage[-1]
-		mapdict[records[106]] = lineage
+def readfq(fp):
+    """
+    FAST(A/Q) generator.
 
-# Verify taxids against nodes.dmp
-taxids = set()
-with open ('nodes.dmp') as nodes:
-	for line in nodes:
-		data = line.split("|")
-		taxids.add(data[0].strip())
+    https://github.com/lh3/readfq
+    """
+    # this is a generator function
+    last = None  # this is a buffer keeping the last unprocessed line
+    while True:  # mimic closure; is it a bad idea?
+        if not last:  # the first record or a record following a fastq
+            for l in fp:  # search for the start of the next record
+                if l[0] in '>@':  # fasta/q header line
+                    last = l[:-1]  # save this line
+                    break
 
-# Map mmp_id from downloaded sequences to lineages and write to stdout in Kaiju preferred format.
-processed_mmp = set()
-warnings = defaultdict(int)
-for root, dirs, files in os.walk('genomes/'):
-	for filename in files:
-		if filename.endswith(".faa"):
-			counter = 1
-			for seq in HTSeq.FastaReader(os.path.join(root,filename)):
-				mmp_id = seq.name.split("_")
-				mmp_id = mmp_id[-1]
+        if not last:
+            break
 
-				# If this mmp accession is a duplicate (already processed), skip it.
-				if mmp_id in processed_mmp:
-					warnings['duplicate']+=1
-					break
-				# If this mmp accession has no taxonomic linage for some reason, skip it.
-				if not mapdict[mmp_id]:
-					warnings['nolineage']+=1
-					break
-				# If taxonomic id is not in nodes.dmp, skip.
-				if not mapdict[mmp_id] in taxids:
-					warnings['notax']+=1
-					break
-				# If sequence contains dubious characters, skip.
-				if '*' in seq.seq:
-					warnings['asterix']+=1
-					continue 
+        name, seqs, last = last[1:].partition(" ")[0], [], None
+        for l in fp:  # read the sequence
+            if l[0] in '@+>':
+                last = l[:-1]
+                break
 
-				lineage = mapdict[mmp_id]
-				header = str(counter)+"_"+mmp_id+"_"+str(lineage)
-				counter += 1
-				print ">"+header+"\n", seq.seq
-			processed_mmp.add(mmp_id)
+            seqs.append(l[:-1])
+        if not last or last[0] != '+':  # this is a fasta record
+            yield name, ''.join(seqs), None  # yield a fasta record
 
-# Output simple statistic to stderr
-sys.stderr.write("Warnings / Sequences removed:\nDuplicates: "+str(warnings['duplicate'])+"\nAccessions with no taxonomic lineage: "+str(warnings['nolineage'])+"\nAccessions with no taxid in nodes.dmp: "+str(warnings['notax'])+"\nSequences with asterix: "+str(warnings['asterix'])+"\n") 
+            if not last:
+                break
+
+        else:  # this is a fastq record
+            seq, leng, seqs = ''.join(seqs), 0, []
+            for l in fp:  # read the quality
+                seqs.append(l[:-1])
+                leng += len(l) - 1
+                if leng >= len(seq):  # have read enough quality
+                    last = None
+                    yield name, seq, ''.join(seqs)
+
+                    # yield a fastq record
+                    break
+
+            if last:  # reach EOF before reading enough quality
+                yield name, seq, None  # yield a fasta record instead
+                break
+
+
+def parse_tsv(tsv, db_map=None):
+    """
+    Hardcoded columns refer to taxon_lineage_ids and mmp_ID within MarRef
+    and MarDB reference files. Returns a dictionary linking mmp_ID to
+    last element of taxon_lineage_ids.
+    """
+    if db_map is None:
+        db_map = dict()
+    with open(tsv) as fh:
+        # advance beyond header
+        next(fh)
+        for line in fh:
+            tokens = line.strip("\r\n").split("\t")
+            # column header: taxon_lineage_ids
+            lineage = tokens[37].rpartition("|")[-1]
+            # column header: mmp_ID
+            db_map[tokens[106]] = lineage
+    return db_map
+
+
+def parse_nodes(nodes):
+    """
+    Parse NCBI taxonomy's nodes.dmp, grabbing the taxonomy identifier in the
+    first column. Returns a set containing the IDs.
+    """
+    ids = set()
+    with open(nodes) as fh:
+    	for line in fh:
+    		ids.add(line.partition("|")[0].strip())
+    return ids
+
+
+def process_genomes(genome_dir, lineage_map, tax_ids):
+    """
+    Walk through the genomes directory parsing .faa files, updating the
+    sequence header to include the NCBI taxonomy. Prints to STDOUT.
+    """
+    processed_mmp = set()
+    warnings = Counter()
+    for root, dirs, files in os.walk(genome_dir):
+        for filename in files:
+            if not filename.endswith(".faa"):
+                continue
+
+            with open(os.path.join(root, filename)) as fh:
+                for i, (name, seq, _) in enumerate(readfq(fh), start=1):
+                    mmp_id = name.rpartition("_")[-1]
+                    # If this mmp accession is a duplicate (already processed), skip it.
+                    if mmp_id in processed_mmp:
+                        warnings.update(["duplicate"])
+                        break
+
+                    # If this mmp accession has no taxonomic linage for some reason, skip it.
+                    if not mmp_id in lineage_map:
+                        warnings.update(["nolineage"])
+                        break
+
+                    # If taxonomic id is not in nodes.dmp, skip.
+                    if not lineage_map[mmp_id] in tax_ids:
+                        warnings.update(["notax"])
+                        break
+
+                    # If sequence contains dubious characters, skip.
+                    if '*' in seq:
+                        warnings.update(["asterix"])
+                        continue
+
+                    current_lineage = lineage_map[mmp_id]
+                    sys.stdout.write(
+                        ">{index}_{id}_{lineage}\n{seq}\n".format(
+                            index=i, id=mmp_id, lineage=current_lineage, seq=seq
+                        )
+                    )
+                processed_mmp.add(mmp_id)
+    return warnings
+
+
+def process_mardb(ref, db, nodes, genomes):
+    """
+    Parse TSVs and reformat MarDB genomes to accommodate Kaiju FASTA
+    reference requirements.
+    """
+    lineage_map = parse_tsv(ref)
+    lineage_map = parse_tsv(db, db_map=lineage_map)
+    tax_ids = parse_nodes(nodes)
+    warn = process_genomes(genomes, lineage_map, tax_ids)
+    # Output simple statistic to stderr
+    sys.stderr.write(
+        (
+            "Warnings / Sequences removed:\nDuplicates: "
+            "{duplicates}\nAccessions with no taxonomic lineage: {no_lineage}\n"
+            "Accessions with no taxid in nodes.dmp: {no_tax}\n"
+            "Sequences with asterix: {asterix}\n"
+        ).format(
+            duplicates=warn["duplicate"],
+            no_lineage=warn["nolineage"],
+            no_tax=warn["notax"],
+            asterix=warn["asterix"],
+        )
+    )
+
+
+if __name__ == "__main__":
+    p = argparse.ArgumentParser(description=__doc__,
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    p.add_argument("--ref", default="MarRef.tsv", help="MarRef TSV file path")
+    p.add_argument("--db", default="MarDB.tsv", help="MarDB TSV file path")
+    p.add_argument("--nodes", default="nodes.dmp", help="NCBI nodes.dmp file path")
+    p.add_argument("--genomes", default="genomes", help="genomes download directory")
+    args = p.parse_args()
+    process_mardb(args.ref, args.db, args.nodes, args.genomes)
