@@ -148,7 +148,6 @@ tar xf taxdump.tar.gz nodes.dmp names.dmp merged.dmp
 
 if [ $db_mar -eq 1 ]
 then
-	python -c "import HTSeq" 2> /dev/null || (echo Missing HTSeq library for python2. Please install; exit 1;)
 	if [ $DL -eq 1 ]
 	then
 		echo Downloading list of marine genomes from the Marine Metagenomics Portal \(MMP\)
@@ -277,5 +276,3 @@ else
 	echo Kaiju only needs the files kaiju_db.fmi, nodes.dmp, and names.dmp.
 	echo The remaining files and the folder genomes/ can be deleted.
 fi
-
-
