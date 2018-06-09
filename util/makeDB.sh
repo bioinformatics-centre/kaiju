@@ -148,7 +148,6 @@ tar xf taxdump.tar.gz nodes.dmp names.dmp merged.dmp
 
 if [ $db_mar -eq 1 ]
 then
-	python -c "import HTSeq" 2> /dev/null || (echo Missing HTSeq library for python2. Please install; exit 1;)
 	if [ $DL -eq 1 ]
 	then
 		echo Downloading list of marine genomes from the Marine Metagenomics Portal \(MMP\)
@@ -159,10 +158,14 @@ then
 		echo Creating directory genomes/
 		mkdir -p genomes
 		echo Downloading Mar reference genomes from the MMP. This may take a while...
-		cat download_list.txt | xargs -P $parallelDL wget -P genomes -nv -nc
+		cat download_list.txt | xargs -P $parallelDL wget -P genomes -nv
 	fi
+    [ -r download_list.txt ] || { echo Missing file download_list.txt; exit 1; }
+    [ -r MarRef.tsv ] || { echo Missing file MarRef.tsv; exit 1; }
+    [ -r MarDB.tsv ] || { echo Missing file MarDB.tsv; exit 1; }
+    [ -r $SCRIPTDIR/convert_mar_to_kaiju.py ] || { echo Error: file convert_mar_to_kaiju.py not found in $SCRIPTDIR; exit 1; }
 	echo Converting MMP data to kaiju format
-	convert_mar_to_kaiju.py > kaiju_db_tmp.faa
+	python $SCRIPTDIR/convert_mar_to_kaiju.py > kaiju_db_tmp.faa
 	echo On the fly substitution with merged.dmp
 	cat kaiju_db_tmp.faa | perl -lsne 'BEGIN{open(F,$m);while(<F>){@F=split(/[\|\s]+/);$h{$F[0]}=$F[1]}}if(/(>.+)_(\d+)/){print $1,"_",defined($h{$2})?$h{$2}:$2;}else{print}' -- -m=merged.dmp > kaiju_db.faa
 	rm kaiju_db_tmp.faa
@@ -277,5 +280,3 @@ else
 	echo Kaiju only needs the files kaiju_db.fmi, nodes.dmp, and names.dmp.
 	echo The remaining files and the folder genomes/ can be deleted.
 fi
-
-
