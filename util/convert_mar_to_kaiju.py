@@ -76,9 +76,9 @@ def parse_tsv(tsv, db_map=None):
         for line in fh:
             tokens = line.strip("\r\n").split("\t")
             # column header: taxon_lineage_ids
-            lineage = tokens[37].rpartition("|")[-1]
+            lineage = tokens[34].rpartition("|")[-1]
             # column header: mmp_ID
-            db_map[tokens[106]] = lineage
+            db_map[tokens[101]] = lineage
     return db_map
 
 
