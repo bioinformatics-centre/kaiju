@@ -258,7 +258,7 @@ void usage(char *progname) {
 	fprintf(stderr, "   -u            Unclassified reads are not contained in the output.\n");
 	fprintf(stderr, "   -p            Print full taxon path.\n");
 	fprintf(stderr, "   -r            Print taxon path containing only ranks specified by a comma-separated list,\n");
-	fprintf(stderr, "                 for example: superkingdom,phylum,order,class,family,genus,species\n");
+	fprintf(stderr, "                 for example: superkingdom,phylum,class,order,family,genus,species\n");
 	fprintf(stderr, "   -v            Enable verbose output.\n");
 	fprintf(stderr, "\n");
 	exit(EXIT_FAILURE);
