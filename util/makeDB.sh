@@ -19,6 +19,7 @@ parallelConversions=5
 exponentSA=3
 exponentSA_NR=5
 DL=1
+index_only=0
 
 usage() {
 s=" "
@@ -27,9 +28,9 @@ echo
 echo This program creates a protein reference database and index for Kaiju.
 echo Several source databases can be used and one of these options must be set:
 echo
-echo  "$s" -r  all complete bacterial and archaeal genomes in the NCBI RefSeq database
+echo  "$s" -r  All complete bacterial and archaeal genomes in the NCBI RefSeq database
 echo
-echo  "$s" -p  all proteins belonging to the set of representative genomes
+echo  "$s" -p  All proteins belonging to the set of representative genomes
 echo  "$tab"   from the proGenomes database
 echo
 echo  "$s" -n  NCBI BLAST non-redundant protein database \"nr\":
@@ -41,15 +42,16 @@ echo
 echo  "$s" -m  Marine Metagenomics Portal \(MMP\) marine reference databases, MarRef and MarDB
 echo  "$tab"   \(https://mmp.sfb.uit.no\)
 echo
+echo  "$s" -v   Viral genomes from RefSeq, can also be used together with -n or -p
 echo
 echo Additional options:
 echo
-echo  "$s" -v    viral genomes from RefSeq, can also be used together with -n or -p
+echo  "$s" -t X  Set number of parallel threads for index construction to X \(default:5\)
+echo  "       The more threads are used, the higher the memory requirement becomes."
 echo
-echo  "$s" -t X  set number of parallel threads for index construction to X \(default:5\)
-echo  "$tab"     The more threads are used, the higher the memory requirement becomes.
+echo  "$s" --noDL  Do not download files, but use the existing files in the folder.
 echo
-echo  "$s" --noDL  do not download files, but use the existing files in the folder.
+echo  "$s" --index-only  Only create BWT and FMI from kaiju_db*.faa files, implies --noDL.
 echo
 }
 
@@ -70,6 +72,10 @@ while :; do
             fi
             ;;
         --noDL)
+            DL=0
+            ;;
+        --index-only)
+            index_only=1
             DL=0
             ;;
         -n|--nr)
@@ -142,7 +148,7 @@ then
 	echo Downloading file taxdump.tar.gz
 	wget -N -nv $wgetProgress ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz
 fi
-[ -r taxdump.tar.gz ] || { echo Missing file taxdump.tgz; exit 1; }
+[ -r taxdump.tar.gz ] || { echo Missing file taxdump.tar.gz; exit 1; }
 echo Extracting file taxdump.tar.gz
 tar xf taxdump.tar.gz nodes.dmp names.dmp merged.dmp
 
@@ -160,17 +166,17 @@ then
 		echo Downloading Mar reference genomes from the MMP. This may take a while...
 		cat download_list.txt | xargs -P $parallelDL wget -P genomes -nv
 	fi
-    [ -r download_list.txt ] || { echo Missing file download_list.txt; exit 1; }
-    [ -r MarRef.tsv ] || { echo Missing file MarRef.tsv; exit 1; }
-    [ -r MarDB.tsv ] || { echo Missing file MarDB.tsv; exit 1; }
-    [ -r $SCRIPTDIR/convert_mar_to_kaiju.py ] || { echo Error: file convert_mar_to_kaiju.py not found in $SCRIPTDIR; exit 1; }
+	[ -r download_list.txt ] || { echo Missing file download_list.txt; exit 1; }
+	[ -r MarRef.tsv ] || { echo Missing file MarRef.tsv; exit 1; }
+	[ -r MarDB.tsv ] || { echo Missing file MarDB.tsv; exit 1; }
+	[ -r $SCRIPTDIR/convert_mar_to_kaiju.py ] || { echo Error: file convert_mar_to_kaiju.py not found in $SCRIPTDIR; exit 1; }
 	echo Converting MMP data to kaiju format
 	python $SCRIPTDIR/convert_mar_to_kaiju.py > kaiju_db_tmp.faa
 	echo On the fly substitution with merged.dmp
 	cat kaiju_db_tmp.faa | perl -lsne 'BEGIN{open(F,$m);while(<F>){@F=split(/[\|\s]+/);$h{$F[0]}=$F[1]}}if(/(>.+)_(\d+)/){print $1,"_",defined($h{$2})?$h{$2}:$2;}else{print}' -- -m=merged.dmp > kaiju_db.faa
 	rm kaiju_db_tmp.faa
 	echo Building Kaiju reference
-	mkbwt -n $threadsBWT -e $exponentSA -a ABCDEFGHIJKLMNOPQRSTUVWXYZ -o kaiju_db kaiju_db.faa
+	mkbwt -n $threadsBWT -e $exponentSA -a ACDEFGHIKLMNPQRSTVWY -o kaiju_db kaiju_db.faa
 	mkfmi kaiju_db
 	exit 0
 fi
@@ -189,10 +195,14 @@ then
 	[ -r prot.accession2taxid.gz ] || { echo Missing file prot.accession2taxid.gz; exit 1; }
 	echo Unpacking prot.accession2taxid.gz
 	gunzip -c prot.accession2taxid.gz > prot.accession2taxid
-	echo Converting NR file to Kaiju database
 	if [ $db_euk -eq 1 ]
 	then
-		gunzip -c nr.gz | convertNR -t nodes.dmp -g prot.accession2taxid -a -o kaiju_db_nr_euk.faa -l $SCRIPTDIR/taxonlist.tsv
+		if [ $index_only -eq 0 ]
+		then
+			echo Converting NR file to Kaiju database
+			gunzip -c nr.gz | convertNR -t nodes.dmp -g prot.accession2taxid -a -o kaiju_db_nr_euk.faa -l $SCRIPTDIR/taxonlist.tsv
+		fi
+		[ -r kaiju_db_nr_euk.faa ] || { echo Missing file kaiju_db_nr_euk.faa; exit 1; }
 		echo Creating BWT from Kaiju database
 		mkbwt -e $exponentSA_NR -n $threadsBWT -a ACDEFGHIKLMNPQRSTVWY -o kaiju_db_nr_euk kaiju_db_nr_euk.faa
 		echo Creating FM-index
@@ -202,7 +212,12 @@ then
 		echo The remaining files can be deleted.
 		echo
 	else
-		gunzip -c nr.gz | convertNR -t nodes.dmp -g prot.accession2taxid -a -o kaiju_db_nr.faa
+		if [ $index_only -eq 0 ]
+		then
+			echo Converting NR file to Kaiju database
+			gunzip -c nr.gz | convertNR -t nodes.dmp -g prot.accession2taxid -a -o kaiju_db_nr.faa
+		fi
+		[ -r kaiju_db_nr.faa ] || { echo Missing file kaiju_db_nr.faa; exit 1; }
 		echo Creating BWT from Kaiju database
 		mkbwt -e $exponentSA_NR -n $threadsBWT -a ACDEFGHIKLMNPQRSTVWY -o kaiju_db_nr kaiju_db_nr.faa
 		echo Creating FM-index
@@ -213,65 +228,69 @@ then
 		echo
 	fi
 else
-	echo Creating directory genomes/
-	mkdir -p genomes
-	if [ $db_refseq -eq 1 ]
+	if [ $index_only -eq 0 ]
 	then
-		if [ $DL -eq 1 ]
+		echo Creating directory genomes/
+		mkdir -p genomes
+		if [ $db_refseq -eq 1 ]
 		then
-			echo Downloading file list for complete genomes from RefSeq...
-			wget -nv -O assembly_summary.archaea.txt ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/archaea/assembly_summary.txt
-			wget -nv -O assembly_summary.bacteria.txt ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/bacteria/assembly_summary.txt
-			awk 'BEGIN{FS="\t";OFS="/"}$12=="Complete Genome" && $11=="latest"{l=split($20,a,"/");print $20,a[l]"_genomic.gbff.gz"}' assembly_summary.bacteria.txt assembly_summary.archaea.txt > downloadlist.txt
-			nfiles=`cat downloadlist.txt| wc -l`
-			echo Downloading $nfiles genome files from NCBI FTP server. This may take a while...
-			cat downloadlist.txt | xargs -P $parallelDL -n 1 wget -P genomes -nv
-			if [ $db_viruses -eq 1 ]
+			if [ $DL -eq 1 ]
+			then
+				echo Downloading file list for complete genomes from RefSeq...
+				wget -nv -O assembly_summary.archaea.txt ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/archaea/assembly_summary.txt
+				wget -nv -O assembly_summary.bacteria.txt ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/bacteria/assembly_summary.txt
+				awk 'BEGIN{FS="\t";OFS="/"}$12=="Complete Genome" && $11=="latest"{l=split($20,a,"/");print $20,a[l]"_genomic.gbff.gz"}' assembly_summary.bacteria.txt assembly_summary.archaea.txt > downloadlist.txt
+				nfiles=`cat downloadlist.txt| wc -l`
+				echo Downloading $nfiles genome files from NCBI FTP server. This may take a while...
+				cat downloadlist.txt | xargs -P $parallelDL -n 1 wget -P genomes -nv
+				if [ $db_viruses -eq 1 ]
+				then
+					echo Downloading virus genomes from RefSeq...
+					wget -N -nv $wgetProgress -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.1.genomic.gbff.gz
+					wget -N -nv $wgetProgress -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.2.genomic.gbff.gz
+				fi
+			fi
+			if [ $db_viruses -eq 1 ]; then if [ ! -r genomes/viral.1.genomic.gbff.gz ]; then echo Missing file viral.1.genomic.gbff.gz; exit 1; fi; fi
+			if [ $db_viruses -eq 1 ]; then if [ ! -r genomes/viral.2.genomic.gbff.gz ]; then echo Missing file viral.2.genomic.gbff.gz; exit 1; fi; fi
+			echo Extracting protein sequences from downloaded files...
+			find ./genomes -name "*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX gbk2faa.pl XX XX.faa
+		elif [ $db_progenomes -eq 1 ]
+		then
+			if [ $DL -eq 1 ]
+			then
+				echo Downloading proGenomes database...
+				wget -N -nv $wgetProgress -P genomes http://progenomes.embl.de/data/repGenomes/representatives.proteins.fasta.gz
+				if [ $db_viruses -eq 1 ]
+				then
+					echo Downloading virus genomes from RefSeq...
+					wget -N -nv $wgetProgress -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.1.genomic.gbff.gz
+					wget -N -nv $wgetProgress -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.2.genomic.gbff.gz
+				fi
+			fi
+			if [ $db_viruses -eq 1 ]; then if [ ! -r genomes/viral.1.genomic.gbff.gz ]; then echo Missing file viral.1.genomic.gbff.gz; exit 1; fi; fi
+			if [ $db_viruses -eq 1 ]; then if [ ! -r genomes/viral.2.genomic.gbff.gz ]; then echo Missing file viral.2.genomic.gbff.gz; exit 1; fi; fi
+			echo Extracting protein sequences from downloaded files...
+			gunzip -c genomes/representatives.proteins.fasta.gz | perl -lne 'if(/>(\d+)\.(\S+)/){print ">",$2,"_",$1}else{y/BZ/DE/;s/[^ARNDCQEGHILKMFPSTWYV]//gi;print if length}' > genomes/representatives.proteins.fasta.gz.faa
+			find ./genomes -name "viral.*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX gbk2faa.pl XX XX.faa
+		elif [ $db_viruses -eq 1 ]
+		then
+			if [ $DL -eq 1 ]
 			then
 				echo Downloading virus genomes from RefSeq...
 				wget -N -nv $wgetProgress -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.1.genomic.gbff.gz
 				wget -N -nv $wgetProgress -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.2.genomic.gbff.gz
 			fi
+			if [ ! -r genomes/viral.1.genomic.gbff.gz ]; then echo Missing file viral.1.genomic.gbff.gz; exit 1; fi;
+			if [ ! -r genomes/viral.2.genomic.gbff.gz ]; then echo Missing file viral.2.genomic.gbff.gz; exit 1; fi;
+			echo Extracting protein sequences from downloaded files...
+			find ./genomes -name "viral.*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX gbk2faa.pl XX XX.faa
 		fi
-		if [ $db_viruses -eq 1 ]; then if [ ! -r genomes/viral.1.genomic.gbff.gz ]; then echo Missing file viral.1.genomic.gbff.gz; exit 1; fi; fi
-		if [ $db_viruses -eq 1 ]; then if [ ! -r genomes/viral.2.genomic.gbff.gz ]; then echo Missing file viral.2.genomic.gbff.gz; exit 1; fi; fi
-		echo Extracting protein sequences from downloaded files...
-		find ./genomes -name "*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX gbk2faa.pl XX XX.faa
-	elif [ $db_progenomes -eq 1 ]
-	then
-		if [ $DL -eq 1 ]
-		then
-			echo Downloading proGenomes database...
-			wget -N -nv $wgetProgress -P genomes http://progenomes.embl.de/data/repGenomes/representatives.proteins.fasta.gz
-			if [ $db_viruses -eq 1 ]
-			then
-				echo Downloading virus genomes from RefSeq...
-				wget -N -nv $wgetProgress -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.1.genomic.gbff.gz
-				wget -N -nv $wgetProgress -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.2.genomic.gbff.gz
-			fi
-		fi
-		if [ $db_viruses -eq 1 ]; then if [ ! -r genomes/viral.1.genomic.gbff.gz ]; then echo Missing file viral.1.genomic.gbff.gz; exit 1; fi; fi
-		if [ $db_viruses -eq 1 ]; then if [ ! -r genomes/viral.2.genomic.gbff.gz ]; then echo Missing file viral.2.genomic.gbff.gz; exit 1; fi; fi
-		echo Extracting protein sequences from downloaded files...
-		gunzip -c genomes/representatives.proteins.fasta.gz | perl -lne 'if(/>(\d+)\.(\S+)/){print ">",$2,"_",$1}else{y/BZ/DE/;s/[^ARNDCQEGHILKMFPSTWYV]//gi;print if length}' > genomes/representatives.proteins.fasta.gz.faa
-		find ./genomes -name "viral.*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX gbk2faa.pl XX XX.faa
-	elif [ $db_viruses -eq 1 ]
-	then
-		if [ $DL -eq 1 ]
-		then
-			echo Downloading virus genomes from RefSeq...
-			wget -N -nv $wgetProgress -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.1.genomic.gbff.gz
-			wget -N -nv $wgetProgress -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.2.genomic.gbff.gz
-		fi
-		if [ ! -r genomes/viral.1.genomic.gbff.gz ]; then echo Missing file viral.1.genomic.gbff.gz; exit 1; fi;
-		if [ ! -r genomes/viral.2.genomic.gbff.gz ]; then echo Missing file viral.2.genomic.gbff.gz; exit 1; fi;
-		echo Extracting protein sequences from downloaded files...
-		find ./genomes -name "viral.*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX gbk2faa.pl XX XX.faa
+
+		# on-the-fly substitution of taxon IDs found in merged.dmp by their updated IDs
+		cat genomes/*.faa | perl -lsne 'BEGIN{open(F,$m);while(<F>){@F=split(/[\|\s]+/);$h{$F[0]}=$F[1]}}if(/(>.+)_(\d+)/){print $1,"_",defined($h{$2})?$h{$2}:$2;}else{print}' -- -m=merged.dmp  >kaiju_db.faa
 	fi
 
-	# on-the-fly substitution of taxon IDs found in merged.dmp by their updated IDs
-	cat genomes/*.faa | perl -lsne 'BEGIN{open(F,$m);while(<F>){@F=split(/[\|\s]+/);$h{$F[0]}=$F[1]}}if(/(>.+)_(\d+)/){print $1,"_",defined($h{$2})?$h{$2}:$2;}else{print}' -- -m=merged.dmp  >kaiju_db.faa
-
+	[ -r kaiju_db.faa ] || { echo Missing file kaiju_db.faa; exit 1; }
 	echo Creating Borrows-Wheeler transform...
 	mkbwt -n $threadsBWT -e $exponentSA -a ACDEFGHIKLMNPQRSTVWY -o kaiju_db kaiju_db.faa
 	echo Creating FM-Index...
