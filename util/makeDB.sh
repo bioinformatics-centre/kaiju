@@ -115,7 +115,7 @@ while :; do
     shift
 done
 
-[ $db_plasmids -eq 1 -o $db_viruses -eq 1 -o $db_refseq -eq 1 -o $db_progenomes -eq 1 -o $db_nr -eq 1 -o $db_euk -eq 1 -o $db_mar -eq 1 ] || { echo "Error: Use one of the options -r, -p, -n, -v, -m or -e"; usage; exit 1; }
+[ $db_plasmids -eq 1 -o $db_viruses -eq 1 -o $db_refseq -eq 1 -o $db_progenomes -eq 1 -o $db_nr -eq 1 -o $db_euk -eq 1 -o $db_mar -eq 1 ] || { echo "Error: Use one of the options -r, -p, -n, -v, -l, -m, or -e"; usage; exit 1; }
 
 #check if necessary programs are in the PATH
 command -v awk >/dev/null 2>/dev/null || { echo Error: awk not found; exit 1; }
