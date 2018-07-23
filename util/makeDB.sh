@@ -13,6 +13,7 @@ db_progenomes=0
 db_nr=0
 db_euk=0
 db_mar=0
+db_plasmids=0
 threadsBWT=5
 parallelDL=5
 parallelConversions=5
@@ -43,6 +44,8 @@ echo  "$s" -m  Marine Metagenomics Portal \(MMP\) marine reference databases, Ma
 echo  "$tab"   \(https://mmp.sfb.uit.no\)
 echo
 echo  "$s" -v   Viral genomes from RefSeq, can also be used together with -n or -p
+echo
+echo  "$s" -l   Plasmid genomes from RefSeq
 echo
 echo Additional options:
 echo
@@ -87,6 +90,9 @@ while :; do
         -v|--viruses)
             db_viruses=1
             ;;
+        -l|--plasmids)
+            db_plasmids=1
+            ;;
         -p|--progenomes)
             db_progenomes=1
             ;;
@@ -109,7 +115,7 @@ while :; do
     shift
 done
 
-[ $db_viruses -eq 1 -o $db_refseq -eq 1 -o $db_progenomes -eq 1 -o $db_nr -eq 1 -o $db_euk -eq 1 -o $db_mar -eq 1 ] || { echo "Error: Use one of the options -r, -p, -n, -v, -m or -e"; usage; exit 1; }
+[ $db_plasmids -eq 1 -o $db_viruses -eq 1 -o $db_refseq -eq 1 -o $db_progenomes -eq 1 -o $db_nr -eq 1 -o $db_euk -eq 1 -o $db_mar -eq 1 ] || { echo "Error: Use one of the options -r, -p, -n, -v, -m or -e"; usage; exit 1; }
 
 #check if necessary programs are in the PATH
 command -v awk >/dev/null 2>/dev/null || { echo Error: awk not found; exit 1; }
@@ -284,6 +290,22 @@ else
 			if [ ! -r genomes/viral.2.genomic.gbff.gz ]; then echo Missing file viral.2.genomic.gbff.gz; exit 1; fi;
 			echo Extracting protein sequences from downloaded files...
 			find ./genomes -name "viral.*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX gbk2faa.pl XX XX.faa
+		elif [ $db_plasmids -eq 1 ]
+		then
+			if [ $DL -eq 1 ]
+			then
+				echo Downloading plasmid genomes from RefSeq...
+				wget -N -nv $wgetProgress -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/plasmid/plasmid.1.genomic.gbff.gz
+				wget -N -nv $wgetProgress -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/plasmid/plasmid.2.genomic.gbff.gz
+				wget -N -nv $wgetProgress -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/plasmid/plasmid.3.genomic.gbff.gz
+				wget -N -nv $wgetProgress -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/plasmid/plasmid.4.genomic.gbff.gz
+			fi
+			if [ ! -r genomes/plasmid.1.genomic.gbff.gz ]; then echo Missing file plasmid.1.genomic.gbff.gz; exit 1; fi;
+			if [ ! -r genomes/plasmid.2.genomic.gbff.gz ]; then echo Missing file plasmid.2.genomic.gbff.gz; exit 1; fi;
+			if [ ! -r genomes/plasmid.3.genomic.gbff.gz ]; then echo Missing file plasmid.3.genomic.gbff.gz; exit 1; fi;
+			if [ ! -r genomes/plasmid.4.genomic.gbff.gz ]; then echo Missing file plasmid.4.genomic.gbff.gz; exit 1; fi;
+			echo Extracting protein sequences from downloaded files...
+			find ./genomes -name "plasmid.*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX gbk2faa.pl XX XX.faa
 		fi
 
 		# on-the-fly substitution of taxon IDs found in merged.dmp by their updated IDs
