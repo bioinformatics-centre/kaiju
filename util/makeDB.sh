@@ -12,6 +12,7 @@ db_refseq=0
 db_progenomes=0
 db_nr=0
 db_euk=0
+db_nr_all=0
 db_mar=0
 db_plasmids=0
 threadsBWT=5
@@ -36,6 +37,9 @@ echo  "$tab"   from the proGenomes database
 echo
 echo  "$s" -n  NCBI BLAST non-redundant protein database \"nr\":
 echo  "$tab"   only Archaea, bacteria, and viruses
+echo
+echo  "$s" -N NCBI BLAST non-redundant protein database \"nr\":
+echo  "$tab"   all taxa
 echo
 echo  "$s" -e  NCBI BLAST non-redundant protein database \"nr\":
 echo  "$tab"   like -n, but additionally including fungi and microbial eukaryotes
@@ -87,6 +91,9 @@ while :; do
         -e|--euk)
             db_euk=1
             ;;
+        -N|--nra)
+            db_nr_all=1
+            ;;
         -v|--viruses)
             db_viruses=1
             ;;
@@ -115,7 +122,7 @@ while :; do
     shift
 done
 
-[ $db_plasmids -eq 1 -o $db_viruses -eq 1 -o $db_refseq -eq 1 -o $db_progenomes -eq 1 -o $db_nr -eq 1 -o $db_euk -eq 1 -o $db_mar -eq 1 ] || { echo "Error: Use one of the options -r, -p, -n, -v, -l, -m, or -e"; usage; exit 1; }
+[ $db_plasmids -eq 1 -o $db_viruses -eq 1 -o $db_refseq -eq 1 -o $db_progenomes -eq 1 -o $db_nr -eq 1 -o $db_euk -eq 1 -o $db_nr_all -eq 1 -o $db_mar -eq 1 ] || { echo "Error: Use one of the options -r, -p, -n, -v, -l, -m, or -e"; usage; exit 1; }
 
 #check if necessary programs are in the PATH
 command -v awk >/dev/null 2>/dev/null || { echo Error: awk not found; exit 1; }
@@ -188,7 +195,7 @@ then
 fi
 
 
-if [ $db_nr -eq 1 -o $db_euk -eq 1 ]
+if [ $db_nr -eq 1 -o $db_euk -eq 1 -o $db_nr_all -eq 1 ]
 then
 	if [ $DL -eq 1 ]
 	then
@@ -215,6 +222,22 @@ then
 		mkfmi kaiju_db_nr_euk
 		echo Done!
 		echo Kaiju only needs the files kaiju_db_nr_euk.fmi, nodes.dmp, and names.dmp.
+		echo The remaining files can be deleted.
+		echo
+	elif [ $db_nr_all -eq 1 ]
+	then
+		if [ $index_only -eq 0 ]
+		then
+			echo Converting NR file to Kaiju database
+			gunzip -c nr.gz | convertNR -t nodes.dmp -g prot.accession2taxid -a -o kaiju_db_nr_all.faa -A
+		fi
+		[ -r kaiju_db_nr_all.faa ] || { echo Missing file kaiju_db_nr_all.faa; exit 1; }
+		echo Creating BWT from Kaiju database
+		mkbwt -e $exponentSA_NR -n $threadsBWT -a ACDEFGHIKLMNPQRSTVWY -o kaiju_db_nr_all kaiju_db_nr_all.faa
+		echo Creating FM-index
+		mkfmi kaiju_db_nr_all
+		echo Done!
+		echo Kaiju only needs the files kaiju_db_nr_all.fmi, nodes.dmp, and names.dmp.
 		echo The remaining files can be deleted.
 		echo
 	else

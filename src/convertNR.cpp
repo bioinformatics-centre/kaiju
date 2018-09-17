@@ -41,11 +41,12 @@ int main(int argc, char **argv) {
 	bool verbose = false;
 	bool debug = false;
 	bool addAcc = false;
+        bool all_taxa = false;
 
 	// --------------------- START ------------------------------------------------------------------
 	// Read command line params
 	int c;
-	while ((c = getopt(argc, argv, "ahdvrl:g:t:i:o:")) != -1) {
+	while ((c = getopt(argc, argv, "ahdvrAl:g:t:i:o:")) != -1) {
 		switch (c)  {
 			case 'h':
 				usage(argv[0]);
@@ -55,6 +56,8 @@ int main(int argc, char **argv) {
 				verbose = true; break;
 			case 'a':
 				addAcc = true; break;
+			case 'A':
+				all_taxa = true; break;
 			case 'l':
 				list_filename = optarg; break;
 			case 't':
@@ -84,7 +87,8 @@ int main(int argc, char **argv) {
 	parseNodesDmp(*nodes,nodes_file);
 	nodes_file.close();
 
-	if(list_filename.length()==0) {
+        if(all_taxa) {std::cerr << "Using all taxa, due to '-A' option." << std::endl;}
+	else if(list_filename.length()==0) {
 		std::cerr << "No taxa list specified, using Archaea, Bacteria, and Viruses." << std::endl;
 		include_ids.insert((uint64_t)2);
 		include_ids.insert((uint64_t)2157);
@@ -162,6 +166,9 @@ int main(int argc, char **argv) {
 		inputfile.open(nr_filename);
 		if(!inputfile.is_open()) { error("Could not open file " + nr_filename); exit(EXIT_FAILURE); }
 	}
+        else {
+                nr_filename = "std::cin";
+        }
 
 	if(verbose) std::cerr << "Writing to file " << out_filename << std::endl;
 	std::ofstream out_file;
@@ -209,7 +216,7 @@ int main(int argc, char **argv) {
 				if(nodes->count(lca)==0) { std::cerr << "Taxon ID " << lca << " not found in taxonomy!" << std::endl; continue; }
 				uint64_t id = lca;
 				while(nodes->count(id)>0 && id != 1) {
-					if(include_ids.count(id) > 0) {
+					if(all_taxa || include_ids.count(id) > 0) {
 						keep = true;
 						break;
 					}
@@ -264,6 +271,7 @@ void usage(char *progname) {
 	fprintf(stderr, "   -o FILENAME   Name of output file.\n");
 	fprintf(stderr, "Optional arguments:\n");
 	fprintf(stderr, "   -a            Prefix taxon ID in database names with the first Accession.Ver\n");
+	fprintf(stderr, "   -A            Use all taxids. This overrides -l and the default (only Archaea, Bacteria, and Viruses)\n");
 	fprintf(stderr, "   -i FILENAME   Name of NR file. If this option is not used, then the program will read from STDIN.\n");
 	fprintf(stderr, "   -l FILENAME   Name of file containing IDs of taxa that will be extracted from the NR file. The IDs must be contained in nodes.dmp.\n");
 	exit(EXIT_FAILURE);
