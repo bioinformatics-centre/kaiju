@@ -73,9 +73,12 @@ convertNR: makefile bwt/mkbwt Config.o convertNR.o util.o $(BLASTOBJS)
 
 
 clean:
-	rm -f -v bwt/mkbwt bwt/mkfmi kaiju kaijux kaijup kaiju2krona mergeOutputs kaijuReport convertNR addTaxonNames ../bin/*
+	rm -f -v bwt/mkbwt bwt/mkfmi kaiju kaijux kaijup kaiju2krona mergeOutputs kaijuReport convertNR addTaxonNames
 	find . -name "*.o" -delete
 	$(MAKE) -C bwt/ clean
+
+uninstall:
+	rm -fv ../bin/*
 
 static: LDFLAGS = -static
 static: LDLIBS = $(LD_LIBS_STATIC)
