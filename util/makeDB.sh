@@ -135,7 +135,6 @@ command -v gbk2faa.pl >/dev/null 2>/dev/null || { echo Error: gbk2faa.pl not fou
 command -v mkfmi >/dev/null 2>/dev/null || { echo Error: mkfmi not found in $PATH; exit 1; }
 command -v mkbwt >/dev/null 2>/dev/null || { echo Error: mkbwt not found in $PATH; exit 1; }
 command -v convertNR >/dev/null 2>/dev/null || { echo Error: convertNR not found in $PATH; exit 1; }
-command -v convert_mar_to_kaiju.py >/dev/null 2>/dev/null || { echo Error: convert_mar_to_kaiju.py not found in $PATH; exit 1; }
 
 if [ $db_euk -eq 1 ]
 then
