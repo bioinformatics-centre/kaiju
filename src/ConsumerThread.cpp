@@ -847,11 +847,12 @@ void ConsumerThread::ids_from_SI_recursive(SI *si) {
 void ConsumerThread::flush_output() {
 	static std::mutex m;
 
-	std::unique_lock<std::mutex> out_lock(m);
+	{
+	std::lock_guard<std::mutex> out_lock(m);
 	*(config->out_stream) << output.str();
-	out_lock.unlock();
-	output.str("");
+	}
 
+	output.str("");
 }
 
 void ConsumerThread::clearFragments() {
