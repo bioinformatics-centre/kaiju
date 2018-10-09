@@ -53,8 +53,6 @@ class Config {
 		std::ostream * out_stream;
 		std::unordered_map<uint64_t,uint64_t> * nodes;
 
-		std::mutex out_mutex;
-
 		FMI * fmi;
 		BWT * bwt;
 
