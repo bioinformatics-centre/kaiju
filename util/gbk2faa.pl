@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 # This program reads gbk files and extracts all amino acid sequences from the
 # /translation fields into a FASTA file. The FASTA header contains a sequential
 # number followed by the taxon id, which is extracted from the
@@ -12,6 +12,7 @@
 #
 
 use strict;
+use warnings;
 use IO::Uncompress::AnyUncompress qw(anyuncompress $AnyUncompressError) ;
 
 my $t = 0;
