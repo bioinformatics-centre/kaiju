@@ -48,6 +48,8 @@ int main(int argc, char** argv) {
 	std::string rank;
 
 	bool specified_ranks = false;
+	bool individual_viruses = false;
+	bool print_taxids = false;
 	std::string ranks_arg;
 	std::list<std::string> ranks_list;
 	std::set<std::string> ranks_set;
@@ -55,12 +57,16 @@ int main(int argc, char** argv) {
 	// ------------------------------------------- START -------------------------------------------
 	// Read command line params
 	int c;
-	while ((c = getopt (argc, argv, "hpvur:n:t:i:o:m:c:l:")) != -1) {
+	while ((c = getopt (argc, argv, "hpxvwur:n:t:i:o:m:c:l:")) != -1) {
 		switch (c)  {
 			case 'h':
 				usage(argv[0]);
 			case 'v':
 				verbose = true; break;
+			case 'w':
+				individual_viruses = true; break;
+			case 'x':
+				print_taxids = true; break;
 			case 'u':
 				filter_unclassified = true; break;
 			case 'r':
@@ -192,7 +198,7 @@ int main(int argc, char** argv) {
 				std::cerr << "Warning: Taxon ID " << taxonid << " in output file is not contained in taxonomic tree file "<< nodes_filename << ".\n";
 				continue;
 			}
-			if(is_ancestor(nodes,taxonid_viruses,taxonid)) {
+			if(!individual_viruses && is_ancestor(nodes,taxonid_viruses,taxonid)) {
 				total_virus_reads++;
 			}
 			if(node2hitcount.count(taxonid)>0)
@@ -235,7 +241,7 @@ int main(int argc, char** argv) {
 	for(auto it : node2summarizedhits) {
 		uint64_t id = it.first;
 		uint64_t count = it.second;
-		if(is_ancestor(nodes,taxonid_viruses,id)) {
+		if(!individual_viruses && is_ancestor(nodes,taxonid_viruses,id)) {
 			continue;
 		}
 		if(node2rank.count(id)==0) { std::cerr << "Error: No rank specified for taxonid " << id << std::endl; continue; }
@@ -258,18 +264,27 @@ int main(int argc, char** argv) {
 	else
 		assert(totalreads >= unclassified + reads_at_rank_sum);
 
-	uint64_t viruses = (node2summarizedhits.count(taxonid_viruses) > 0) ?  node2summarizedhits[taxonid_viruses] : 0;
-	assert(total_virus_reads==viruses);
-
 	uint64_t above = (filter_unclassified) ? totalreads - reads_at_rank_sum  : totalreads - unclassified - reads_at_rank_sum;
-	above -= viruses;
+
+	uint64_t viruses;
+	if (!individual_viruses) {
+		viruses = (node2summarizedhits.count(taxonid_viruses) > 0) ?	node2summarizedhits[taxonid_viruses] : 0;
+		assert(total_virus_reads==viruses);
+
+		above -= viruses;
+	}
+
 
 	/* ---------- print output ---------------- */
 	if(verbose) std::cerr << "Writing to file " << out_filename << std::endl;
 	FILE * report_file = fopen(out_filename.c_str(),"w");
 	if(report_file==NULL) {  std::cerr << "Could not open file " << out_filename << " for writing" << std::endl; exit(EXIT_FAILURE); }
-	fprintf(report_file,"        %%\t    reads\t%s\n",rank.c_str());
-	fprintf(report_file,"-------------------------------------------\n");
+	fprintf(report_file,"        %%\t    reads\t%s",rank.c_str());
+	if (print_taxids) {
+		fprintf(report_file,"\t                        tax_id");
+	}
+	fprintf(report_file,"\n");
+	fprintf(report_file,"-------------------------------------------------------------------------\n");
 
 	for(auto it : sorted_count2ids) {
 		std::string name;
@@ -323,17 +338,24 @@ int main(int argc, char** argv) {
 			name = getTaxonNameFromId(node2name, it.second, names_filename);
 		}
 		float percent = (float)it.first/(float)totalreads*100.0f;
-		fprintf(report_file,"%9.6f\t%9" PRIu64 "\t%s\n", percent, it.first, name.c_str() );
+		fprintf(report_file,"%9.6f\t%9" PRIu64 "\t%-27s", percent, it.first, name.c_str());
+
+		if (print_taxids) {
+			fprintf(report_file, "\t%-9lu", it.second );
+		}
+		fprintf(report_file,"\n");
 	}
 
-	fprintf(report_file,"-------------------------------------------\n");
-	fprintf(report_file,"%9.6f\t%9" PRIu64 "\tViruses\n", (float)viruses/(float)totalreads*100.0, viruses);
+	fprintf(report_file,"-------------------------------------------------------------------------\n");
+	if (!individual_viruses) {
+		fprintf(report_file,"%9.6f\t%9" PRIu64 "\tViruses\n", (float)viruses/(float)totalreads*100.0, viruses);
+	}
 	fprintf(report_file,"%9.6f\t%9" PRIu64 "\tcannot be assigned to a %s \n", (float)above/(float)totalreads*100.0, above, rank.c_str());
 	if(min_read_count > 0)
 		fprintf(report_file,"%9.6f\t%9" PRIu64 "\tbelong to a %s having less than %i reads\n", (float)reads_at_rank_below_count_threshold/(float)totalreads*100.0, reads_at_rank_below_count_threshold, rank.c_str(), min_read_count);
 	if(min_percent > 0.0)
 		fprintf(report_file,"%9.6f\t%9" PRIu64 "\tbelong to a %s with less than %g%% of all reads\n", (float)reads_at_rank_below_percent_threshold/(float)totalreads*100.0, reads_at_rank_below_percent_threshold, rank.c_str(), min_percent);
-	fprintf(report_file,"-------------------------------------------\n");
+	fprintf(report_file,"-------------------------------------------------------------------------\n");
 	if(filter_unclassified)
 		fprintf(report_file,"%9.6f\t%9" PRIu64 "\tunclassified\n", (float)unclassified/(float)(totalreads+unclassified)*100.0, unclassified );
 	else
@@ -366,9 +388,10 @@ void usage(char *progname) {
 	fprintf(stderr, "   -p            Print full taxon path.\n");
 	fprintf(stderr, "   -l            Print taxon path containing only ranks specified by a comma-separated list,\n");
 	fprintf(stderr, "                 for example: superkingdom,phylum,class,order,family,genus,species\n");
+	fprintf(stderr, "   -w            Print individual viral taxa instead of grouping under 'Viruses'.\n");
+	fprintf(stderr, "   -x            Print taxonomy ids in the last column.\n");
 	fprintf(stderr, "   -v            Enable verbose output.\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Only one of the options -m and -c may be used at a time.\n");
 	exit(EXIT_FAILURE);
 }
-
