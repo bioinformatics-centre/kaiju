@@ -14,7 +14,7 @@ db_nr=0
 db_euk=0
 db_mar=0
 db_plasmids=0
-threadsBWT=5
+threadsBWT=24
 parallelDL=5
 parallelConversions=5
 exponentSA=3
@@ -172,10 +172,11 @@ then
 		echo Creating directory genomes/
 		mkdir -p genomes
 		echo Downloading Mar reference genomes from the MMP. This may take a while...
-		# Comment out /remove any of these three lines to exclude MarDB MAGS, MarDB or MarRef.
-		cat dl_list_mardb_mags_protein.txt | xargs -P $parallelDL wget -P genomes -nv
-		cat dl_list_mardb_no_mags_protein.txt | xargs -P $parallelDL wget -P genomes -nv
-		cat dl_list_marref_protein.txt | xargs -P $parallelDL wget -P genomes -nv
+		# Comment out /remove any of these three cat | xargs lines to exclude MarDB MAGS, MarDB or MarRef.
+		# || true is appended to circumvent exit code 123 from xargs exiting the database build, as there are some miniscule discrepancies between metadata and sequence data (duplicates) that does not affect classification atm. This will be fixed really soon.
+		cat dl_list_mardb_mags_protein.txt | xargs -P $parallelDL wget -P genomes -nv || true
+		cat dl_list_mardb_no_mags_protein.txt | xargs -P $parallelDL wget -P genomes -nv || true
+		cat dl_list_marref_protein.txt | xargs -P $parallelDL wget -P genomes -nv || true
 	fi
 	[ -r MarRef.tsv ] || { echo Missing file MarRef.tsv; exit 1; }
 	[ -r MarDB.tsv ] || { echo Missing file MarDB.tsv; exit 1; }
