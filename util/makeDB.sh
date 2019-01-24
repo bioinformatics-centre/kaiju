@@ -40,8 +40,8 @@ echo
 echo  "$s" -e  NCBI BLAST non-redundant protein database \"nr\":
 echo  "$tab"   like -n, but additionally including fungi and microbial eukaryotes
 echo
-echo  "$s" -m  Marine Metagenomics Portal \(MMP\) marine reference databases, MarRef and MarDB
-echo  "$tab"   \(https://mmp.sfb.uit.no\)
+echo  "$s" -m  Marine Metagenomics Portal \(MMP\) marine reference databases, MarRef, MarDB
+echo  "$tab"   and MarDB Metagenomic assembled genomes \(MAGS\) \(https://mmp.sfb.uit.no\)
 echo
 echo  "$s" -v   Viral genomes from RefSeq, can also be used together with -n or -p
 echo
@@ -162,16 +162,21 @@ then
 	if [ $DL -eq 1 ]
 	then
 		echo Downloading list of marine genomes from the Marine Metagenomics Portal \(MMP\)
-		wget -nv -O download_list.txt https://s1.sfb.uit.no/public/mar/Resources/kaiju/download_list.txt
+		# Comment out / remove any of these three lines to exclude MarDB MAGS, MarDB or MarRef.
+		wget -nv -O dl_list_mardb_mags_protein.txt https://s1.sfb.uit.no/public/mar/Resources/kaiju/dl_list_mardb_mags_protein.txt
+		wget -nv -O dl_list_mardb_no_mags_protein.txt https://s1.sfb.uit.no/public/mar/Resources/kaiju/dl_list_mardb_no_mags_protein.txt
+		wget -nv -O dl_list_marref_protein.txt https://s1.sfb.uit.no/public/mar/Resources/kaiju/dl_list_marref_protein.txt
 		echo Downloading necessary metadata from MMP
 		wget -nv -O MarRef.tsv https://s1.sfb.uit.no/public/mar/MarRef/Metadatabase/Current.tsv
 		wget -nv -O MarDB.tsv https://s1.sfb.uit.no/public/mar/MarDB/Metadatabase/Current.tsv
 		echo Creating directory genomes/
 		mkdir -p genomes
 		echo Downloading Mar reference genomes from the MMP. This may take a while...
-		cat download_list.txt | xargs -P $parallelDL wget -P genomes -nv
+		# Comment out /remove any of these three lines to exclude MarDB MAGS, MarDB or MarRef.
+		cat dl_list_mardb_mags_protein.txt | xargs -P $parallelDL wget -P genomes -nv
+		cat dl_list_mardb_no_mags_protein.txt | xargs -P $parallelDL wget -P genomes -nv
+		cat dl_list_marref_protein.txt | xargs -P $parallelDL wget -P genomes -nv
 	fi
-	[ -r download_list.txt ] || { echo Missing file download_list.txt; exit 1; }
 	[ -r MarRef.tsv ] || { echo Missing file MarRef.tsv; exit 1; }
 	[ -r MarDB.tsv ] || { echo Missing file MarDB.tsv; exit 1; }
 	[ -r $SCRIPTDIR/convert_mar_to_kaiju.py ] || { echo Error: file convert_mar_to_kaiju.py not found in $SCRIPTDIR; exit 1; }
