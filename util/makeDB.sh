@@ -13,6 +13,9 @@ db_progenomes=0
 db_nr=0
 db_euk=0
 db_mar=0
+db_mar_ref=0
+db_mar_db=0
+db_mar_mags=0
 db_plasmids=0
 threadsBWT=5
 parallelDL=5
@@ -42,6 +45,9 @@ echo  "$tab"   like -n, but additionally including fungi and microbial eukaryote
 echo
 echo  "$s" -m  Marine Metagenomics Portal \(MMP\) marine reference databases, MarRef, MarDB
 echo  "$tab"   and MarDB Metagenomic assembled genomes \(MAGS\) \(https://mmp.sfb.uit.no\)
+echo  "$tab"   To build discrete divisions, provide -m \<division\>, where divisions can be
+echo  "$tab"   \'MarRef\', \'MarDB\' or \'MarDBMAGS\'. No arguments will build all divisions.
+echo  "$tab"   Multiple divisions separated by space can be selected.
 echo
 echo  "$s" -v   Viral genomes from RefSeq, can also be used together with -n or -p
 echo
@@ -100,7 +106,33 @@ while :; do
             db_refseq=1
             ;;
         -m|--mardb)
-            db_mar=1
+	    # If no arguments to -m, or next element in $@ is a d flag, build all 3 divisions
+	    if [ -z "$2" ] || case $2 in -*) ;; *) false;; esac; then 
+                db_mar=1
+                db_mar_ref=1
+                db_mar_db=1
+                db_mar_mags=1
+	    # If arguments are supplied, loop through the rest of $@ and set individual discrete divisions
+	    else
+		db_mar=1
+		for param in $@; do
+		    if [ $param = 'MarRef' ]; then
+			db_mar_ref=1
+			shift
+			continue
+		    fi
+		    if [ $param = 'MarDB' ]; then
+                        db_mar_db=1
+			shift
+                        continue
+                    fi
+		    if [ $param = 'MarDBMAGS' ]; then
+                        db_mar_mags=1
+			shift
+                        continue
+                    fi
+	        done
+            fi
             ;;
         --)# End of all options.
             shift
@@ -114,7 +146,6 @@ while :; do
     esac
     shift
 done
-
 [ $db_plasmids -eq 1 -o $db_viruses -eq 1 -o $db_refseq -eq 1 -o $db_progenomes -eq 1 -o $db_nr -eq 1 -o $db_euk -eq 1 -o $db_mar -eq 1 ] || { echo "Error: Use one of the options -r, -p, -n, -v, -l, -m, or -e"; usage; exit 1; }
 
 #check if necessary programs are in the PATH
@@ -161,22 +192,26 @@ if [ $db_mar -eq 1 ]
 then
 	if [ $DL -eq 1 ]
 	then
-		echo Downloading list of marine genomes from the Marine Metagenomics Portal \(MMP\)
-		# Comment out / remove any of these three lines to exclude MarDB MAGS, MarDB or MarRef.
-		wget -nv -O dl_list_mardb_mags_protein.txt https://s1.sfb.uit.no/public/mar/Resources/kaiju/dl_list_mardb_mags_protein.txt
-		wget -nv -O dl_list_mardb_no_mags_protein.txt https://s1.sfb.uit.no/public/mar/Resources/kaiju/dl_list_mardb_no_mags_protein.txt
-		wget -nv -O dl_list_marref_protein.txt https://s1.sfb.uit.no/public/mar/Resources/kaiju/dl_list_marref_protein.txt
+		echo Creating directory genomes/
+                mkdir -p genomes
+		echo Downloading MarRef reference genomes from the Marine Metagenomics Portal \(MMP\). This may take a while...
+		if [ $db_mar_ref -eq 1 ]; then
+		    wget -nv -O dl_list_marref_protein.txt https://s1.sfb.uit.no/public/mar/Resources/kaiju/dl_list_marref_protein.txt
+		    cat dl_list_marref_protein.txt | xargs -P $parallelDL wget -P genomes -q || true
+	        fi
+		echo Downloading MarDB complete genomes from the Marine Metagenomics Portal \(MMP\). This may take a while...
+		if [ $db_mar_db -eq 1 ]; then
+		    wget -nv -O dl_list_mardb_no_mags_protein.txt https://s1.sfb.uit.no/public/mar/Resources/kaiju/dl_list_mardb_no_mags_protein.txt
+		    cat dl_list_mardb_no_mags_protein.txt | xargs -P $parallelDL wget -P genomes -q || true
+                fi
+		echo Downloading MarDBMAGS metagenomic assembled genomes from the Marine Metagenomics Portal \(MMP\). This may take a while...
+		if [ $db_mar_mags -eq 1 ]; then
+		    wget -nv -O dl_list_mardb_mags_protein.txt https://s1.sfb.uit.no/public/mar/Resources/kaiju/dl_list_mardb_mags_protein.txt
+		    cat dl_list_mardb_mags_protein.txt | xargs -P $parallelDL wget -P genomes -q || true
+                fi
 		echo Downloading necessary metadata from MMP
 		wget -nv -O MarRef.tsv https://s1.sfb.uit.no/public/mar/MarRef/Metadatabase/Current.tsv
 		wget -nv -O MarDB.tsv https://s1.sfb.uit.no/public/mar/MarDB/Metadatabase/Current.tsv
-		echo Creating directory genomes/
-		mkdir -p genomes
-		echo Downloading Mar reference genomes from the MMP. This may take a while...
-		# Comment out /remove any of these three cat | xargs lines to exclude MarDB MAGS, MarDB or MarRef.
-		# || true is appended to circumvent exit code 123 from xargs exiting the database build, as there are some miniscule discrepancies between metadata and sequence data (duplicates) that does not affect classification atm. This will be fixed really soon.
-		cat dl_list_mardb_mags_protein.txt | xargs -P $parallelDL wget -P genomes -nv || true
-		cat dl_list_mardb_no_mags_protein.txt | xargs -P $parallelDL wget -P genomes -nv || true
-		cat dl_list_marref_protein.txt | xargs -P $parallelDL wget -P genomes -nv || true
 	fi
 	[ -r MarRef.tsv ] || { echo Missing file MarRef.tsv; exit 1; }
 	[ -r MarDB.tsv ] || { echo Missing file MarDB.tsv; exit 1; }
