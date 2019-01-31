@@ -65,87 +65,88 @@ echo
 }
 
 while :; do
-    case $1 in
-        -h|-\?|--help)
-            usage
-            exit 1
-            ;;
-        -t|--threads)
-            if [ -n "$2" ]; then
-                threadsBWT=$2
-                shift
-            else
-                printf 'ERROR: "-t" requires a non-empty integer argument.\n' >&2
-                usage
-                exit 1
-            fi
-            ;;
-        --noDL)
-            DL=0
-            ;;
-        --index-only)
-            index_only=1
-            DL=0
-            ;;
-        -n|--nr)
-            db_nr=1
-            ;;
-        -e|--euk)
-            db_euk=1
-            ;;
-        -v|--viruses)
-            db_viruses=1
-            ;;
-        -l|--plasmids)
-            db_plasmids=1
-            ;;
-        -p|--progenomes)
-            db_progenomes=1
-            ;;
-        -r|--refseq)
-            db_refseq=1
-            ;;
-        -m|--mardb)
-	    # If no arguments to -m, or next element in $@ is a d flag, build all 3 divisions
-	    if [ -z "$2" ] || case $2 in -*) ;; *) false;; esac; then 
-                db_mar=1
-                db_mar_ref=1
-                db_mar_db=1
-                db_mar_mags=1
-	    # If arguments are supplied, loop through the rest of $@ and set individual discrete divisions
-	    else
-		db_mar=1
-		for param in $@; do
-		    if [ $param = 'MarRef' ]; then
-			db_mar_ref=1
+	case $1 in
+		-h|-\?|--help)
+			usage
+			exit 1
+			;;
+		-t|--threads)
+			if [ -n "$2" ]; then
+				threadsBWT=$2
+				shift
+			else
+				printf 'ERROR: "-t" requires a non-empty integer argument.\n' >&2
+				usage
+				exit 1
+			fi
+			;;
+		--noDL)
+			DL=0
+			;;
+		--index-only)
+			index_only=1
+			DL=0
+			;;
+		-n|--nr)
+			db_nr=1
+			;;
+		-e|--euk)
+			db_euk=1
+			;;
+		-v|--viruses)
+			db_viruses=1
+			;;
+		-l|--plasmids)
+			db_plasmids=1
+			;;
+		-p|--progenomes)
+			db_progenomes=1
+			;;
+		-r|--refseq)
+			db_refseq=1
+			;;
+		-m|--mardb)
+			# If no arguments to -m, or next element in $@ is a d flag, build all 3 divisions
+			if [ -z "$2" ] || case $2 in -*) ;; *) false;; esac; then
+				db_mar=1
+				db_mar_ref=1
+				db_mar_db=1
+				db_mar_mags=1
+				# If arguments are supplied, loop through the rest of $@ and set individual discrete divisions
+			else
+				db_mar=1
+				for param in $@; do
+					if [ $param = 'MarRef' ]; then
+						db_mar_ref=1
+						shift
+						continue
+					fi
+					if [ $param = 'MarDB' ]; then
+						db_mar_db=1
+						shift
+						continue
+					fi
+					if [ $param = 'MarDBMAGS' ]; then
+						db_mar_mags=1
+						shift
+						continue
+					fi
+				done
+			fi
+			;;
+		--)# End of all options.
 			shift
-			continue
-		    fi
-		    if [ $param = 'MarDB' ]; then
-                        db_mar_db=1
-			shift
-                        continue
-                    fi
-		    if [ $param = 'MarDBMAGS' ]; then
-                        db_mar_mags=1
-			shift
-                        continue
-                    fi
-	        done
-            fi
-            ;;
-        --)# End of all options.
-            shift
-            break
-            ;;
-        -?*)
-            printf 'WARN: Unknown option (ignored): %s\n' "$1" >&2
-            ;;
-        *)# Default case: If no more options then break out of the loop.
-            break
-    esac
-    shift
+			break
+			;;
+		-?*)
+			printf 'WARN: Unknown option (ignored): %s\n' "$1" >&2
+			;;
+		*)# Default case: If no more options then break out of the loop.
+			break
+	esac
+	shift
 done
+
 [ $db_plasmids -eq 1 -o $db_viruses -eq 1 -o $db_refseq -eq 1 -o $db_progenomes -eq 1 -o $db_nr -eq 1 -o $db_euk -eq 1 -o $db_mar -eq 1 ] || { echo "Error: Use one of the options -r, -p, -n, -v, -l, -m, or -e"; usage; exit 1; }
 
 #check if necessary programs are in the PATH
