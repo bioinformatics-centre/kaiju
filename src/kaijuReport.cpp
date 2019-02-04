@@ -1,4 +1,4 @@
-/* This file is part of Kaiju, Copyright 2015-2017 Peter Menzel and Anders Krogh,
+/* This file is part of Kaiju, Copyright 2015-2019 Peter Menzel and Anders Krogh,
  * Kaiju is licensed under the GPLv3, see the file LICENSE. */
 
 #include <unistd.h>
@@ -21,7 +21,6 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-#include "version.hpp"
 #include "util.hpp"
 
 void usage(char *progname);
@@ -346,10 +345,7 @@ int main(int argc, char** argv) {
 
 
 void usage(char *progname) {
-	fprintf(stderr, "Kaiju %s\n",KAIJUVERSION);
-	fprintf(stderr, "Copyright 2015-2017 Peter Menzel, Anders Krogh\n");
-	fprintf(stderr, "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>\n");
-	fprintf(stderr, "\n");
+	print_usage_header();
 	fprintf(stderr, "Usage:\n   %s -t nodes.dmp -n names.dmp -i kaiju.out -o kaiju.report\n", progname);
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Mandatory arguments:\n");

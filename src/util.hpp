@@ -13,6 +13,9 @@
 #include <fstream>
 
 #include "Config.hpp"
+#include "version.hpp"
+
+void print_usage_header();
 
 void error(const std::string e);
 

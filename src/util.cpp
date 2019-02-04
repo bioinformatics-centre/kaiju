@@ -7,6 +7,13 @@ extern "C" {
 #include "./bwt/bwt.h"
 }
 
+void print_usage_header() {
+	fprintf(stderr, "Kaiju %s\n",KAIJUVERSION);
+	fprintf(stderr, "Copyright 2015-2019 Peter Menzel, Anders Krogh\n");
+	fprintf(stderr, "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>\n");
+	fprintf(stderr, "\n");
+}
+
 void error(const std::string e) {
 	std::cerr << "Error: " << e << std::endl << std::endl;
 }

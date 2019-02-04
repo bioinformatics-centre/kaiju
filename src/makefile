@@ -34,8 +34,8 @@ LD_LIBS_STATIC = -Wl,--whole-archive -lpthread -lz -Wl,--no-whole-archive
 endif
 
 
-all: makefile kaiju kaiju2krona mergeOutputs kaijuReport kaijux kaijup convertNR addTaxonNames bwt/mkbwt
-	mkdir -p ../bin && cp kaiju kaijux kaijup kaiju2krona mergeOutputs kaijuReport convertNR addTaxonNames bwt/mkbwt bwt/mkfmi ../util/gbk2faa.pl ../util/makeDB.sh ../util/taxonlist.tsv ../util/convert_mar_to_kaiju.py ../bin/
+all: makefile kaiju kaiju2krona mergeOutputs kaijuReport kaiju2table kaijux kaijup convertNR addTaxonNames bwt/mkbwt
+	mkdir -p ../bin && cp kaiju kaijux kaijup kaiju2krona kaiju2table mergeOutputs kaijuReport convertNR addTaxonNames bwt/mkbwt bwt/mkfmi ../util/gbk2faa.pl ../util/makeDB.sh ../util/taxonlist.tsv ../util/convert_mar_to_kaiju.py ../bin/
 
 # use bwt/mkbwt as target for compiling everything in the bwt folder first
 bwt/mkbwt:
@@ -58,6 +58,9 @@ mergeOutputs: makefile bwt/mkbwt mergeOutputs.o util.o
 
 kaijuReport: makefile bwt/mkbwt kaijuReport.o util.o
 	$(CXX) $(LDFLAGS) -o kaijuReport kaijuReport.o util.o $(BWTOBJS)
+
+kaiju2table: makefile bwt/mkbwt kaiju2table.o util.o
+	$(CXX) $(LDFLAGS) -o kaiju2table kaiju2table.o util.o $(BWTOBJS)
 
 addTaxonNames: makefile bwt/mkbwt addTaxonNames.o util.o
 	$(CXX) $(LDFLAGS) -o addTaxonNames addTaxonNames.o util.o $(BWTOBJS)

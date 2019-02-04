@@ -17,7 +17,6 @@
 #include <stdexcept>
 #include <deque>
 
-#include "version.hpp"
 #include "util.hpp"
 
 void usage(char *progname);
@@ -242,10 +241,7 @@ int main(int argc, char** argv) {
 }
 
 void usage(char *progname) {
-	fprintf(stderr, "Kaiju %s\n",KAIJUVERSION);
-	fprintf(stderr, "Copyright 2015,2016 Peter Menzel, Anders Krogh\n");
-	fprintf(stderr, "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>\n");
-	fprintf(stderr, "\n");
+	print_usage_header();
 	fprintf(stderr, "Usage:\n   %s -t nodes.dmp -n names.dmp -i kaiju.out -o kaiju-names.out\n", progname);
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Mandatory arguments:\n");

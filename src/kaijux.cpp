@@ -18,7 +18,6 @@
 #include "ReadItem.hpp"
 #include "ConsumerThreadx.hpp"
 #include "Config.hpp"
-#include "version.hpp"
 #include "util.hpp"
 
 extern "C" {
@@ -370,10 +369,7 @@ int main(int argc, char** argv) {
 }
 
 void usage(char *progname) {
-	fprintf(stderr, "Kaiju %s\n",KAIJUVERSION);
-	fprintf(stderr, "Copyright 2015-2018 Peter Menzel, Anders Krogh\n");
-	fprintf(stderr, "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>\n");
-	fprintf(stderr, "\n");
+	print_usage_header();
 	fprintf(stderr, "Usage:\n   %s -f proteins.fmi -i reads.fastq [-j reads2.fastq]\n", progname);
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Mandatory arguments:\n");
