@@ -25,14 +25,16 @@ usage() {
 	echo
 	echo  " refseq: bacterial, Archaeal and viral genomes in the NCBI RefSeq database with assembly status complete"
 	echo
-	echo  " progenomes: proteins in the set of representative genomes from the proGenomes database and viral genomes from RefSeq"
+	echo  " progenomes: proteins in the set of representative genomes from the proGenomes database and viral genomes from NCBI RefSeq"
 	echo
 	echo  " nr: NCBI BLAST non-redundant protein database \"nr\", only Archaea, bacteria, and viruses"
 	echo
-	echo  " nr_euk:  NCBI BLAST non-redundant protein database \"nr\", additionally including fungi and microbial eukaryotes"
+	echo  " nr_euk: nr and additionally including fungi and microbial eukaryotes"
 	echo
 	echo  " mar_ref, mar_db, mar_mag: individual marine reference databases or assembled genomes from the Marine Metagenomics Portal"
-	echo  " mar: combination of all three MAR database"
+	echo  " mar: combination of all three MAR databases"
+	echo
+	echo  " zou219: 1520 bacterial genomes from Zou et al. 2019 (doi:10.1038/s41587-018-0008-8) and viral genomes from NCBI RefSeq"
 	echo
 	echo  " viruses: Viral proteins from NCBI RefSeq virus genomes."
 	echo
@@ -117,6 +119,9 @@ command -v mkbwt >/dev/null 2>/dev/null || { echo Error: mkbwt not found in $PAT
 command -v convertNR >/dev/null 2>/dev/null || { echo Error: convertNR not found in $PATH; exit 1; }
 
 [ -z "$DB" ] && { echo Error: Use option -s to select a source database; exit 1; }
+[ "$DB" = "mar" -o "$DB" = "mar_ref" -o "$DB" = "mar_db" -o "$DB" = "mar_mag" -o "$DB" = "nr" -o "$DB" = "nr_euk" -o "$DB" = "refseq" -o "$DB" = "progenomes" -o "$DB" = "viruses" -o "$DB" = "plasmids" -o "$DB" = "zou2019" ] || { echo Error: $DB is not a valid source database; usage; exit 1; }
+
+
 
 [ -r $SCRIPTDIR/taxonlist.tsv ] || { echo Error: File taxonlist.tsv not found in $SCRIPTDIR; exit 1; }
 [ -r $SCRIPTDIR/convert_mar_to_kaiju.py ] || { echo Error: File convert_mar_to_kaiju.py not found in $SCRIPTDIR; exit 1; }
@@ -148,7 +153,7 @@ then
 		then
 			echo Downloading MarRef reference genomes from the Marine Metagenomics Portal
 			wget -nv -O $DB/dl_list_marref_protein.txt https://s1.sfb.uit.no/public/mar/Resources/kaiju/dl_list_marref_protein.txt
-			cat $SB/dl_list_marref_protein.txt | xargs -P $parallelDL wget -P $DB/source -q || true
+			cat $DB/dl_list_marref_protein.txt | xargs -P $parallelDL wget -P $DB/source -q || true
 		fi
 		if [ "$DB" = "mar" -o "$DB" = "mar_db" ]
 		then
@@ -249,9 +254,9 @@ then
 			wget -N -nv $wgetProgress -P $DB/source ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.2.genomic.gbff.gz
 			wget -N -nv $wgetProgress -P $DB/source ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.3.genomic.gbff.gz
 		fi
-		[ -r $DB/source/viral.1.genomic.gbff.gz ] || { echo Missing file $SB/source/viral.1.genomic.gbff.gz; exit 1;}
-		[ -r $DB/source/viral.2.genomic.gbff.gz ] || { echo Missing file $SB/source/viral.2.genomic.gbff.gz; exit 1;}
-		[ -r $DB/source/viral.3.genomic.gbff.gz ] || { echo Missing file $SB/source/viral.3.genomic.gbff.gz; exit 1;}
+		[ -r $DB/source/viral.1.genomic.gbff.gz ] || { echo Missing file $DB/source/viral.1.genomic.gbff.gz; exit 1;}
+		[ -r $DB/source/viral.2.genomic.gbff.gz ] || { echo Missing file $DB/source/viral.2.genomic.gbff.gz; exit 1;}
+		[ -r $DB/source/viral.3.genomic.gbff.gz ] || { echo Missing file $DB/source/viral.3.genomic.gbff.gz; exit 1;}
 		echo Extracting protein sequences from downloaded files
 		find $DB/source -name "*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX gbk2faa.pl XX XX.faa
 		# on-the-fly substitution of taxon IDs found in merged.dmp by their updated IDs
@@ -278,9 +283,9 @@ then
 			wget -N -nv $wgetProgress -P $DB/source ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.2.genomic.gbff.gz
 			wget -N -nv $wgetProgress -P $DB/source ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.3.genomic.gbff.gz
 		fi
-		[ -r $DB/source/viral.1.genomic.gbff.gz ] || { echo Missing file $SB/source/viral.1.genomic.gbff.gz; exit 1;}
-		[ -r $DB/source/viral.2.genomic.gbff.gz ] || { echo Missing file $SB/source/viral.2.genomic.gbff.gz; exit 1;}
-		[ -r $DB/source/viral.3.genomic.gbff.gz ] || { echo Missing file $SB/source/viral.3.genomic.gbff.gz; exit 1;}
+		[ -r $DB/source/viral.1.genomic.gbff.gz ] || { echo Missing file $DB/source/viral.1.genomic.gbff.gz; exit 1;}
+		[ -r $DB/source/viral.2.genomic.gbff.gz ] || { echo Missing file $DB/source/viral.2.genomic.gbff.gz; exit 1;}
+		[ -r $DB/source/viral.3.genomic.gbff.gz ] || { echo Missing file $DB/source/viral.3.genomic.gbff.gz; exit 1;}
 		gunzip -c $DB/source/representatives.proteins.fasta.gz | perl -lne 'if(/>(\d+)\.(\S+)/){print ">",$2,"_",$1}else{y/BZ/DE/;s/[^ARNDCQEGHILKMFPSTWYV]//gi;print if length}' > $DB/source/representatives.proteins.faa
 		find $DB/source -name "viral.*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX gbk2faa.pl XX XX.faa
 		# on-the-fly substitution of taxon IDs found in merged.dmp by their updated IDs
@@ -305,9 +310,9 @@ then
 			wget -N -nv $wgetProgress -P $DB/source ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.2.genomic.gbff.gz
 			wget -N -nv $wgetProgress -P $DB/source ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.3.genomic.gbff.gz
 		fi
-		[ -r $DB/source/viral.1.genomic.gbff.gz ] || { echo Missing file $SB/source/viral.1.genomic.gbff.gz; exit 1;}
-		[ -r $DB/source/viral.2.genomic.gbff.gz ] || { echo Missing file $SB/source/viral.2.genomic.gbff.gz; exit 1;}
-		[ -r $DB/source/viral.3.genomic.gbff.gz ] || { echo Missing file $SB/source/viral.3.genomic.gbff.gz; exit 1;}
+		[ -r $DB/source/viral.1.genomic.gbff.gz ] || { echo Missing file $DB/source/viral.1.genomic.gbff.gz; exit 1;}
+		[ -r $DB/source/viral.2.genomic.gbff.gz ] || { echo Missing file $DB/source/viral.2.genomic.gbff.gz; exit 1;}
+		[ -r $DB/source/viral.3.genomic.gbff.gz ] || { echo Missing file $DB/source/viral.3.genomic.gbff.gz; exit 1;}
 		echo Extracting protein sequences from downloaded files
 		find $DB/source -name "viral.*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX gbk2faa.pl XX XX.faa
 		find $DB/source -name '*.faa' -print0 | xargs -0 cat | perl -lsne 'BEGIN{open(F,$m);while(<F>){@F=split(/[\|\s]+/);$h{$F[0]}=$F[1]}}if(/(>.+)_(\d+)/){print $1,"_",defined($h{$2})?$h{$2}:$2;}else{print}' -- -m=merged.dmp  > $DB/kaiju_db_$DB.faa
@@ -340,7 +345,40 @@ then
 		[ -r $DB/source/plasmid.5.genomic.gbff.gz ] || { echo Missing file $DB/source/plasmid.5.genomic.gbff.gz; exit 1; }
 		echo Extracting protein sequences from downloaded files
 		find $DB/source -name "plasmid.*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX gbk2faa.pl XX XX.faa
-		find $SB/source -name '*.faa' -print0 | xargs -0 cat | perl -lsne 'BEGIN{open(F,$m);while(<F>){@F=split(/[\|\s]+/);$h{$F[0]}=$F[1]}}if(/(>.+)_(\d+)/){print $1,"_",defined($h{$2})?$h{$2}:$2;}else{print}' -- -m=merged.dmp  > $DB/kaiju_db_$DB.faa
+		find $DB/source -name '*.faa' -print0 | xargs -0 cat | perl -lsne 'BEGIN{open(F,$m);while(<F>){@F=split(/[\|\s]+/);$h{$F[0]}=$F[1]}}if(/(>.+)_(\d+)/){print $1,"_",defined($h{$2})?$h{$2}:$2;}else{print}' -- -m=merged.dmp  > $DB/kaiju_db_$DB.faa
+	fi
+	[ -r $DB/kaiju_db_$DB.faa ] || { echo Missing file $DB/kaiju_db_$DB.faa; exit 1; }
+	echo Creating Borrows-Wheeler transform
+	mkbwt -n $threadsBWT -e $exponentSA -a ACDEFGHIKLMNPQRSTVWY -o $DB/kaiju_db_$DB $DB/kaiju_db_$DB.faa
+	echo Creating FM-Index
+	mkfmi $DB/kaiju_db_$DB
+fi
+#----------------------------------------------------------------------------------------------------------------------------------
+if [ "$DB" = "zou2019" ]
+then
+	mkdir -p $DB/source
+	if [ $index_only -eq 0 ]
+	then
+		if [ $DL -eq 1 ]
+		then
+			echo Downloading file list
+			wget -O $DB/assembly_list.xml 'https://www.ncbi.nlm.nih.gov/portal/utils/file_backend.cgi?Db=assembly&HistoryId=NCID_1_12694613_130.14.18.48_5555_1549369150_1786790945_0MetA0_S_HStore&QueryKey=2&Sort=ACCN&CompleteResultCount=1520&Mode=file&View=xml&p$l=Email&portalSnapshot=/projects/Genome/AssemblyDB/Assembly_EntrezPackage@2.41&PortName=live'
+			grep FtpPath_GenBank $DB/assembly_list.xml | perl -lne 's/\s+//;s/<.*?>//g;@x=split("/");print $_,"/",$x[$#x],"_genomic.gbff.gz";' > $DB/downloadlist.txt
+			nfiles=`cat $DB/downloadlist.txt| wc -l`
+			echo Downloading $nfiles genome files from NCBI FTP server
+			cat $DB/downloadlist.txt | xargs -P $parallelDL -n 1 wget -P $DB/source -nv
+			echo Downloading virus genomes from RefSeq
+			wget -N -nv $wgetProgress -P $DB/source ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.1.genomic.gbff.gz
+			wget -N -nv $wgetProgress -P $DB/source ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.2.genomic.gbff.gz
+			wget -N -nv $wgetProgress -P $DB/source ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.3.genomic.gbff.gz
+		fi
+		[ -r $DB/source/viral.1.genomic.gbff.gz ] || { echo Missing file $DB/source/viral.1.genomic.gbff.gz; exit 1;}
+		[ -r $DB/source/viral.2.genomic.gbff.gz ] || { echo Missing file $DB/source/viral.2.genomic.gbff.gz; exit 1;}
+		[ -r $DB/source/viral.3.genomic.gbff.gz ] || { echo Missing file $DB/source/viral.3.genomic.gbff.gz; exit 1;}
+		echo Extracting protein sequences from downloaded files
+		find $DB/source -name "*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX gbk2faa.pl XX XX.faa
+		# on-the-fly substitution of taxon IDs found in merged.dmp by their updated IDs
+		find $DB/source -name '*.faa' -print0 | xargs -0 cat | perl -lsne 'BEGIN{open(F,$m);while(<F>){@F=split(/[\|\s]+/);$h{$F[0]}=$F[1]}}if(/(>.+)_(\d+)/){print $1,"_",defined($h{$2})?$h{$2}:$2;}else{print}' -- -m=merged.dmp  >$DB/kaiju_db_$DB.faa
 	fi
 	[ -r $DB/kaiju_db_$DB.faa ] || { echo Missing file $DB/kaiju_db_$DB.faa; exit 1; }
 	echo Creating Borrows-Wheeler transform
