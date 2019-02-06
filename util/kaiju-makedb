@@ -106,7 +106,6 @@ command -v xargs >/dev/null 2>/dev/null || { echo Error: xargs not found; exit 1
 command -v tar >/dev/null 2>/dev/null || { echo Error: tar not found; exit 1; }
 command -v gunzip >/dev/null 2>/dev/null || { echo Error: gunzip not found; exit 1; }
 command -v perl >/dev/null 2>/dev/null || { echo Error: perl not found; exit 1; }
-command -v python >/dev/null 2>/dev/null || { echo Error: python not found; exit 1; }
 
 #test if option --show-progress is available for wget, then use it when downloading
 wgetProgress=""
@@ -121,7 +120,11 @@ command -v convertNR >/dev/null 2>/dev/null || { echo Error: convertNR not found
 [ -z "$DB" ] && { echo Error: Use option -s to select a source database; exit 1; }
 [ "$DB" = "mar" -o "$DB" = "mar_ref" -o "$DB" = "mar_db" -o "$DB" = "mar_mag" -o "$DB" = "nr" -o "$DB" = "nr_euk" -o "$DB" = "refseq" -o "$DB" = "progenomes" -o "$DB" = "viruses" -o "$DB" = "plasmids" -o "$DB" = "zou2019" ] || { echo Error: $DB is not a valid source database; usage; exit 1; }
 
-
+if [ "$DB" = "mar" -o "$DB" = "mar_ref" -o "$DB" = "mar_db" -o "$DB" = "mar_mag" ]
+then
+	command -v python >/dev/null 2>/dev/null || { echo Error: python not found; exit 1; }
+	python -c 'from collections import Counter' >/dev/null 2>/dev/null || { echo Error: Python version too low for using Counter; exit 1; }
+fi
 
 [ -r $SCRIPTDIR/taxonlist.tsv ] || { echo Error: File taxonlist.tsv not found in $SCRIPTDIR; exit 1; }
 [ -r $SCRIPTDIR/convert_mar_to_kaiju.py ] || { echo Error: File convert_mar_to_kaiju.py not found in $SCRIPTDIR; exit 1; }
@@ -147,36 +150,39 @@ tar xf taxdump.tar.gz nodes.dmp names.dmp merged.dmp
 if [ "$DB" = "mar" -o "$DB" = "mar_ref" -o "$DB" = "mar_db" -o "$DB" = "mar_mag" ]
 then
 	mkdir -p $DB/source
-	if [ $DL -eq 1 ]
+	if [ $index_only -eq 0 ]
 	then
-		if [ "$DB" = "mar" -o "$DB" = "mar_ref" ]
+		if [ $DL -eq 1 ]
 		then
-			echo Downloading MarRef reference genomes from the Marine Metagenomics Portal
-			wget -nv -O $DB/dl_list_marref_protein.txt https://s1.sfb.uit.no/public/mar/Resources/kaiju/dl_list_marref_protein.txt
-			cat $DB/dl_list_marref_protein.txt | xargs -P $parallelDL wget -P $DB/source -q || true
+			if [ "$DB" = "mar" -o "$DB" = "mar_ref" ]
+			then
+				echo Downloading MarRef reference genomes from the Marine Metagenomics Portal
+				wget -nv -O $DB/dl_list_marref_protein.txt https://s1.sfb.uit.no/public/mar/Resources/kaiju/dl_list_marref_protein.txt
+				cat $DB/dl_list_marref_protein.txt | xargs -P $parallelDL wget -P $DB/source -q || true
+			fi
+			if [ "$DB" = "mar" -o "$DB" = "mar_db" ]
+			then
+				echo Downloading MarDB complete genomes from the Marine Metagenomics Portal
+				wget -nv -O $DB/dl_list_mardb_no_mags_protein.txt https://s1.sfb.uit.no/public/mar/Resources/kaiju/dl_list_mardb_no_mags_protein.txt
+				cat $DB/dl_list_mardb_no_mags_protein.txt | xargs -P $parallelDL wget -P $DB/source -q || true
+			fi
+			if [ "$DB" = "mar" -o "$DB" = "mar_mag" ]
+			then
+				echo Downloading MarDB metagenomic assembled genomes from the Marine Metagenomics Portal
+				wget -nv -O $DB/dl_list_mardb_mags_protein.txt https://s1.sfb.uit.no/public/mar/Resources/kaiju/dl_list_mardb_mags_protein.txt
+				cat $DB/dl_list_mardb_mags_protein.txt | xargs -P $parallelDL wget -P $DB/source -q || true
+			fi
+			echo Downloading metadata from MMP
+			wget -nv -O $DB/MarRef.tsv https://s1.sfb.uit.no/public/mar/MarRef/Metadatabase/Current.tsv
+			wget -nv -O $DB/MarDB.tsv https://s1.sfb.uit.no/public/mar/MarDB/Metadatabase/Current.tsv
 		fi
-		if [ "$DB" = "mar" -o "$DB" = "mar_db" ]
-		then
-			echo Downloading MarDB complete genomes from the Marine Metagenomics Portal
-			wget -nv -O $DB/dl_list_mardb_no_mags_protein.txt https://s1.sfb.uit.no/public/mar/Resources/kaiju/dl_list_mardb_no_mags_protein.txt
-			cat $DB/dl_list_mardb_no_mags_protein.txt | xargs -P $parallelDL wget -P $DB/source -q || true
-		fi
-		if [ "$DB" = "mar" -o "$DB" = "mar_mag" ]
-		then
-			echo Downloading MarDB metagenomic assembled genomes from the Marine Metagenomics Portal
-			wget -nv -O $DB/dl_list_mardb_mags_protein.txt https://s1.sfb.uit.no/public/mar/Resources/kaiju/dl_list_mardb_mags_protein.txt
-			cat $DB/dl_list_mardb_mags_protein.txt | xargs -P $parallelDL wget -P $DB/source -q || true
-		fi
-		echo Downloading metadata from MMP
-		wget -nv -O $DB/MarRef.tsv https://s1.sfb.uit.no/public/mar/MarRef/Metadatabase/Current.tsv
-		wget -nv -O $DB/MarDB.tsv https://s1.sfb.uit.no/public/mar/MarDB/Metadatabase/Current.tsv
+		[ -r $DB/MarRef.tsv ] || { echo Missing file MarRef.tsv; exit 1; }
+		[ -r $DB/MarDB.tsv ] || { echo Missing file MarDB.tsv; exit 1; }
+		echo Converting MMP data to Kaiju format
+		python $SCRIPTDIR/convert_mar_to_kaiju.py --ref $DB/MarRef.tsv --db $DB/MarDB.tsv --genomes $DB/source > $DB/kaiju_db_tmp.faa
+		cat $DB/kaiju_db_tmp.faa | perl -lsne 'BEGIN{open(F,$m);while(<F>){@F=split(/[\|\s]+/);$h{$F[0]}=$F[1]}}if(/(>.+)_(\d+)/){print $1,"_",defined($h{$2})?$h{$2}:$2;}else{print}' -- -m=merged.dmp > $DB/kaiju_db_$DB.faa
+		rm $DB/kaiju_db_tmp.faa
 	fi
-	[ -r $DB/MarRef.tsv ] || { echo Missing file MarRef.tsv; exit 1; }
-	[ -r $DB/MarDB.tsv ] || { echo Missing file MarDB.tsv; exit 1; }
-	echo Converting MMP data to Kaiju format
-	python $SCRIPTDIR/convert_mar_to_kaiju.py --ref $DB/MarRef.tsv --db $DB/MarDB.tsv --genomes $DB/source > $DB/kaiju_db_tmp.faa
-	cat $DB/kaiju_db_tmp.faa | perl -lsne 'BEGIN{open(F,$m);while(<F>){@F=split(/[\|\s]+/);$h{$F[0]}=$F[1]}}if(/(>.+)_(\d+)/){print $1,"_",defined($h{$2})?$h{$2}:$2;}else{print}' -- -m=merged.dmp > $DB/kaiju_db_$DB.faa
-	rm $DB/kaiju_db_tmp.faa
 	echo Creating Borrows-Wheeler transform
 	mkbwt -n $threadsBWT -e $exponentSA -a ACDEFGHIKLMNPQRSTVWY -o $DB/kaiju_db_$DB $DB/kaiju_db_$DB.faa
 	echo Creating FM-Index
