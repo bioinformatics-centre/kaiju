@@ -194,11 +194,12 @@ kaiju -z 25 -t nodes.dmp -f kaiju_db.fmi -i inputfile.fastq -o kaiju.out
 ```
 
 ### Run modes
-The default run mode is **MEM**, which only considers exact matches.
-For using the **Greedy** mode, which allows mismatches, set the mode via the option `-a` and the number
-of allowed substitutions using option `-e`:
+The default run mode is **Greedy** with three allowed mismatches.
+The number of allowed mismatches can be changed using option `-e`.
+
+The run mode can be changed to **MEM** using option `-a`:
 ```
-kaiju -t nodes.dmp -f kaiju_db.fmi -i inputfile.fastq -a greedy -e 5
+kaiju -t nodes.dmp -f kaiju_db.fmi -i inputfile.fastq -a mem
 ```
 The cutoffs for minimum required match length and match score can be changed using the options `-m` (default: 11) and `-s` (default: 65).
 
