@@ -234,9 +234,9 @@ then
 	if [ $DL -eq 1 ]
 	then
 		echo Downloading file nr.gz
-		wget -N -nv $wgetProgress ftp://ftp.ncbi.nih.gov/blast/db/FASTA/nr.gz
+		wget -c -N -nv $wgetProgress ftp://ftp.ncbi.nih.gov/blast/db/FASTA/nr.gz
 		echo Downloading file prot.accession2taxid.gz
-		wget -N -nv $wgetProgress ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/prot.accession2taxid.gz
+		wget -c -N -nv $wgetProgress ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/prot.accession2taxid.gz
 	fi
 	[ -r nr.gz ] || { echo Missing file nr.gz; exit 1; }
 	[ -r prot.accession2taxid.gz ] || { echo Missing file prot.accession2taxid.gz; exit 1; }
