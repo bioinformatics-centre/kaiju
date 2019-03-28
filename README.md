@@ -18,7 +18,7 @@ See the release notes for all releases [here](http://kaiju.binf.ku.dk/index.html
 
 ### License
 
-Copyright (c) 2015-2018 Peter Menzel and Anders Krogh
+Copyright (c) 2015-2019 Peter Menzel and Anders Krogh
 
 Kaiju is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -59,8 +59,8 @@ the reference protein database.  You can either create a local index based on
 the currently available data from GenBank, or download one of the indexes used
 by the [Kaiju web server](http://kaiju.binf.ku.dk/).
 
-For creating a local index, the program `makeDB.sh` in the `bin/` directory
-will download the reference genomes and taxonomy files from the NCBI FTP server,
+For creating a local index, the program `kaiju-makedb` in the `bin/` directory
+will download a source database and the taxonomy files from the NCBI FTP server,
 convert them into a protein database and construct Kaiju's index (the
 Burrows-Wheeler transform and the FM-index) in one go.
 
@@ -69,77 +69,33 @@ and database construction, for example:
 ```
 mkdir kaijudb
 cd kaijudb
-makeDB.sh [-r|-p|-n|-e]
+kaiju-makedb -s <DB>
 ```
 The downloaded files are several GB in size. Therefore, the program should be
-run in a directory having at least 80 GB of free space.
+run in a directory with at least 100 GB of free space.
 
-There are several options for creating the reference database with protein
-sequences from different source databases:
+The source database is selected using option `-s` for `kaiju-makedb`.
 
-### 1. Complete Reference Genomes from NCBI RefSeq
-`makeDB.sh -r`  
-Download only completely assembled and annotated reference
-genomes of Archaea and Bacteria from the NCBI RefSeq database.
+| Option | Description | Sequences<sup>\*</sup> | required RAM<sup>\*</sup> |
+| --- | --- | --- | --- |
+| `-s refseq` | Completely assembled and annotated reference genomes of Archaea, Bacteria, and viruses from the NCBI RefSeq database. | 46.7m | 31.5 GB |
+| `-s progenomes` |  Representative set of genomes from the [proGenomes](http://progenomes.embl.de/) database and viruses from the NCBI RefSeq database. | 19.7m | 14.7 GB |
+| `-s viruses` |  Only viruses from the NCBI RefSeq database. | 0.32m | 0.26 GB |
+| `-s nr` | Subset of NCBI BLAST _nr_ database containing all proteins belonging to Archaea, Bacteria and Viruses. | 154m | 82 GB |
+| `-s nr_euk` | As option `-s nr` and additionally include proteins from fungi and microbial eukaryotes, see taxon list in `bin/taxonlist.tsv`. | 167m | 92 GB |
+| `-s mar` | Protein sequences from all [Mar databases](https://mmp.sfb.uit.no/). Subsets can be chosen by `mar_ref`, `mar_db`, or `mar_mag`. | 32.6m |  21 GB |
 
-Additionally, viral genomes from NCBI RefSeq can be added by using the option `-v`.
-
-As of February 2018, this database contains ca. 33M protein sequences, which
-amounts to a requirement of 21GB RAM for running Kaiju.
-
-### 2. Representative genomes from proGenomes
-`makeDB.sh -p`  
-Download the protein sequences belonging to the representative set of genomes
-from the [proGenomes](http://progenomes.embl.de/) database.
-This dataset generally covers a broader phylogenetic range compared to the RefSeq dataset,
-and is therefore recommended, especially for environmental samples.
-
-Additionally, viral genomes from NCBI RefSeq can be added by using the option `-v`.
-
-As of February 2018, this database contains ca. 19M protein sequences, which
-amounts to a requirement of 13GB RAM for running Kaiju.
-
-### 3. Virus Genomes from NCBI RefSeq
-`makeDB.sh -v`  
-This will only download viral genomes from NCBI RefSeq.
-
-As of February 2018, this database contains ca. 310k protein sequences, which
-amounts to a requirement of 260MB RAM for running Kaiju.
-
-### 4. Non-redundant protein database _nr_
-`makeDB.sh -n`  
-Download the _nr_ database that is used by NCBI BLAST and extract proteins belonging
-to Archaea, Bacteria and Viruses.
-
-`makeDB.sh -e`  
-Download the _nr_ database as above, but additionally include proteins from fungi and microbial eukaryotes.
-The complete taxon list for this option is in the file `bin/taxonlist.tsv`.
-
-Because the _nr_ database contains more proteins, more RAM is needed for index
-construction and for running Kaiju.  As of February 2018, the _nr_ database with
-option `-e` contains ca. 124M protein sequences, which amounts to a requirement
-of 68GB RAM for running Kaiju.
-
-### 5. Mar databases from the Marine Metagenomics Portal
-`makeDB.sh -m`  
-Download the protein sequences belonging to the genomes
-from the [MarRef and MarDB databases](https://mmp.sfb.uit.no/).
-This dataset specifically covers marine metagenomics.
+\* as of March 2019.
 
 ### Index construction
 
-When using option `-r`, `makeDB.sh` downloads and extracts 5 genomes from the NCBI FTP
-server in parallel. This number can be changed by modifying the appropriate
-variables at the beginning of the script.
-
-By default, `makeDB.sh` uses 5 parallel threads for constructing the index, which can
+By default, `kaiju-makedb` uses 5 parallel threads for constructing the index, which can
 be changed by using the option `-t`. Note that a higher number of threads
 increases the memory usage during index construction, while reducing the number
 of threads decreases memory usage.
 
-After `makeDB.sh` is finished, only the files `kaiju_db.fmi` (or `kaiju_db_nr.fmi` / `kaiju_db_nr_euk.fmi`), `nodes.dmp`,
-and `names.dmp` are needed to run Kaiju. The remaining files and the `genomes/`
-directory containing the downloaded genomes can be deleted.
+After `kaiju-makedb` is finished, only the files `kaiju_db_*.fmi`, `nodes.dmp`,
+and `names.dmp` are needed to run Kaiju.
 
 ### Custom database
 It is also possible to make a custom database from a collection of protein sequences.
@@ -169,9 +125,10 @@ characters need to be removed.
 ## Running Kaiju
 Kaiju requires at least three arguments:
 ```
-kaiju -t nodes.dmp -f kaiju_db.fmi -i inputfile.fastq
+kaiju -t nodes.dmp -f kaiju_db_*.fmi -i inputfile.fastq
 ```
-If you chose options `-n` or `-e` in `makeDB.sh`, then use `-f kaiju_db_nr.fmi` or `-f kaiju_db_nr_euk.fmi`.
+Replace `kaiju_db_*.fmi` by the actually `.fmi` file depending on the selected database.
+For example, when running `kaiju-makedb -s refseq`, the corresponding index file is `refseq/kaiju_db_refseq.fmi`.
 
 For paired-end reads use `-i firstfile.fastq` and `-j secondfile.fastq`.
 
