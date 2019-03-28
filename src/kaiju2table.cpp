@@ -1,18 +1,6 @@
 /* This file is part of Kaiju, Copyright 2015-2019 Peter Menzel and Anders Krogh,
  * Kaiju is licensed under the GPLv3, see the file LICENSE. */
 
-
-/*
- *
-
-file percent count taxid taxonname / path / columns with user defined fields
-
-
-
- *
- * */
-
-
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -274,7 +262,7 @@ int main(int argc, char** argv) {
 			if(node2rank.count(id)==0) { std::cerr << "Error: No rank specified for taxonid " << id << std::endl; continue; }
 			if(rank == node2rank[id]) {
 				if((int)count >= min_read_count) {
-					float percent = (float)it.second/(float)totalreads*100;
+					float percent = (float)count/(float)totalreads*100;
 					if(percent >= min_percent)
 						sorted_count2ids.emplace(count,id);
 					else
@@ -286,10 +274,12 @@ int main(int argc, char** argv) {
 			}
 		}
 
-		if(filter_unclassified)
+		if(filter_unclassified) {
 			assert(totalreads >= reads_at_rank_sum);
-		else
+		}
+		else {
 			assert(totalreads >= unclassified + reads_at_rank_sum);
+		}
 
 		uint64_t above = (filter_unclassified) ? totalreads - reads_at_rank_sum  : totalreads - unclassified - reads_at_rank_sum;
 		above -= total_virus_reads;
@@ -354,9 +344,13 @@ int main(int argc, char** argv) {
 		}
 
 		if(!expand_viruses) {
-			fprintf(report_file,"%s\t%.6f\t%" PRIu64 "\t%" PRIu64 "\tViruses\n", filename.c_str(), (float)total_virus_reads/(float)totalreads*100.0, total_virus_reads, taxonid_viruses);
+			float percent_viruses = total_virus_reads > 0 ? (float)total_virus_reads/(float)totalreads*100.0 : 0.0;
+			fprintf(report_file,"%s\t%.6f\t%" PRIu64 "\t%" PRIu64 "\tViruses\n", filename.c_str(), percent_viruses, total_virus_reads, taxonid_viruses);
 		}
-		fprintf(report_file,"%s\t%.6f\t%" PRIu64 "\t0\tcannot be assigned to a (non-viral) %s\n", filename.c_str(), (float)above/(float)totalreads*100.0, above, rank.c_str());
+		{
+			float percent_above = above > 0 ? (float)above/(float)totalreads*100.0 : 0.0;
+			fprintf(report_file,"%s\t%.6f\t%" PRIu64 "\t0\tcannot be assigned to a (non-viral) %s\n", filename.c_str(), percent_above, above, rank.c_str());
+		}
 		if(min_read_count > 0) {
 			fprintf(report_file,"%s\t%.6f\t%" PRIu64 "\t0\tbelong to a (non-viral) %s having less than %i reads\n",filename.c_str(), (float)reads_at_rank_below_count_threshold/(float)totalreads*100.0, reads_at_rank_below_count_threshold, rank.c_str(), min_read_count);
 		}
