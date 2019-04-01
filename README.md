@@ -189,7 +189,7 @@ Using the option `-v` enables the verbose output, which will print additional co
 7. matching fragment sequence(s)
 
 NB: Since the _nr_ database aggregates multiple genes of identical sequences, only the first accession number
-for each sequence in the database is kept in Kaiju's database and therefore also in the output file.
+for each sequence in the __nr__ source file is kept in Kaiju's database and therefore also in the output file.
 
 The number of taxon identifiers (column 5) and accession numbers (column 5) is limited to 20 entries each in
 order to reduce large outputs produced by highly abundant protein sequences in _nr_, e.g. from HIV.
@@ -231,27 +231,33 @@ ktImportText -o kaiju.out.html kaiju.out.krona
 ```
 
 ### Creating classification summary
-The program `kaijuReport` can convert Kaiju's tab-separated output file into a
-summary report file for a given taxonomic rank, e.g., genus. It requires the
-`nodes.dmp` and `names.dmp` files for mapping the taxon identifiers from
-Kaiju's output to the corresponding taxon names.
+The program `kaiju2table` converts Kaiju's output file(s) into a
+summary table for a given taxonomic rank, e.g., genus. It requires the
+`nodes.dmp` and `names.dmp` files for mapping the taxon identifiers from the third column in the
+Kaiju output to the corresponding taxon names.
+
+Basic usage:
 ```
-kaijuReport -t nodes.dmp -n names.dmp -i kaiju.out -r genus -o kaiju.out.summary
+kaiju2table -t nodes.dmp -n names.dmp -r genus -o kaiju_summary.tsv kaiju.out [kaiju2.out, ...]
 ```
 The program can also filter out taxa with low abundances, e.g. for only showing genera that
 comprise at least 1 percent of the total reads:
 ```
-kaijuReport -t nodes.dmp -n names.dmp -i kaiju.out -r genus -m 1 -o kaiju.out.summary
+kaiju2table -t nodes.dmp -n names.dmp -r genus -m 1.0 -o kaiju_summary.tsv kaiju.out [kaiju2.out, ...]
 ```
-or for showing genera comprising at least 1 percent of all classified reads:
-```
-kaijuReport -t nodes.dmp -n names.dmp -i kaiju.out -r genus -m 1 -u -o kaiju.out.summary
-```
+Similarly, option `-c` can be used to specify the threshold by absolute read count.
+
+Option `-u` disables counting unclassified reads towards the total number of reads when calculating percentages.
+
 Option `-p` will print the full taxon path instead of just the taxon name.
 
-### Adding taxa names
+Instead of printing the full taxon path, option `-l` can be used to specify the
+ranks to be printed by supplying a comma-separated list, for example:
+`-l superkingdom,phylum,class,order,family,genus,species`.
+
+### Adding taxa names to output file
 The program `addTaxonNames` appends the name that corresponds to the taxon id in
-Kaiju's output file as a last column to the output.
+Kaiju's output file as an additional last column to the output.
 ```
 addTaxonNames -t nodes.dmp -n names.dmp -i kaiju.out -o kaiju.names.out
 ```
@@ -286,7 +292,7 @@ first input file (specified by `-i`).  This behavior can be changed using the
 - `1`: use taxon identifier from the first input file (default)
 - `2`: use taxon identifier from the second input file
 - `lca`: use the least common ancestor of the taxon identifiers from both files.
-- `lowest`: use the lowest ranking of the two taxon identifiers iff they are within the same lineage. Otherwise use the LCA.
+- `lowest`: use the lowest ranking of the two taxon identifiers if they are within the same lineage. Otherwise use the LCA.
 
 Options `lca` and `lowest` require the path to the file `nodes.dmp` by using the `-t` option.
 
