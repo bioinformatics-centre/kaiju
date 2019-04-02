@@ -295,12 +295,10 @@ else
 					echo Downloading virus genomes from RefSeq...
 					wget -N -nv $wgetProgress -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.1.genomic.gbff.gz
 					wget -N -nv $wgetProgress -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.2.genomic.gbff.gz
-					wget -N -nv $wgetProgress -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.3.genomic.gbff.gz
 				fi
 			fi
 			if [ $db_viruses -eq 1 ]; then if [ ! -r genomes/viral.1.genomic.gbff.gz ]; then echo Missing file viral.1.genomic.gbff.gz; exit 1; fi; fi
 			if [ $db_viruses -eq 1 ]; then if [ ! -r genomes/viral.2.genomic.gbff.gz ]; then echo Missing file viral.2.genomic.gbff.gz; exit 1; fi; fi
-			if [ $db_viruses -eq 1 ]; then if [ ! -r genomes/viral.3.genomic.gbff.gz ]; then echo Missing file viral.3.genomic.gbff.gz; exit 1; fi; fi
 			echo Extracting protein sequences from downloaded files...
 			find ./genomes -name "*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX gbk2faa.pl XX XX.faa
 		elif [ $db_progenomes -eq 1 ]
@@ -314,12 +312,10 @@ else
 					echo Downloading virus genomes from RefSeq...
 					wget -N -nv $wgetProgress -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.1.genomic.gbff.gz
 					wget -N -nv $wgetProgress -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.2.genomic.gbff.gz
-					wget -N -nv $wgetProgress -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.3.genomic.gbff.gz
 				fi
 			fi
 			if [ $db_viruses -eq 1 ]; then if [ ! -r genomes/viral.1.genomic.gbff.gz ]; then echo Missing file viral.1.genomic.gbff.gz; exit 1; fi; fi
 			if [ $db_viruses -eq 1 ]; then if [ ! -r genomes/viral.2.genomic.gbff.gz ]; then echo Missing file viral.2.genomic.gbff.gz; exit 1; fi; fi
-			if [ $db_viruses -eq 1 ]; then if [ ! -r genomes/viral.3.genomic.gbff.gz ]; then echo Missing file viral.3.genomic.gbff.gz; exit 1; fi; fi
 			echo Extracting protein sequences from downloaded files...
 			gunzip -c genomes/representatives.proteins.fasta.gz | perl -lne 'if(/>(\d+)\.(\S+)/){print ">",$2,"_",$1}else{y/BZ/DE/;s/[^ARNDCQEGHILKMFPSTWYV]//gi;print if length}' > genomes/representatives.proteins.fasta.gz.faa
 			find ./genomes -name "viral.*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX gbk2faa.pl XX XX.faa
@@ -330,11 +326,9 @@ else
 				echo Downloading virus genomes from RefSeq...
 				wget -N -nv $wgetProgress -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.1.genomic.gbff.gz
 				wget -N -nv $wgetProgress -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.2.genomic.gbff.gz
-				wget -N -nv $wgetProgress -P genomes ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.3.genomic.gbff.gz
 			fi
 			if [ ! -r genomes/viral.1.genomic.gbff.gz ]; then echo Missing file viral.1.genomic.gbff.gz; exit 1; fi;
 			if [ ! -r genomes/viral.2.genomic.gbff.gz ]; then echo Missing file viral.2.genomic.gbff.gz; exit 1; fi;
-			if [ ! -r genomes/viral.3.genomic.gbff.gz ]; then echo Missing file viral.3.genomic.gbff.gz; exit 1; fi;
 			echo Extracting protein sequences from downloaded files...
 			find ./genomes -name "viral.*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX gbk2faa.pl XX XX.faa
 		elif [ $db_plasmids -eq 1 ]
