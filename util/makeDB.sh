@@ -163,14 +163,14 @@ wgetProgress=""
 wget --help | grep -q -- --show-progress && wgetProgress='--show-progress'
 
 #check that all programs from Kaiju are usable
-command -v gbk2faa.pl >/dev/null 2>/dev/null || { echo Error: gbk2faa.pl not found in $PATH; exit 1; }
+command -v kaiju-gbk2faa.pl >/dev/null 2>/dev/null || { echo Error: kaiju-gbk2faa.pl not found in $PATH; exit 1; }
 command -v mkfmi >/dev/null 2>/dev/null || { echo Error: mkfmi not found in $PATH; exit 1; }
 command -v mkbwt >/dev/null 2>/dev/null || { echo Error: mkbwt not found in $PATH; exit 1; }
 command -v convertNR >/dev/null 2>/dev/null || { echo Error: convertNR not found in $PATH; exit 1; }
 
 if [ $db_euk -eq 1 ]
 then
-	[ -r $SCRIPTDIR/taxonlist.tsv ] || { echo Error: file taxonlist.tsv not found in $SCRIPTDIR; exit 1; }
+	[ -r $SCRIPTDIR/kaiju-taxonlistEuk.tsv ] || { echo Error: file kaiju-taxonlistEuk.tsv not found in $SCRIPTDIR; exit 1; }
 fi
 
 #test AnyUncompress usable in perl
@@ -216,9 +216,9 @@ then
 	fi
 	[ -r MarRef.tsv ] || { echo Missing file MarRef.tsv; exit 1; }
 	[ -r MarDB.tsv ] || { echo Missing file MarDB.tsv; exit 1; }
-	[ -r $SCRIPTDIR/convert_mar_to_kaiju.py ] || { echo Error: file convert_mar_to_kaiju.py not found in $SCRIPTDIR; exit 1; }
+	[ -r $SCRIPTDIR/kaiju-convertMAR.py ] || { echo Error: file kaiju-convertMAR.py not found in $SCRIPTDIR; exit 1; }
 	echo Converting MMP data to kaiju format
-	python $SCRIPTDIR/convert_mar_to_kaiju.py > kaiju_db_tmp.faa
+	python $SCRIPTDIR/kaiju-convertMAR.py > kaiju_db_tmp.faa
 	echo On the fly substitution with merged.dmp
 	cat kaiju_db_tmp.faa | perl -lsne 'BEGIN{open(F,$m);while(<F>){@F=split(/[\|\s]+/);$h{$F[0]}=$F[1]}}if(/(>.+)_(\d+)/){print $1,"_",defined($h{$2})?$h{$2}:$2;}else{print}' -- -m=merged.dmp > kaiju_db.faa
 	rm kaiju_db_tmp.faa
@@ -247,7 +247,7 @@ then
 		if [ $index_only -eq 0 ]
 		then
 			echo Converting NR file to Kaiju database
-			gunzip -c nr.gz | convertNR -t nodes.dmp -g prot.accession2taxid -a -o kaiju_db_nr_euk.faa -l $SCRIPTDIR/taxonlist.tsv
+			gunzip -c nr.gz | convertNR -t nodes.dmp -g prot.accession2taxid -a -o kaiju_db_nr_euk.faa -l $SCRIPTDIR/kaiju-taxonlistEuk.tsv
 		fi
 		[ -r kaiju_db_nr_euk.faa ] || { echo Missing file kaiju_db_nr_euk.faa; exit 1; }
 		echo Creating BWT from Kaiju database
@@ -300,7 +300,7 @@ else
 			if [ $db_viruses -eq 1 ]; then if [ ! -r genomes/viral.1.genomic.gbff.gz ]; then echo Missing file viral.1.genomic.gbff.gz; exit 1; fi; fi
 			if [ $db_viruses -eq 1 ]; then if [ ! -r genomes/viral.2.genomic.gbff.gz ]; then echo Missing file viral.2.genomic.gbff.gz; exit 1; fi; fi
 			echo Extracting protein sequences from downloaded files...
-			find ./genomes -name "*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX gbk2faa.pl XX XX.faa
+			find ./genomes -name "*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX kaiju-gbk2faa.pl XX XX.faa
 		elif [ $db_progenomes -eq 1 ]
 		then
 			if [ $DL -eq 1 ]
@@ -318,7 +318,7 @@ else
 			if [ $db_viruses -eq 1 ]; then if [ ! -r genomes/viral.2.genomic.gbff.gz ]; then echo Missing file viral.2.genomic.gbff.gz; exit 1; fi; fi
 			echo Extracting protein sequences from downloaded files...
 			gunzip -c genomes/representatives.proteins.fasta.gz | perl -lne 'if(/>(\d+)\.(\S+)/){print ">",$2,"_",$1}else{y/BZ/DE/;s/[^ARNDCQEGHILKMFPSTWYV]//gi;print if length}' > genomes/representatives.proteins.fasta.gz.faa
-			find ./genomes -name "viral.*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX gbk2faa.pl XX XX.faa
+			find ./genomes -name "viral.*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX kaiju-gbk2faa.pl XX XX.faa
 		elif [ $db_viruses -eq 1 ]
 		then
 			if [ $DL -eq 1 ]
@@ -330,7 +330,7 @@ else
 			if [ ! -r genomes/viral.1.genomic.gbff.gz ]; then echo Missing file viral.1.genomic.gbff.gz; exit 1; fi;
 			if [ ! -r genomes/viral.2.genomic.gbff.gz ]; then echo Missing file viral.2.genomic.gbff.gz; exit 1; fi;
 			echo Extracting protein sequences from downloaded files...
-			find ./genomes -name "viral.*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX gbk2faa.pl XX XX.faa
+			find ./genomes -name "viral.*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX kaiju-gbk2faa.pl XX XX.faa
 		elif [ $db_plasmids -eq 1 ]
 		then
 			if [ $DL -eq 1 ]
@@ -348,7 +348,7 @@ else
 			if [ ! -r genomes/plasmid.4.genomic.gbff.gz ]; then echo Missing file plasmid.4.genomic.gbff.gz; exit 1; fi;
 			if [ ! -r genomes/plasmid.5.genomic.gbff.gz ]; then echo Missing file plasmid.5.genomic.gbff.gz; exit 1; fi;
 			echo Extracting protein sequences from downloaded files...
-			find ./genomes -name "plasmid.*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX gbk2faa.pl XX XX.faa
+			find ./genomes -name "plasmid.*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX kaiju-gbk2faa.pl XX XX.faa
 		fi
 
 		# on-the-fly substitution of taxon IDs found in merged.dmp by their updated IDs

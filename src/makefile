@@ -35,7 +35,7 @@ endif
 
 
 all: makefile kaiju kaiju2krona mergeOutputs kaijuReport kaiju2table kaijux kaijup convertNR addTaxonNames bwt/mkbwt
-	mkdir -p ../bin && cp kaiju kaijux kaijup kaiju2krona mergeOutputs kaijuReport kaiju2table convertNR addTaxonNames bwt/mkbwt bwt/mkfmi ../util/gbk2faa.pl ../util/kaiju-makedb ../util/makeDB.sh ../util/taxonlist.tsv ../util/convert_mar_to_kaiju.py ../bin/
+	mkdir -p ../bin && cp kaiju kaijux kaijup kaiju2krona mergeOutputs kaijuReport kaiju2table convertNR addTaxonNames bwt/mkbwt bwt/mkfmi ../util/kaiju-gbk2faa.pl ../util/kaiju-makedb ../util/makeDB.sh ../util/kaiju-taxonlistEuk.tsv ../util/kaiju-convertMAR.py ../bin/
 
 # use bwt/mkbwt as target for compiling everything in the bwt folder first
 bwt/mkbwt:

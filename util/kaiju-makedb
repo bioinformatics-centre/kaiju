@@ -110,7 +110,7 @@ wgetProgress=""
 wget --help | grep -q -- --show-progress && wgetProgress='--show-progress'
 
 #check that all programs from Kaiju are usable
-command -v gbk2faa.pl >/dev/null 2>/dev/null || { echo Error: gbk2faa.pl not found in $PATH; exit 1; }
+command -v kaiju-gbk2faa.pl >/dev/null 2>/dev/null || { echo Error: kaiju-gbk2faa.pl not found in $PATH; exit 1; }
 command -v mkfmi >/dev/null 2>/dev/null || { echo Error: mkfmi not found in $PATH; exit 1; }
 command -v mkbwt >/dev/null 2>/dev/null || { echo Error: mkbwt not found in $PATH; exit 1; }
 command -v convertNR >/dev/null 2>/dev/null || { echo Error: convertNR not found in $PATH; exit 1; }
@@ -124,10 +124,10 @@ then
 	python -c 'from collections import Counter' >/dev/null 2>/dev/null || { echo Error: Python version too low for using Counter; exit 1; }
 fi
 
-[ -r $SCRIPTDIR/taxonlist.tsv ] || { echo Error: File taxonlist.tsv not found in $SCRIPTDIR; exit 1; }
-[ -r $SCRIPTDIR/convert_mar_to_kaiju.py ] || { echo Error: File convert_mar_to_kaiju.py not found in $SCRIPTDIR; exit 1; }
+[ -r $SCRIPTDIR/kaiju-taxonlistEuk.tsv ] || { echo Error: File kaiju-taxonlistEuk.tsv not found in $SCRIPTDIR; exit 1; }
+[ -r $SCRIPTDIR/kaiju-convertMAR.py ] || { echo Error: File kaiju-convertMAR.py not found in $SCRIPTDIR; exit 1; }
 
-#test AnyUncompress usable in perl, used by gbk2faa.pl
+#test AnyUncompress usable in perl, used by kaiju-gbk2faa.pl
 `perl -e 'use IO::Uncompress::AnyUncompress qw(anyuncompress $AnyUncompressError);'`
 [ $? -ne 0 ] && { echo Error: Perl IO::Uncompress::AnyUncompress library not found; exit 1; }
 
@@ -177,7 +177,7 @@ then
 		[ -r $DB/MarRef.tsv ] || { echo Missing file MarRef.tsv; exit 1; }
 		[ -r $DB/MarDB.tsv ] || { echo Missing file MarDB.tsv; exit 1; }
 		echo Converting MMP data to Kaiju format
-		python $SCRIPTDIR/convert_mar_to_kaiju.py --ref $DB/MarRef.tsv --db $DB/MarDB.tsv --genomes $DB/source > $DB/kaiju_db_tmp.faa
+		python $SCRIPTDIR/kaiju-convertMAR.py --ref $DB/MarRef.tsv --db $DB/MarDB.tsv --genomes $DB/source > $DB/kaiju_db_tmp.faa
 		cat $DB/kaiju_db_tmp.faa | perl -lsne 'BEGIN{open(F,$m);while(<F>){@F=split(/[\|\s]+/);$h{$F[0]}=$F[1]}}if(/(>.+)_(\d+)/){print $1,"_",defined($h{$2})?$h{$2}:$2;}else{print}' -- -m=merged.dmp > $DB/kaiju_db_$DB.faa
 		rm $DB/kaiju_db_tmp.faa
 	fi
@@ -204,7 +204,7 @@ then
 	if [ $index_only -eq 0 ]
 	then
 		echo Converting NR file to Kaiju database
-		gunzip -c $DB/nr.gz | convertNR -t nodes.dmp -g $DB/prot.accession2taxid -a -o $DB/kaiju_db_$DB.faa -l $SCRIPTDIR/taxonlist.tsv
+		gunzip -c $DB/nr.gz | convertNR -t nodes.dmp -g $DB/prot.accession2taxid -a -o $DB/kaiju_db_$DB.faa -l $SCRIPTDIR/kaiju-taxonlistEuk.tsv
 	fi
 	[ -r $DB/kaiju_db_$DB.faa ] || { echo Missing file $DB/kaiju_db_$DB.faa; exit 1; }
 	echo Creating BWT from Kaiju database
@@ -260,7 +260,7 @@ then
 		[ -r $DB/source/viral.1.genomic.gbff.gz ] || { echo Missing file $DB/source/viral.1.genomic.gbff.gz; exit 1;}
 		[ -r $DB/source/viral.2.genomic.gbff.gz ] || { echo Missing file $DB/source/viral.2.genomic.gbff.gz; exit 1;}
 		echo Extracting protein sequences from downloaded files
-		find $DB/source -name "*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX gbk2faa.pl XX XX.faa
+		find $DB/source -name "*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX kaiju-gbk2faa.pl XX XX.faa
 		# on-the-fly substitution of taxon IDs found in merged.dmp by their updated IDs
 		find $DB/source -name '*.faa' -print0 | xargs -0 cat | perl -lsne 'BEGIN{open(F,$m);while(<F>){@F=split(/[\|\s]+/);$h{$F[0]}=$F[1]}}if(/(>.+)_(\d+)/){print $1,"_",defined($h{$2})?$h{$2}:$2;}else{print}' -- -m=merged.dmp  >$DB/kaiju_db_$DB.faa
 	fi
@@ -287,7 +287,7 @@ then
 		[ -r $DB/source/viral.1.genomic.gbff.gz ] || { echo Missing file $DB/source/viral.1.genomic.gbff.gz; exit 1;}
 		[ -r $DB/source/viral.2.genomic.gbff.gz ] || { echo Missing file $DB/source/viral.2.genomic.gbff.gz; exit 1;}
 		gunzip -c $DB/source/representatives.proteins.fasta.gz | perl -lne 'if(/>(\d+)\.(\S+)/){print ">",$2,"_",$1}else{y/BZ/DE/;s/[^ARNDCQEGHILKMFPSTWYV]//gi;print if length}' > $DB/source/representatives.proteins.faa
-		find $DB/source -name "viral.*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX gbk2faa.pl XX XX.faa
+		find $DB/source -name "viral.*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX kaiju-gbk2faa.pl XX XX.faa
 		# on-the-fly substitution of taxon IDs found in merged.dmp by their updated IDs
 		find $DB/source -name '*.faa' -print0 | xargs -0 cat | perl -lsne 'BEGIN{open(F,$m);while(<F>){@F=split(/[\|\s]+/);$h{$F[0]}=$F[1]}}if(/(>.+)_(\d+)/){print $1,"_",defined($h{$2})?$h{$2}:$2;}else{print}' -- -m=merged.dmp  > $DB/kaiju_db_$DB.faa
 	fi
@@ -312,7 +312,7 @@ then
 		[ -r $DB/source/viral.1.genomic.gbff.gz ] || { echo Missing file $DB/source/viral.1.genomic.gbff.gz; exit 1;}
 		[ -r $DB/source/viral.2.genomic.gbff.gz ] || { echo Missing file $DB/source/viral.2.genomic.gbff.gz; exit 1;}
 		echo Extracting protein sequences from downloaded files
-		find $DB/source -name "viral.*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX gbk2faa.pl XX XX.faa
+		find $DB/source -name "viral.*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX kaiju-gbk2faa.pl XX XX.faa
 		find $DB/source -name '*.faa' -print0 | xargs -0 cat | perl -lsne 'BEGIN{open(F,$m);while(<F>){@F=split(/[\|\s]+/);$h{$F[0]}=$F[1]}}if(/(>.+)_(\d+)/){print $1,"_",defined($h{$2})?$h{$2}:$2;}else{print}' -- -m=merged.dmp  > $DB/kaiju_db_$DB.faa
 	fi
 	[ -r $DB/kaiju_db_$DB.faa ] || { echo Missing file $DB/kaiju_db_$DB.faa; exit 1; }
@@ -342,7 +342,7 @@ then
 		[ -r $DB/source/plasmid.4.genomic.gbff.gz ] || { echo Missing file $DB/source/plasmid.4.genomic.gbff.gz; exit 1; }
 		[ -r $DB/source/plasmid.5.genomic.gbff.gz ] || { echo Missing file $DB/source/plasmid.5.genomic.gbff.gz; exit 1; }
 		echo Extracting protein sequences from downloaded files
-		find $DB/source -name "plasmid.*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX gbk2faa.pl XX XX.faa
+		find $DB/source -name "plasmid.*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX kaiju-gbk2faa.pl XX XX.faa
 		find $DB/source -name '*.faa' -print0 | xargs -0 cat | perl -lsne 'BEGIN{open(F,$m);while(<F>){@F=split(/[\|\s]+/);$h{$F[0]}=$F[1]}}if(/(>.+)_(\d+)/){print $1,"_",defined($h{$2})?$h{$2}:$2;}else{print}' -- -m=merged.dmp  > $DB/kaiju_db_$DB.faa
 	fi
 	[ -r $DB/kaiju_db_$DB.faa ] || { echo Missing file $DB/kaiju_db_$DB.faa; exit 1; }
