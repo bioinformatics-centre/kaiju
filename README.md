@@ -112,10 +112,10 @@ MTNPFENDNYTYKVLKNEEGQYSLWPAFLDVPIGWNVVHKEASRNDCLQYVENNWEDLNPKSNQVGKKILVGKR
 ...
 ```
 The taxon identifiers must be contained in the [NCBI taxonomy files](ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz) nodes.dmp and names.dmp.
-Then, Kaiju's index is created using the programs `mkbwt` and `mkfmi`. For example, if the database FASTA file is called `proteins.faa`, then run:
+Then, Kaiju's index is created using the programs `kaiju-mkbwt` and `kaiju-mkfmi`. For example, if the database FASTA file is called `proteins.faa`, then run:
 ```
-mkbwt -n 5 -a ACDEFGHIKLMNPQRSTVWY -o proteins proteins.faa
-mkfmi proteins
+kaiju-mkbwt -n 5 -a ACDEFGHIKLMNPQRSTVWY -o proteins proteins.faa
+kaiju-mkfmi proteins
 ```
 which creates the file proteins.fmi that is used by Kaiju.
 Note that the protein sequences may only contain the uppercase characters of the standard 20 amino acids, all other
@@ -256,10 +256,10 @@ ranks to be printed by supplying a comma-separated list, for example:
 `-l superkingdom,phylum,class,order,family,genus,species`.
 
 ### Adding taxa names to output file
-The program `addTaxonNames` appends the name that corresponds to the taxon id in
+The program `kaiju-addTaxonNames` appends the name that corresponds to the taxon id in
 Kaiju's output file as an additional last column to the output.
 ```
-addTaxonNames -t nodes.dmp -n names.dmp -i kaiju.out -o kaiju.names.out
+kaiju-addTaxonNames -t nodes.dmp -n names.dmp -i kaiju.out -o kaiju.names.out
 ```
 Option `-u` will omit unclassified reads.  
 Option `-p` will print the full taxon path instead of just the taxon name.  
@@ -267,7 +267,7 @@ Option `-r` will print the path containing only to the specified ranks. For exam
 `-r phylum,genus` will append the names of phylum and genus to the end of each line.
 
 ### Merging outputs
-The program `mergeOutputs` can merge two tab-separated output files in the
+The program `kaiju-mergeOutputs` can merge two tab-separated output files in the
 column format (see above) used by Kaiju and Kraken. Only the first three columns are used.
 
 The files need to be sorted by the read name in the second column, for example by:
@@ -277,16 +277,16 @@ sort -k2,2 kraken.out >kraken.out.sort
 ```
 Then both files can be merged:
 ```
-mergeOutputs -i kaiju.out.sort -j kraken.out.sort -o combined.out -v
+kaiju-mergeOutputs -i kaiju.out.sort -j kraken.out.sort -o combined.out -v
 ```
 The shell's process substitution can be used for sorting without creating intermediate files:
 ```
-mergeOutputs -i <(sort -k2,2 kaiju.out) -j <(sort -k2,2 kraken.out) -o combined.out -v
+kaiju-mergeOutputs -i <(sort -k2,2 kaiju.out) -j <(sort -k2,2 kraken.out) -o combined.out -v
 ```
 The output file will be in the same column format as the input files (but only
 contain the first three columns) and it will have the same length as the input
 files (which also have to be of same length).  In the case of conflicting taxon
-identifiers for a classified read in both input files, `mergeOutputs` will use the identifier found in the
+identifiers for a classified read in both input files, `kaiju-mergeOutputs` will use the identifier found in the
 first input file (specified by `-i`).  This behavior can be changed using the
 `-c` option, which can take four possible values:
 - `1`: use taxon identifier from the first input file (default)
@@ -314,10 +314,10 @@ alphabet `ACDEFGHIKLMNPQRSTVWY`.
 
 For example, building the index (the Burrows-Wheeler transform and FM-index) from the
 file with the protein sequences `proteins.faa` is done in two steps by the
-programs `mkbwt` and `mkfmi`:
+programs `kaiju-mkbwt` and `kaiju-mkfmi`:
 ```
-mkbwt -n 5 -a ACDEFGHIKLMNPQRSTVWY -o proteins proteins.faa
-mkfmi proteins
+kaiju-mkbwt -n 5 -a ACDEFGHIKLMNPQRSTVWY -o proteins proteins.faa
+kaiju-mkfmi proteins
 ```
 This will create two intermediate files `proteins.bwt` and `proteins.sa`, and finally
 the file `proteins.fmi`, which is used by Kaiju.

@@ -164,9 +164,9 @@ wget --help | grep -q -- --show-progress && wgetProgress='--show-progress'
 
 #check that all programs from Kaiju are usable
 command -v kaiju-gbk2faa.pl >/dev/null 2>/dev/null || { echo Error: kaiju-gbk2faa.pl not found in $PATH; exit 1; }
-command -v mkfmi >/dev/null 2>/dev/null || { echo Error: mkfmi not found in $PATH; exit 1; }
-command -v mkbwt >/dev/null 2>/dev/null || { echo Error: mkbwt not found in $PATH; exit 1; }
-command -v convertNR >/dev/null 2>/dev/null || { echo Error: convertNR not found in $PATH; exit 1; }
+command -v kaiju-mkfmi >/dev/null 2>/dev/null || { echo Error: kaiju-mkfmi not found in $PATH; exit 1; }
+command -v kaiju-mkbwt >/dev/null 2>/dev/null || { echo Error: kaiju-mkbwt not found in $PATH; exit 1; }
+command -v kaiju-convertNR >/dev/null 2>/dev/null || { echo Error: kaiju-convertNR not found in $PATH; exit 1; }
 
 if [ $db_euk -eq 1 ]
 then
@@ -199,17 +199,17 @@ then
 		if [ $db_mar_ref -eq 1 ]; then
 		    wget -nv -O dl_list_marref_protein.txt https://s1.sfb.uit.no/public/mar/Resources/kaiju/dl_list_marref_protein.txt
 		    cat dl_list_marref_protein.txt | xargs -P $parallelDL wget -P genomes -q || true
-	        fi
+		fi
 		echo Downloading MarDB complete genomes from the Marine Metagenomics Portal \(MMP\). This may take a while...
 		if [ $db_mar_db -eq 1 ]; then
 		    wget -nv -O dl_list_mardb_no_mags_protein.txt https://s1.sfb.uit.no/public/mar/Resources/kaiju/dl_list_mardb_no_mags_protein.txt
 		    cat dl_list_mardb_no_mags_protein.txt | xargs -P $parallelDL wget -P genomes -q || true
-                fi
+		fi
 		echo Downloading MarDBMAGS metagenomic assembled genomes from the Marine Metagenomics Portal \(MMP\). This may take a while...
 		if [ $db_mar_mags -eq 1 ]; then
 		    wget -nv -O dl_list_mardb_mags_protein.txt https://s1.sfb.uit.no/public/mar/Resources/kaiju/dl_list_mardb_mags_protein.txt
 		    cat dl_list_mardb_mags_protein.txt | xargs -P $parallelDL wget -P genomes -q || true
-                fi
+		fi
 		echo Downloading necessary metadata from MMP
 		wget -nv -O MarRef.tsv https://s1.sfb.uit.no/public/mar/MarRef/Metadatabase/Current.tsv
 		wget -nv -O MarDB.tsv https://s1.sfb.uit.no/public/mar/MarDB/Metadatabase/Current.tsv
@@ -223,8 +223,8 @@ then
 	cat kaiju_db_tmp.faa | perl -lsne 'BEGIN{open(F,$m);while(<F>){@F=split(/[\|\s]+/);$h{$F[0]}=$F[1]}}if(/(>.+)_(\d+)/){print $1,"_",defined($h{$2})?$h{$2}:$2;}else{print}' -- -m=merged.dmp > kaiju_db.faa
 	rm kaiju_db_tmp.faa
 	echo Building Kaiju reference
-	mkbwt -n $threadsBWT -e $exponentSA -a ACDEFGHIKLMNPQRSTVWY -o kaiju_db kaiju_db.faa
-	mkfmi kaiju_db
+	kaiju-mkbwt -n $threadsBWT -e $exponentSA -a ACDEFGHIKLMNPQRSTVWY -o kaiju_db kaiju_db.faa
+	kaiju-mkfmi kaiju_db
 	exit 0
 fi
 
@@ -247,13 +247,13 @@ then
 		if [ $index_only -eq 0 ]
 		then
 			echo Converting NR file to Kaiju database
-			gunzip -c nr.gz | convertNR -t nodes.dmp -g prot.accession2taxid -a -o kaiju_db_nr_euk.faa -l $SCRIPTDIR/kaiju-taxonlistEuk.tsv
+			gunzip -c nr.gz | kaiju-convertNR -t nodes.dmp -g prot.accession2taxid -a -o kaiju_db_nr_euk.faa -l $SCRIPTDIR/kaiju-taxonlistEuk.tsv
 		fi
 		[ -r kaiju_db_nr_euk.faa ] || { echo Missing file kaiju_db_nr_euk.faa; exit 1; }
 		echo Creating BWT from Kaiju database
-		mkbwt -e $exponentSA_NR -n $threadsBWT -a ACDEFGHIKLMNPQRSTVWY -o kaiju_db_nr_euk kaiju_db_nr_euk.faa
+		kaiju-mkbwt -e $exponentSA_NR -n $threadsBWT -a ACDEFGHIKLMNPQRSTVWY -o kaiju_db_nr_euk kaiju_db_nr_euk.faa
 		echo Creating FM-index
-		mkfmi kaiju_db_nr_euk
+		kaiju-mkfmi kaiju_db_nr_euk
 		echo Done!
 		echo Kaiju only needs the files kaiju_db_nr_euk.fmi, nodes.dmp, and names.dmp.
 		echo The remaining files can be deleted.
@@ -262,13 +262,13 @@ then
 		if [ $index_only -eq 0 ]
 		then
 			echo Converting NR file to Kaiju database
-			gunzip -c nr.gz | convertNR -t nodes.dmp -g prot.accession2taxid -a -o kaiju_db_nr.faa
+			gunzip -c nr.gz | kaiju-convertNR -t nodes.dmp -g prot.accession2taxid -a -o kaiju_db_nr.faa
 		fi
 		[ -r kaiju_db_nr.faa ] || { echo Missing file kaiju_db_nr.faa; exit 1; }
 		echo Creating BWT from Kaiju database
-		mkbwt -e $exponentSA_NR -n $threadsBWT -a ACDEFGHIKLMNPQRSTVWY -o kaiju_db_nr kaiju_db_nr.faa
+		kaiju-mkbwt -e $exponentSA_NR -n $threadsBWT -a ACDEFGHIKLMNPQRSTVWY -o kaiju_db_nr kaiju_db_nr.faa
 		echo Creating FM-index
-		mkfmi kaiju_db_nr
+		kaiju-mkfmi kaiju_db_nr
 		echo Done!
 		echo Kaiju only needs the files kaiju_db_nr.fmi, nodes.dmp, and names.dmp.
 		echo The remaining files can be deleted.
@@ -359,9 +359,9 @@ else
 
 	[ -r kaiju_db.faa ] || { echo Missing file kaiju_db.faa; exit 1; }
 	echo Creating Borrows-Wheeler transform...
-	mkbwt -n $threadsBWT -e $exponentSA -a ACDEFGHIKLMNPQRSTVWY -o kaiju_db kaiju_db.faa
+	kaiju-mkbwt -n $threadsBWT -e $exponentSA -a ACDEFGHIKLMNPQRSTVWY -o kaiju_db kaiju_db.faa
 	echo Creating FM-Index...
-	mkfmi kaiju_db
+	kaiju-mkfmi kaiju_db
 	echo Done!
 	echo Kaiju only needs the files kaiju_db.fmi, nodes.dmp, and names.dmp.
 	echo The remaining files and the folder genomes/ can be deleted.

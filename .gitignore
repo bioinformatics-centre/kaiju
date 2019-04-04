@@ -6,9 +6,9 @@ kaijup
 kaiju2krona
 kaiju2table
 kaijuReport
-mergeOutputs
-convertNR
-addTaxonNames
+kaiju-mergeOutputs
+kaiju-convertNR
+kaiju-addTaxonNames
 mkbwt
 mkfmi
 bin/

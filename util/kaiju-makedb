@@ -111,9 +111,9 @@ wget --help | grep -q -- --show-progress && wgetProgress='--show-progress'
 
 #check that all programs from Kaiju are usable
 command -v kaiju-gbk2faa.pl >/dev/null 2>/dev/null || { echo Error: kaiju-gbk2faa.pl not found in $PATH; exit 1; }
-command -v mkfmi >/dev/null 2>/dev/null || { echo Error: mkfmi not found in $PATH; exit 1; }
-command -v mkbwt >/dev/null 2>/dev/null || { echo Error: mkbwt not found in $PATH; exit 1; }
-command -v convertNR >/dev/null 2>/dev/null || { echo Error: convertNR not found in $PATH; exit 1; }
+command -v kaiju-mkfmi >/dev/null 2>/dev/null || { echo Error: kaiju-mkfmi not found in $PATH; exit 1; }
+command -v kaiju-mkbwt >/dev/null 2>/dev/null || { echo Error: kaiju-mkbwt not found in $PATH; exit 1; }
+command -v kaiju-convertNR >/dev/null 2>/dev/null || { echo Error: kaiju-convertNR not found in $PATH; exit 1; }
 
 [ -z "$DB" ] && { echo Error: Use option -s to select a source database; exit 1; }
 [ "$DB" = "mar" -o "$DB" = "mar_ref" -o "$DB" = "mar_db" -o "$DB" = "mar_mag" -o "$DB" = "nr" -o "$DB" = "nr_euk" -o "$DB" = "refseq" -o "$DB" = "progenomes" -o "$DB" = "viruses" -o "$DB" = "plasmids" ] || { echo Error: $DB is not a valid source database; usage; exit 1; }
@@ -182,9 +182,9 @@ then
 		rm $DB/kaiju_db_tmp.faa
 	fi
 	echo Creating Borrows-Wheeler transform
-	mkbwt -n $threadsBWT -e $exponentSA -a ACDEFGHIKLMNPQRSTVWY -o $DB/kaiju_db_$DB $DB/kaiju_db_$DB.faa
+	kaiju-mkbwt -n $threadsBWT -e $exponentSA -a ACDEFGHIKLMNPQRSTVWY -o $DB/kaiju_db_$DB $DB/kaiju_db_$DB.faa
 	echo Creating FM-Index
-	mkfmi $DB/kaiju_db_$DB
+	kaiju-mkfmi $DB/kaiju_db_$DB
 fi
 #----------------------------------------------------------------------------------------------------------------------------------
 if [ "$DB" = "nr_euk" ]
@@ -204,13 +204,13 @@ then
 	if [ $index_only -eq 0 ]
 	then
 		echo Converting NR file to Kaiju database
-		gunzip -c $DB/nr.gz | convertNR -t nodes.dmp -g $DB/prot.accession2taxid -a -o $DB/kaiju_db_$DB.faa -l $SCRIPTDIR/kaiju-taxonlistEuk.tsv
+		gunzip -c $DB/nr.gz | kaiju-convertNR -t nodes.dmp -g $DB/prot.accession2taxid -a -o $DB/kaiju_db_$DB.faa -l $SCRIPTDIR/kaiju-taxonlistEuk.tsv
 	fi
 	[ -r $DB/kaiju_db_$DB.faa ] || { echo Missing file $DB/kaiju_db_$DB.faa; exit 1; }
 	echo Creating BWT from Kaiju database
-	mkbwt -e $exponentSA_NR -n $threadsBWT -a ACDEFGHIKLMNPQRSTVWY -o $DB/kaiju_db_$DB $DB/kaiju_db_$DB.faa
+	kaiju-mkbwt -e $exponentSA_NR -n $threadsBWT -a ACDEFGHIKLMNPQRSTVWY -o $DB/kaiju_db_$DB $DB/kaiju_db_$DB.faa
 	echo Creating FM-index
-	mkfmi $DB/kaiju_db_$DB
+	kaiju-mkfmi $DB/kaiju_db_$DB
 fi
 #----------------------------------------------------------------------------------------------------------------------------------
 if [ "$DB" = "nr" ]
@@ -230,13 +230,13 @@ then
 	if [ $index_only -eq 0 ]
 	then
 		echo Converting NR file to Kaiju database
-		gunzip -c $DB/nr.gz | convertNR -t nodes.dmp -g $DB/prot.accession2taxid -a -o $DB/kaiju_db_$DB.faa
+		gunzip -c $DB/nr.gz | kaiju-convertNR -t nodes.dmp -g $DB/prot.accession2taxid -a -o $DB/kaiju_db_$DB.faa
 	fi
 	[ -r $DB/kaiju_db_$DB.faa ] || { echo Missing file $DB/kaiju_db_$DB.faa; exit 1; }
 	echo Creating BWT from Kaiju database
-	mkbwt -e $exponentSA_NR -n $threadsBWT -a ACDEFGHIKLMNPQRSTVWY -o $DB/kaiju_db_$DB $DB/kaiju_db_$DB.faa
+	kaiju-mkbwt -e $exponentSA_NR -n $threadsBWT -a ACDEFGHIKLMNPQRSTVWY -o $DB/kaiju_db_$DB $DB/kaiju_db_$DB.faa
 	echo Creating FM-index
-	mkfmi $DB/kaiju_db_$DB
+	kaiju-mkfmi $DB/kaiju_db_$DB
 fi
 #----------------------------------------------------------------------------------------------------------------------------------
 if [ "$DB" = "refseq" ]
@@ -266,9 +266,9 @@ then
 	fi
 	[ -r $DB/kaiju_db_$DB.faa ] || { echo Missing file $DB/kaiju_db_$DB.faa; exit 1; }
 	echo Creating Borrows-Wheeler transform
-	mkbwt -n $threadsBWT -e $exponentSA -a ACDEFGHIKLMNPQRSTVWY -o $DB/kaiju_db_$DB $DB/kaiju_db_$DB.faa
+	kaiju-mkbwt -n $threadsBWT -e $exponentSA -a ACDEFGHIKLMNPQRSTVWY -o $DB/kaiju_db_$DB $DB/kaiju_db_$DB.faa
 	echo Creating FM-Index
-	mkfmi $DB/kaiju_db_$DB
+	kaiju-mkfmi $DB/kaiju_db_$DB
 fi
 #----------------------------------------------------------------------------------------------------------------------------------
 if [ "$DB" = "progenomes" ]
@@ -293,9 +293,9 @@ then
 	fi
 	[ -r $DB/kaiju_db_$DB.faa ] || { echo Missing file $DB/kaiju_db_$DB.faa; exit 1; }
 	echo Creating Borrows-Wheeler transform
-	mkbwt -n $threadsBWT -e $exponentSA -a ACDEFGHIKLMNPQRSTVWY -o $DB/kaiju_db_$DB $DB/kaiju_db_$DB.faa
+	kaiju-mkbwt -n $threadsBWT -e $exponentSA -a ACDEFGHIKLMNPQRSTVWY -o $DB/kaiju_db_$DB $DB/kaiju_db_$DB.faa
 	echo Creating FM-Index
-	mkfmi $DB/kaiju_db_$DB
+	kaiju-mkfmi $DB/kaiju_db_$DB
 fi
 #----------------------------------------------------------------------------------------------------------------------------------
 if [ "$DB" = "viruses" ]
@@ -317,9 +317,9 @@ then
 	fi
 	[ -r $DB/kaiju_db_$DB.faa ] || { echo Missing file $DB/kaiju_db_$DB.faa; exit 1; }
 	echo Creating Borrows-Wheeler transform
-	mkbwt -n $threadsBWT -e $exponentSA -a ACDEFGHIKLMNPQRSTVWY -o $DB/kaiju_db_$DB $DB/kaiju_db_$DB.faa
+	kaiju-mkbwt -n $threadsBWT -e $exponentSA -a ACDEFGHIKLMNPQRSTVWY -o $DB/kaiju_db_$DB $DB/kaiju_db_$DB.faa
 	echo Creating FM-Index
-	mkfmi $DB/kaiju_db_$DB
+	kaiju-mkfmi $DB/kaiju_db_$DB
 fi
 #----------------------------------------------------------------------------------------------------------------------------------
 if [ "$DB" = "plasmids" ]
@@ -347,9 +347,9 @@ then
 	fi
 	[ -r $DB/kaiju_db_$DB.faa ] || { echo Missing file $DB/kaiju_db_$DB.faa; exit 1; }
 	echo Creating Borrows-Wheeler transform
-	mkbwt -n $threadsBWT -e $exponentSA -a ACDEFGHIKLMNPQRSTVWY -o $DB/kaiju_db_$DB $DB/kaiju_db_$DB.faa
+	kaiju-mkbwt -n $threadsBWT -e $exponentSA -a ACDEFGHIKLMNPQRSTVWY -o $DB/kaiju_db_$DB $DB/kaiju_db_$DB.faa
 	echo Creating FM-Index
-	mkfmi $DB/kaiju_db_$DB
+	kaiju-mkfmi $DB/kaiju_db_$DB
 fi
 #----------------------------------------------------------------------------------------------------------------------------------
 echo Done!

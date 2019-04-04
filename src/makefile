@@ -34,8 +34,11 @@ LD_LIBS_STATIC = -Wl,--whole-archive -lpthread -lz -Wl,--no-whole-archive
 endif
 
 
-all: makefile kaiju kaiju2krona mergeOutputs kaijuReport kaiju2table kaijux kaijup convertNR addTaxonNames bwt/mkbwt
-	mkdir -p ../bin && cp kaiju kaijux kaijup kaiju2krona mergeOutputs kaijuReport kaiju2table convertNR addTaxonNames bwt/mkbwt bwt/mkfmi ../util/kaiju-gbk2faa.pl ../util/kaiju-makedb ../util/makeDB.sh ../util/kaiju-taxonlistEuk.tsv ../util/kaiju-convertMAR.py ../bin/
+all: makefile kaiju kaiju2krona kaiju-mergeOutputs kaijuReport kaiju2table kaijux kaijup kaiju-convertNR kaiju-addTaxonNames bwt/mkbwt
+	mkdir -p ../bin
+	cp kaiju kaijux kaijup kaiju2krona kaiju-mergeOutputs kaijuReport kaiju2table kaiju-convertNR kaiju-addTaxonNames ../util/kaiju-gbk2faa.pl ../util/kaiju-makedb ../util/makeDB.sh ../util/kaiju-taxonlistEuk.tsv ../util/kaiju-convertMAR.py ../bin/
+	cp bwt/mkbwt ../bin/kaiju-mkbwt
+	cp bwt/mkfmi ../bin/kaiju-mkfmi
 
 # use bwt/mkbwt as target for compiling everything in the bwt folder first
 bwt/mkbwt:
@@ -53,8 +56,8 @@ kaijup: makefile bwt/mkbwt kaijup.o ReadItem.o Config.o ConsumerThread.o Consume
 kaiju2krona: makefile bwt/mkbwt kaiju2krona.o util.o
 	$(CXX) $(LDFLAGS) -o kaiju2krona kaiju2krona.o util.o $(BWTOBJS)
 
-mergeOutputs: makefile bwt/mkbwt mergeOutputs.o util.o
-	$(CXX) $(LDFLAGS) -o mergeOutputs mergeOutputs.o util.o $(BWTOBJS)
+kaiju-mergeOutputs: makefile bwt/mkbwt kaiju-mergeOutputs.o util.o
+	$(CXX) $(LDFLAGS) -o kaiju-mergeOutputs kaiju-mergeOutputs.o util.o $(BWTOBJS)
 
 kaijuReport: makefile bwt/mkbwt kaijuReport.o util.o
 	$(CXX) $(LDFLAGS) -o kaijuReport kaijuReport.o util.o $(BWTOBJS)
@@ -62,11 +65,11 @@ kaijuReport: makefile bwt/mkbwt kaijuReport.o util.o
 kaiju2table: makefile bwt/mkbwt kaiju2table.o util.o
 	$(CXX) $(LDFLAGS) -o kaiju2table kaiju2table.o util.o $(BWTOBJS)
 
-addTaxonNames: makefile bwt/mkbwt addTaxonNames.o util.o
-	$(CXX) $(LDFLAGS) -o addTaxonNames addTaxonNames.o util.o $(BWTOBJS)
+kaiju-addTaxonNames: makefile bwt/mkbwt kaiju-addTaxonNames.o util.o
+	$(CXX) $(LDFLAGS) -o kaiju-addTaxonNames kaiju-addTaxonNames.o util.o $(BWTOBJS)
 
-convertNR: makefile bwt/mkbwt Config.o convertNR.o util.o $(BLASTOBJS)
-	$(CXX) $(LDFLAGS) -o convertNR convertNR.o Config.o util.o $(BWTOBJS) $(BLASTOBJS)
+kaiju-convertNR: makefile bwt/mkbwt Config.o kaiju-convertNR.o util.o $(BLASTOBJS)
+	$(CXX) $(LDFLAGS) -o kaiju-convertNR kaiju-convertNR.o Config.o util.o $(BWTOBJS) $(BLASTOBJS)
 
 
 %.o : %.c
@@ -76,7 +79,7 @@ convertNR: makefile bwt/mkbwt Config.o convertNR.o util.o $(BLASTOBJS)
 
 
 clean:
-	rm -f -v bwt/mkbwt bwt/mkfmi kaiju kaijux kaijup kaiju2krona mergeOutputs kaijuReport convertNR addTaxonNames ../bin/*
+	rm -f -v bwt/mkbwt bwt/mkfmi kaiju kaijux kaijup kaiju2krona kaiju2table kaiju-mergeOutputs kaijuReport kaiju-convertNR kaiju-addTaxonNames ../bin/*
 	find . -name "*.o" -delete
 	$(MAKE) -C bwt/ clean
 
