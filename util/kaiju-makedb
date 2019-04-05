@@ -34,9 +34,11 @@ usage() {
 	echo  " mar_ref, mar_db, mar_mag: individual marine reference databases or assembled genomes from the Marine Metagenomics Portal"
 	echo  " mar: combination of all three MAR databases"
 	echo
-	echo  " viruses: Viral proteins from NCBI RefSeq virus genomes."
+	echo  " viruses: Viral genomes from NCBI RefSeqs."
 	echo
 	echo  " plasmids: Plasmid genomes from NCBI RefSeq"
+	echo
+	echo  " rvdb: Viral proteins from RVDB-prot"
 	echo
 	echo "For example: $0 -s nr will create the database file kaijud_db_nr.fmi"
 	echo
@@ -103,6 +105,7 @@ command -v wget >/dev/null 2>/dev/null || { echo Error: wget not found; exit 1; 
 command -v xargs >/dev/null 2>/dev/null || { echo Error: xargs not found; exit 1; }
 command -v tar >/dev/null 2>/dev/null || { echo Error: tar not found; exit 1; }
 command -v gunzip >/dev/null 2>/dev/null || { echo Error: gunzip not found; exit 1; }
+command -v bunzip2 >/dev/null 2>/dev/null || { echo Error: bunzip2 not found; exit 1; }
 command -v perl >/dev/null 2>/dev/null || { echo Error: perl not found; exit 1; }
 
 #test if option --show-progress is available for wget, then use it when downloading
@@ -116,7 +119,7 @@ command -v kaiju-mkbwt >/dev/null 2>/dev/null || { echo Error: kaiju-mkbwt not f
 command -v kaiju-convertNR >/dev/null 2>/dev/null || { echo Error: kaiju-convertNR not found in $PATH; exit 1; }
 
 [ -z "$DB" ] && { echo Error: Use option -s to select a source database; exit 1; }
-[ "$DB" = "mar" -o "$DB" = "mar_ref" -o "$DB" = "mar_db" -o "$DB" = "mar_mag" -o "$DB" = "nr" -o "$DB" = "nr_euk" -o "$DB" = "refseq" -o "$DB" = "progenomes" -o "$DB" = "viruses" -o "$DB" = "plasmids" ] || { echo Error: $DB is not a valid source database; usage; exit 1; }
+[ "$DB" = "mar" -o "$DB" = "mar_ref" -o "$DB" = "mar_db" -o "$DB" = "mar_mag" -o "$DB" = "nr" -o "$DB" = "nr_euk" -o "$DB" = "refseq" -o "$DB" = "progenomes" -o "$DB" = "viruses" -o "$DB" = "plasmids" -o "$DB" = "rvdb" ] || { echo Error: $DB is not a valid source database; usage; exit 1; }
 
 if [ "$DB" = "mar" -o "$DB" = "mar_ref" -o "$DB" = "mar_db" -o "$DB" = "mar_mag" ]
 then
@@ -344,6 +347,32 @@ then
 		echo Extracting protein sequences from downloaded files
 		find $DB/source -name "plasmid.*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX kaiju-gbk2faa.pl XX XX.faa
 		find $DB/source -name '*.faa' -print0 | xargs -0 cat | perl -lsne 'BEGIN{open(F,$m);while(<F>){@F=split(/[\|\s]+/);$h{$F[0]}=$F[1]}}if(/(>.+)_(\d+)/){print $1,"_",defined($h{$2})?$h{$2}:$2;}else{print}' -- -m=merged.dmp  > $DB/kaiju_db_$DB.faa
+	fi
+	[ -r $DB/kaiju_db_$DB.faa ] || { echo Missing file $DB/kaiju_db_$DB.faa; exit 1; }
+	echo Creating Borrows-Wheeler transform
+	kaiju-mkbwt -n $threadsBWT -e $exponentSA -a ACDEFGHIKLMNPQRSTVWY -o $DB/kaiju_db_$DB $DB/kaiju_db_$DB.faa
+	echo Creating FM-Index
+	kaiju-mkfmi $DB/kaiju_db_$DB
+fi
+#----------------------------------------------------------------------------------------------------------------------------------
+if [ "$DB" = "rvdb" ]
+then
+	mkdir -p $DB
+	if [ $index_only -eq 0 ]
+	then
+		if [ $DL -eq 1 ]
+		then
+			echo Downloading RVDB
+			wget -c -N -nv $wgetProgress -P $DB https://rvdb-prot.pasteur.fr/files/U-RVDBv15.1-prot.fasta.bz2
+			echo Downloading prot.accession2taxid.gz
+			wget -c -N -nv $wgetProgress -P $DB ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/prot.accession2taxid.gz
+		fi
+		[ -r $DB/U-RVDBv15.1-prot.fasta.bz2 ] || { echo Missing file U-RVDBv15.1-prot.fasta.bz2; exit 1; }
+		[ -r $DB/prot.accession2taxid.gz ] || { echo Missing file prot.accession2taxid.gz; exit 1; }
+		echo Unpacking prot.accession2taxid.gz
+		gunzip -c $DB/prot.accession2taxid.gz > $DB/prot.accession2taxid
+		echo Extracting protein sequences from U-RVDBv15.1-prot.fasta.bz2
+		bunzip2 -c $DB/U-RVDBv15.1-prot.fasta.bz2 | perl -lsne 'BEGIN{open(F,$m);while(<F>){@F=split;$h{$F[1]}=$F[2]}}if(/>[^\|]+\|[^\|]+\|([^\|]+)/){print ">",$1,"_",$h{$1};}else{print}' -- -m=$DB/prot.accession2taxid > $DB/kaiju_db_$DB.faa
 	fi
 	[ -r $DB/kaiju_db_$DB.faa ] || { echo Missing file $DB/kaiju_db_$DB.faa; exit 1; }
 	echo Creating Borrows-Wheeler transform

@@ -85,6 +85,7 @@ Use the database name in the first column as argument to option `-s` in `kaiju-m
 | `nr` | Subset of NCBI BLAST _nr_ database containing all proteins belonging to Archaea, Bacteria and Viruses. | 154m | 82 GB |
 | `nr_euk` | As option `-s nr` and additionally include proteins from fungi and microbial eukaryotes, see taxon list in `bin/taxonlist.tsv`. | 167m | 92 GB |
 | `mar` | Protein sequences from all [Mar databases](https://mmp.sfb.uit.no/). Subsets can be chosen by `mar_ref`, `mar_db`, or `mar_mag`. | 32.6m |  21 GB |
+| `rvdb` | Protein sequences from [RVDB-prot](https://rvdb-prot.pasteur.fr/) | 3.9m |  2.8 GB |
 
 \* as of March 2019.
 
