@@ -231,10 +231,16 @@ int main(int argc, char** argv) {
 		}
 		in_file.close();
 
+		// traverse tree upwards and add lower level counts to ancestors
+		// except for Viruses
 		std::map<uint64_t, uint64_t> node2summarizedhits;
 		for(auto const it : node2hitcount) {
 			uint64_t id = it.first;
 			uint64_t reads = it.second;
+			if(is_ancestor(nodes,taxonid_viruses,id)) {
+				node2summarizedhits[id] = reads;
+				continue;
+			}
 			while(nodes.count(id)>0 && id != nodes.at(id)) {
 				(node2summarizedhits.count(id) > 0) ?  node2summarizedhits[id] += reads : node2summarizedhits[id]  = reads;
 				id = nodes.at(id);
@@ -384,7 +390,7 @@ void usage(char *progname) {
 	fprintf(stderr, "Optional arguments:\n");
 	fprintf(stderr, "   -m FLOAT      Number in [0, 100], denoting the minimum required percentage for the taxon (except viruses) to be reported (default: 0.0)\n");
 	fprintf(stderr, "   -c INT        Integer number > 0, denoting the minimum required number of reads for the taxon (except viruses) to be reported (default: 0)\n");
-	fprintf(stderr, "   -e            Expand viruses.\n");
+	fprintf(stderr, "   -e            Expand viruses, which are always shown as full taxon path and read counts are not summarized in higher taxonomic levels.\n");
 	fprintf(stderr, "   -u            Unclassified reads are not counted for the total reads when calculating percentages for classified reads.\n");
 	fprintf(stderr, "   -p            Print full taxon path.\n");
 	fprintf(stderr, "   -l            Print taxon path containing only ranks specified by a comma-separated list,\n");
