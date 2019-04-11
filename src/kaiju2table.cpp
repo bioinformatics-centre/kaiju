@@ -174,20 +174,7 @@ int main(int argc, char** argv) {
 	FILE * report_file = fopen(out_filename.c_str(),"w");
 	if(report_file==NULL) {  std::cerr << "Could not open file " << out_filename << " for writing" << std::endl; exit(EXIT_FAILURE); }
 	// print output file header row
-	fprintf(report_file,"file\tpercent\treads\ttaxon_id");
-	if(full_path) {
-		fprintf(report_file,"\ttaxon_path\n");
-	}
-	else if(ranks_arg.length() > 0) {
-		fprintf(report_file,"\t");
-		for(auto const & r : ranks_list) {
-			fprintf(report_file,"%s;",r.c_str());
-		}
-		fprintf(report_file,"\n");
-	}
-	else {
-		fprintf(report_file,"\t%s\n",rank.c_str());
-	}
+	fprintf(report_file,"file\tpercent\treads\ttaxon_id\ttaxon_name\n");
 
 	/* go through each input file */
 	for(auto const & filename : input_filenames) {
@@ -357,19 +344,19 @@ int main(int argc, char** argv) {
 		}
 		{
 			float percent_above = above > 0 ? (float)above/(float)totalreads*100.0 : 0.0;
-			fprintf(report_file,"%s\t%.6f\t%" PRIu64 "\t0\tcannot be assigned to a (non-viral) %s\n", filename.c_str(), percent_above, above, rank.c_str());
+			fprintf(report_file,"%s\t%.6f\t%" PRIu64 "\tNA\tcannot be assigned to a (non-viral) %s\n", filename.c_str(), percent_above, above, rank.c_str());
 		}
 		if(min_read_count > 0) {
-			fprintf(report_file,"%s\t%.6f\t%" PRIu64 "\t0\tbelong to a (non-viral) %s having less than %i reads\n",filename.c_str(), (float)reads_at_rank_below_count_threshold/(float)totalreads*100.0, reads_at_rank_below_count_threshold, rank.c_str(), min_read_count);
+			fprintf(report_file,"%s\t%.6f\t%" PRIu64 "\tNA\tbelong to a (non-viral) %s having less than %i reads\n",filename.c_str(), (float)reads_at_rank_below_count_threshold/(float)totalreads*100.0, reads_at_rank_below_count_threshold, rank.c_str(), min_read_count);
 		}
 		if(min_percent > 0.0) {
-			fprintf(report_file,"%s\t%.6f\t%" PRIu64 "\t0\tbelong to a (non-viral) %s with less than %g%% of all reads\n",filename.c_str(), (float)reads_at_rank_below_percent_threshold/(float)totalreads*100.0, reads_at_rank_below_percent_threshold, rank.c_str(), min_percent);
+			fprintf(report_file,"%s\t%.6f\t%" PRIu64 "\tNA\tbelong to a (non-viral) %s with less than %g%% of all reads\n",filename.c_str(), (float)reads_at_rank_below_percent_threshold/(float)totalreads*100.0, reads_at_rank_below_percent_threshold, rank.c_str(), min_percent);
 		}
 		if(filter_unclassified) {
-			fprintf(report_file,"%s\t%.6f\t%" PRIu64 "\t0\tunclassified\n",filename.c_str(), (float)unclassified/(float)(totalreads+unclassified)*100.0, unclassified );
+			fprintf(report_file,"%s\t%.6f\t%" PRIu64 "\tNA\tunclassified\n",filename.c_str(), (float)unclassified/(float)(totalreads+unclassified)*100.0, unclassified );
 		}
 		else {
-			fprintf(report_file,"%s\t%.6f\t%" PRIu64 "\t0\tunclassified\n",filename.c_str(), (float)unclassified/(float)(totalreads)*100.0, unclassified );
+			fprintf(report_file,"%s\t%.6f\t%" PRIu64 "\tNA\tunclassified\n",filename.c_str(), (float)unclassified/(float)(totalreads)*100.0, unclassified );
 		}
 
 	} // end for each input file
