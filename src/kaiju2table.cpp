@@ -179,8 +179,9 @@ int main(int argc, char** argv) {
 		fprintf(report_file,"\ttaxon_path\n");
 	}
 	else if(ranks_arg.length() > 0) {
+		fprintf(report_file,"\t");
 		for(auto const & r : ranks_list) {
-			fprintf(report_file,"\t%s",r.c_str());
+			fprintf(report_file,"%s;",r.c_str());
 		}
 		fprintf(report_file,"\n");
 	}
@@ -330,12 +331,13 @@ int main(int argc, char** argv) {
 				}
 
 
-				if(specified_ranks) {
+				if(specified_ranks) { // full path just as single string
+					fprintf(report_file,"\t");
 					for(auto it : ranks_list) {
-						fprintf(report_file,"\t%s", curr_rank_values[it].c_str());
+						fprintf(report_file,"%s;", curr_rank_values[it].c_str());
 					}
 				}
-				else { // full path just as single string without tabs because number of fields is unknown
+				else { // full path just as single string
 					fprintf(report_file,"\t");
 					for(auto const it : lineage) {
 						fprintf(report_file,"%s;", it.c_str());
