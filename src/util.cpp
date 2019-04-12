@@ -63,14 +63,16 @@ bool is_ancestor(const std::unordered_map<uint64_t,uint64_t> & nodes, const std:
 bool is_ancestor(const std::unordered_map<uint64_t,uint64_t> & nodes, uint64_t node1, uint64_t node2) {
 		if(nodes.count(node1)==0) { std::cerr << "Taxon ID " << node1 << " not found in taxonomy!" << std::endl; return false; }
 		if(nodes.count(node2)==0) { std::cerr << "Taxon ID " << node2 << " not found in taxonomy!" << std::endl; return false; }
+		if(node2==node1) {
+			return true;
+		}
 		/* climb up from node 2 and return true if encountering node 1 */
 		while(nodes.count(node2)>0 && node2 != nodes.at(node2)) {
+			node2 = nodes.at(node2);
 			if(node2==node1) {
 				return true;
 			}
-			node2 = nodes.at(node2);
 		}
-
 		return false;
 }
 
