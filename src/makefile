@@ -36,7 +36,7 @@ endif
 
 all: makefile kaiju kaiju2krona kaiju-mergeOutputs kaiju2table kaijux kaijup kaiju-convertNR kaiju-addTaxonNames bwt/mkbwt
 	mkdir -p ../bin
-	cp kaiju kaijux kaijup kaiju2krona kaiju-mergeOutputs kaiju2table kaiju-convertNR kaiju-addTaxonNames ../util/kaiju-gbk2faa.pl ../util/kaiju-makedb ../util/makeDB.sh ../util/kaiju-taxonlistEuk.tsv ../util/kaiju-convertMAR.py ../bin/
+	cp kaiju kaijux kaijup kaiju2krona kaiju-mergeOutputs kaiju2table kaiju-convertNR kaiju-addTaxonNames ../util/kaiju-gbk2faa.pl ../util/kaiju-makedb ../util/kaiju-taxonlistEuk.tsv ../util/kaiju-convertMAR.py ../bin/
 	cp bwt/mkbwt ../bin/kaiju-mkbwt
 	cp bwt/mkfmi ../bin/kaiju-mkfmi
 
