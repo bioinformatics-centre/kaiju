@@ -19,6 +19,10 @@ index_only=0
 
 usage() {
 	echo
+	echo kaiju-makedb
+	echo Copyright 2015-2019 Peter Menzel, Anders Krogh
+	echo License GPLv3+: GNU GPL version 3 or later, http://gnu.org/licenses/gpl.html
+	echo
 	echo This program creates a protein reference database and index for Kaiju.
 	echo
 	echo Select one of the available source databases using option -s:
@@ -40,16 +44,16 @@ usage() {
 	echo
 	echo  " rvdb: Viral proteins from RVDB-prot"
 	echo
-	echo "For example: $0 -s nr will create the database file kaijud_db_nr.fmi"
+	echo "For example: $0 -s nr will create the database file kaiju_db_nr.fmi"
 	echo
 	echo Additional options:
 	echo
-	echo  "$s" -t X  Set number of parallel threads for index construction to X \(default:5\)
-	echo  "       The more threads are used, the higher the memory requirement becomes."
+	echo  "  -t X  Set number of parallel threads for index construction to X \(default:5\)"
+	echo  "        The more threads are used, the higher the memory requirement becomes."
 	echo
-	echo  "$s" --no-download  Do not download files, but use the existing files in the folder.
+	echo  "  --no-download   Do not download files, but use the existing files in the folder."
 	echo
-	echo  "$s" --index-only  Only create BWT and FMI from kaiju_db_*.faa files, implies --no-download.
+	echo  "  --index-only    Only create BWT and FMI from kaiju_db_*.faa files, implies --no-download."
 	echo
 }
 
@@ -118,7 +122,7 @@ command -v kaiju-mkfmi >/dev/null 2>/dev/null || { echo Error: kaiju-mkfmi not f
 command -v kaiju-mkbwt >/dev/null 2>/dev/null || { echo Error: kaiju-mkbwt not found in $PATH; exit 1; }
 command -v kaiju-convertNR >/dev/null 2>/dev/null || { echo Error: kaiju-convertNR not found in $PATH; exit 1; }
 
-[ -z "$DB" ] && { echo Error: Use option -s to select a source database; exit 1; }
+[ -z "$DB" ] && { echo Error: Use option -s to select a source database; usage; exit 1; }
 [ "$DB" = "mar" -o "$DB" = "mar_ref" -o "$DB" = "mar_db" -o "$DB" = "mar_mag" -o "$DB" = "nr" -o "$DB" = "nr_euk" -o "$DB" = "refseq" -o "$DB" = "progenomes" -o "$DB" = "viruses" -o "$DB" = "plasmids" -o "$DB" = "rvdb" ] || { echo Error: $DB is not a valid source database; usage; exit 1; }
 
 if [ "$DB" = "mar" -o "$DB" = "mar_ref" -o "$DB" = "mar_db" -o "$DB" = "mar_mag" ]

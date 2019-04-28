@@ -323,9 +323,9 @@ kaiju-mkfmi proteins
 This will create two intermediate files `proteins.bwt` and `proteins.sa`, and finally
 the file `proteins.fmi`, which is used by Kaiju.
 
-The option `-n` for `mkbwt` specifies the number of parallel threads. The more
+The option `-n` for `kaiju-mkbwt` specifies the number of parallel threads. The more
 threads are used, the higher the memory consumption becomes.  The option `-e`
-for `mkbwt` specifies the exponent of the suffix array checkpoint distances and
+for `kaiju-mkbwt` specifies the exponent of the suffix array checkpoint distances and
 therefore determines the trade-off between the size of the suffix array and the
 speed of the search. The default value is 5.
 
