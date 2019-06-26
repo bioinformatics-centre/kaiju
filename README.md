@@ -75,19 +75,21 @@ kaiju-makedb -s <DB>
 ```
 The table below lists the available source databases.
 Use the database name in the first column as argument to option `-s` in `kaiju-makedb`.
+The last column denotes the required memory for running Kaiju with the
+respective database and for creating the database (in brackets).
 
-| Option | Description | # Sequences<sup>\*</sup> | required RAM<sup>\*</sup> |
+| Option | Description | Sequences<sup>\*</sup> | RAM in GB (makedb)<sup>\*</sup> |
 | --- | --- | --- | --- |
-| `refseq` | Completely assembled and annotated reference genomes of Archaea, Bacteria, and viruses from the NCBI RefSeq database. | 46.7m | 31.5 GB |
-| `progenomes` |  Representative set of genomes from the [proGenomes](http://progenomes.embl.de/) database and viruses from the NCBI RefSeq database. | 19.7m | 14.7 GB |
-| `viruses` |  Only viruses from the NCBI RefSeq database. | 0.32m | 0.26 GB |
-| `plasmids` |  Plasmid sequences from the NCBI RefSeq database. | 1.4m | 0.9 GB |
-| `nr` | Subset of NCBI BLAST _nr_ database containing all proteins belonging to Archaea, Bacteria and Viruses. | 154m | 82 GB |
-| `nr_euk` | As option `-s nr` and additionally include proteins from fungi and microbial eukaryotes, see taxon list in `bin/taxonlist.tsv`. | 167m | 92 GB |
-| `mar` | Protein sequences from all [Mar databases](https://mmp.sfb.uit.no/). Subsets can be chosen by `mar_ref`, `mar_db`, or `mar_mag`. | 32.6m |  21 GB |
-| `rvdb` | Protein sequences from [RVDB-prot](https://rvdb-prot.pasteur.fr/) | 3.9m |  2.8 GB |
+| `refseq` | Completely assembled and annotated reference genomes of Archaea, Bacteria, and viruses from the NCBI RefSeq database. | 50.9M | 35 (44) |
+| `progenomes` |  Representative set of genomes from the [proGenomes](http://progenomes.embl.de/) database and viruses from the NCBI RefSeq database. | 19.7M | 14 (17) |
+| `viruses` |  Only viruses from the NCBI RefSeq database. | 0.35M | 0.28 (0.3) |
+| `plasmids` |  Plasmid sequences from the NCBI RefSeq database. | 1.6M | 1 (1.5) |
+| `nr` | Subset of NCBI BLAST _nr_ database containing all proteins belonging to Archaea, Bacteria and Viruses. | 164M | 87 (150) |
+| `nr_euk` | As option `-s nr` and additionally include proteins from fungi and microbial eukaryotes, see taxon list in `bin/kaiju-taxonlistEuk.tsv`. | 178M | 98 (162) |
+| `mar` | Protein sequences from all [Mar databases](https://mmp.sfb.uit.no/). Subsets can be chosen by `mar_ref`, `mar_db`, or `mar_mag`. | 32.6M |  21 (27) |
+| `rvdb` | Protein sequences from [RVDB-prot](https://rvdb-prot.pasteur.fr/) | 3.9M |  2.8 (133) |
 
-\* as of March 2019.
+\* as of June 2019.
 
 By default, `kaiju-makedb` uses 5 parallel threads for constructing the index, which can
 be changed by using the option `-t`. Note that a higher number of threads
