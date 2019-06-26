@@ -89,7 +89,7 @@ respective database and for creating the database (in brackets).
 | `mar` | Protein sequences from all [Mar databases](https://mmp.sfb.uit.no/). Subsets can be chosen by `mar_ref`, `mar_db`, or `mar_mag`. | 32.6M |  21 (27) |
 | `rvdb` | Protein sequences from [RVDB-prot](https://rvdb-prot.pasteur.fr/) | 3.9M |  2.8 (133) |
 
-\* as of June 2019.
+\* as of June 2019. The databases can also be downloaded from the [web server page](http://kaiju.binf.ku.dk/server).
 
 By default, `kaiju-makedb` uses 5 parallel threads for constructing the index, which can
 be changed by using the option `-t`. Note that a higher number of threads
