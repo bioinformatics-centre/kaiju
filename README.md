@@ -84,6 +84,7 @@ respective database and for creating the database (in brackets).
 | `progenomes` |  Representative set of genomes from the [proGenomes](http://progenomes.embl.de/) database and viruses from the NCBI RefSeq database. | 19.7M | 14 (17) |
 | `viruses` |  Only viruses from the NCBI RefSeq database. | 0.35M | 0.28 (0.3) |
 | `plasmids` |  Plasmid sequences from the NCBI RefSeq database. | 1.6M | 1 (1.5) |
+| `fungi` |  [Fungi](ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/fungi) sequences from the NCBI RefSeq database. | 2.7M | 2.7 (3.6) |
 | `nr` | Subset of NCBI BLAST _nr_ database containing all proteins belonging to Archaea, Bacteria and Viruses. | 164M | 87 (150) |
 | `nr_euk` | As option `-s nr` and additionally include proteins from fungi and microbial eukaryotes, see taxon list in `bin/kaiju-taxonlistEuk.tsv`. | 178M | 98 (162) |
 | `mar` | Protein sequences from all [Mar databases](https://mmp.sfb.uit.no/). Subsets can be chosen by `mar_ref`, `mar_db`, or `mar_mag`. | 32.6M |  21 (27) |
