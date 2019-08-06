@@ -28,10 +28,12 @@ int main(int argc, char **argv) {
 
 	std::unordered_map<uint64_t,unsigned int> node2depth;
 	std::unordered_map<std::string,uint64_t> acc2taxid;
+	std::unordered_set<std::string> excluded_accessions;
 
 	std::string nodes_filename;
 	std::string list_filename;
 	std::string acc_taxid_filename;
+	std::string excluded_accession_filename;
 	std::string nr_filename;
 	std::string out_filename;
 
@@ -44,7 +46,7 @@ int main(int argc, char **argv) {
 	// --------------------- START ------------------------------------------------------------------
 	// Read command line params
 	int c;
-	while ((c = getopt(argc, argv, "ahdvrl:g:t:i:o:")) != -1) {
+	while ((c = getopt(argc, argv, "ahdvrl:g:t:i:o:e:")) != -1) {
 		switch (c)  {
 			case 'h':
 				usage(argv[0]);
@@ -54,6 +56,8 @@ int main(int argc, char **argv) {
 				verbose = true; break;
 			case 'a':
 				addAcc = true; break;
+			case 'e':
+				excluded_accession_filename = optarg; break;
 			case 'l':
 				list_filename = optarg; break;
 			case 't':
@@ -156,6 +160,18 @@ int main(int argc, char **argv) {
 	}
 	acc_taxid_file.close();
 
+	if(excluded_accession_filename.length()==0) {
+		std::ifstream list_file;
+		list_file.open(excluded_accession_filename);
+		if(!list_file.is_open()) { error("Could not open file " + excluded_accession_filename); exit(EXIT_FAILURE); }
+		std::cerr << "Reading excluded accessions from file " << excluded_accession_filename << std::endl;
+		std::string line;
+		while(getline(list_file, line)) {
+			if(line.length() == 0) { continue; }
+			excluded_accessions.emplace(line);
+		}
+	}
+
 	std::ifstream inputfile;
 	if(nr_filename.length()>0) {
 		inputfile.open(nr_filename);
@@ -180,11 +196,14 @@ int main(int argc, char **argv) {
 			std::string first_acc;
 			ids.clear();
 			if(debug) std::cerr << "processing line " << line << std::endl;
-			skip = true;
+			skip = false;
 			size_t start = 1, end = 0;
 			while((end = line.find(' ',start)) != std::string::npos) {
 				// acc is between start and end
 				std::string acc = line.substr(start, end - start);
+				if(excluded_accessions.count(acc) > 0) {
+					skip = true;
+				}
 				auto pos = acc2taxid.find(acc);
 				if(pos != acc2taxid.end() && pos->second > 0 && nodes->count(pos->second)>0) {
 					if(addAcc && first_acc.empty()) { first_acc = acc; } // use first Accession that has taxon id as first part of DB identifier
@@ -200,7 +219,12 @@ int main(int argc, char **argv) {
 					start++;
 				}
 			}
+			if(skip) {
+				if(verbose) std::cerr << "Found excluded accession nr. on line " << line << "\n";
+				continue;
+			}
 
+			skip = true;
 			if(!ids.empty()) {
 				bool keep = false;
 				uint64_t lca = (ids.size()==1) ?  *(ids.begin()) : lca_from_ids(config, node2depth, ids);
@@ -261,7 +285,8 @@ void usage(char *progname) {
 	fprintf(stderr, "Optional arguments:\n");
 	fprintf(stderr, "   -a            Prefix taxon ID in database names with the first Accession.Ver\n");
 	fprintf(stderr, "   -i FILENAME   Name of NR file. If this option is not used, then the program will read from STDIN.\n");
-	fprintf(stderr, "   -l FILENAME   Name of file containing IDs of taxa that will be extracted from the NR file. The IDs must be contained in nodes.dmp.\n");
+	fprintf(stderr, "   -l FILENAME   Name of file with taxon IDs that will be extracted from the NR file. The IDs must be contained in nodes.dmp.\n");
+	fprintf(stderr, "   -e FILENAME   Name of file with accesion numbers that will be exluded.\n");
 	exit(EXIT_FAILURE);
 }
 

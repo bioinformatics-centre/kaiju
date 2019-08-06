@@ -134,6 +134,7 @@ then
 fi
 
 [ -r $SCRIPTDIR/kaiju-taxonlistEuk.tsv ] || { echo Error: File kaiju-taxonlistEuk.tsv not found in $SCRIPTDIR; exit 1; }
+[ -r $SCRIPTDIR/kaiju-excluded-accessions.txt ] || { echo Error: File kaiju-excluded-accessions.txt not found in $SCRIPTDIR; exit 1; }
 [ -r $SCRIPTDIR/kaiju-convertMAR.py ] || { echo Error: File kaiju-convertMAR.py not found in $SCRIPTDIR; exit 1; }
 
 #test AnyUncompress usable in perl, used by kaiju-gbk2faa.pl
@@ -213,7 +214,7 @@ then
 	if [ $index_only -eq 0 ]
 	then
 		echo Converting NR file to Kaiju database
-		gunzip -c $DB/nr.gz | kaiju-convertNR -t nodes.dmp -g $DB/prot.accession2taxid -a -o $DB/kaiju_db_$DB.faa -l $SCRIPTDIR/kaiju-taxonlistEuk.tsv
+		gunzip -c $DB/nr.gz | kaiju-convertNR -t nodes.dmp -g $DB/prot.accession2taxid -e $SCRIPTDIR/kaiju-excluded-accessions.txt -a -o $DB/kaiju_db_$DB.faa -l $SCRIPTDIR/kaiju-taxonlistEuk.tsv
 	fi
 	[ -r $DB/kaiju_db_$DB.faa ] || { echo Missing file $DB/kaiju_db_$DB.faa; exit 1; }
 	echo Creating BWT from Kaiju database
@@ -239,7 +240,7 @@ then
 	if [ $index_only -eq 0 ]
 	then
 		echo Converting NR file to Kaiju database
-		gunzip -c $DB/nr.gz | kaiju-convertNR -t nodes.dmp -g $DB/prot.accession2taxid -a -o $DB/kaiju_db_$DB.faa
+		gunzip -c $DB/nr.gz | kaiju-convertNR -v -t nodes.dmp -g $DB/prot.accession2taxid -e $SCRIPTDIR/kaiju-excluded-accessions.txt -a -o $DB/kaiju_db_$DB.faa 2>log
 	fi
 	[ -r $DB/kaiju_db_$DB.faa ] || { echo Missing file $DB/kaiju_db_$DB.faa; exit 1; }
 	echo Creating BWT from Kaiju database
