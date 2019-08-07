@@ -160,7 +160,7 @@ int main(int argc, char **argv) {
 	}
 	acc_taxid_file.close();
 
-	if(excluded_accession_filename.length()==0) {
+	if(excluded_accession_filename.length()>0) {
 		std::ifstream list_file;
 		list_file.open(excluded_accession_filename);
 		if(!list_file.is_open()) { error("Could not open file " + excluded_accession_filename); exit(EXIT_FAILURE); }
@@ -283,10 +283,10 @@ void usage(char *progname) {
 	fprintf(stderr, "   -g FILENAME   Name of prot.accession2taxid file.\n");
 	fprintf(stderr, "   -o FILENAME   Name of output file.\n");
 	fprintf(stderr, "Optional arguments:\n");
-	fprintf(stderr, "   -a            Prefix taxon ID in database names with the first Accession.Ver\n");
+	fprintf(stderr, "   -a            Prefix taxon ID in database names with the first accession number per record.\n");
 	fprintf(stderr, "   -i FILENAME   Name of NR file. If this option is not used, then the program will read from STDIN.\n");
-	fprintf(stderr, "   -l FILENAME   Name of file with taxon IDs that will be extracted from the NR file. The IDs must be contained in nodes.dmp.\n");
-	fprintf(stderr, "   -e FILENAME   Name of file with accesion numbers that will be exluded.\n");
+	fprintf(stderr, "   -l FILENAME   Name of file with taxon IDs. Only records having one of these IDs as ancestor in the taxonomy will be used.\n");
+	fprintf(stderr, "   -e FILENAME   Name of file with accession numbers that will be excluded.\n");
 	exit(EXIT_FAILURE);
 }
 
