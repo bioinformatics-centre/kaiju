@@ -1,4 +1,4 @@
-/* This file is part of Kaiju, Copyright 2015,2016 Peter Menzel and Anders Krogh,
+/* This file is part of Kaiju, Copyright 2015-2019 Peter Menzel and Anders Krogh,
  * Kaiju is licensed under the GPLv3, see the file LICENSE. */
 
 #include <stdint.h>
@@ -28,17 +28,18 @@ int main(int argc, char** argv) {
 	std::string in1_filename = "";
 	std::string in2_filename = "";
 	std::string out_filename;
-	std::string conflict = "1";
+	std::string conflict = "lca";
 
 	std::ostream * out_stream;
 
 	bool verbose = false;
 	bool debug = false;
+	bool use_score = false;
 
 	// --------------------- START ------------------------------------------------------------------
 	// Read command line params
 	int c;
-	while ((c = getopt(argc, argv, "hdvc:n:t:i:j:o:")) != -1) {
+	while ((c = getopt(argc, argv, "hdvsc:n:t:i:j:o:")) != -1) {
 		switch (c)  {
 			case 'h':
 				usage(argv[0]);
@@ -46,6 +47,8 @@ int main(int argc, char** argv) {
 				verbose = true; break;
 			case 'd':
 				debug = true; break;
+			case 's':
+				use_score = true; break;
 			case 'c':
 				conflict = optarg; break;
 			case 'o':
@@ -111,17 +114,47 @@ int main(int argc, char** argv) {
 		//if(debug) std::cerr << line << std::endl;
 		// get the three values
 		char classified1 = line[0];
-		size_t index1 = line.find('\t');
-		if(index1 == std::string::npos) { std::cerr << "Error Could not parse line " << count << " in file " << in1_filename << std::endl; break; }
-		size_t index2 = line.find('\t',index1+1);
-		if(index2 == std::string::npos) { std::cerr << "Error Could not parse line " << count << " in file " << in1_filename << std::endl; break; }
-		std::string name1 = line.substr(index1+1,index2-index1-1);
-		size_t end = line.find_first_not_of("0123456789",index2+1);
-		if(end == std::string::npos) { if(index2 < line.length()-1){ end=line.length()-1;} else { std::cerr << "Error Could not parse line " << count << " in file " << in1_filename << std::endl; break; }}
-		else { end -= 1; }
-		std::string taxon_id1 = line.substr(index2+1,end-index2);
+		if(!(classified1=='C' || classified1 =='U')) { std::cerr << "Error: Line " << count << " in file "<< in1_filename << " does not start with C or U. "<< std::endl; break; }
+		size_t index_tab1 = line.find('\t');
+		if(index_tab1 == std::string::npos) { std::cerr << "Error: Could not parse line " << count << " in file " << in1_filename << std::endl; break; }
+		size_t index_tab2 = line.find('\t', index_tab1 + 1);
+		if(index_tab2 == std::string::npos) { std::cerr << "Error: Could not parse line " << count << " in file " << in1_filename << std::endl; break; }
+		std::string name1 = line.substr(index_tab1 + 1, index_tab2 - index_tab1 - 1);
+		std::string taxon_id1;
+		std::string score1s = "0";
+		if(use_score && classified1=='C') { // look for third tab
+			size_t index_tab3 = line.find('\t', index_tab2 + 1);
+			if(index_tab3 == std::string::npos) { std::cerr << "Error: No score column (4th col) found in line " << count << " in file " << in1_filename << std::endl; break; }
+			// taxon id is between tab2 and tab3
+			taxon_id1 = line.substr(index_tab2 + 1, index_tab3 - index_tab2 - 1);
+			// score follows after tab3
+			size_t end = line.find_first_not_of(".0123456789",index_tab3 + 1);
+			if(end == std::string::npos) {
+				if(index_tab3 < line.length()-1){
+					end = line.length()-1;
+				}
+				else { std::cerr << "Error Could not parse line " << count << " in file " << in1_filename << std::endl; break; }
+			}
+			else {
+				end -= 1;
+			}
+			score1s = line.substr(index_tab3 + 1, end - index_tab3);
+		}
+		else { // look to the end of the taxon id (which starts after second tab), it can either be the line end or some other columns following
+			size_t end = line.find_first_not_of("0123456789",index_tab2 + 1);
+			if(end == std::string::npos) {
+				if(index_tab2 < line.length()-1){
+					end = line.length()-1;
+				}
+				else { std::cerr << "Error Could not parse line " << count << " in file " << in1_filename << std::endl; break; }
+			}
+			else {
+				end -= 1;
+			}
+			taxon_id1 = line.substr(index_tab2 + 1, end - index_tab2);
+		}
 
-		//if(debug) std::cerr << "Name1=" << name1 <<" ID1=>" << taxon_id1 <<"<" << std::endl;
+		if(debug) std::cerr << "Name1=" << name1 <<" ID1=" << taxon_id1 << (use_score ? " Score="+score1s+"\n" : "\n");
 
 		if(!getline(in2_file,line)) {
 			//that's the border case where file1 has more entries than file2
@@ -132,76 +165,123 @@ int main(int argc, char** argv) {
 
 		// get the three values for second file
 		char classified2 = line[0];
-		index1 = line.find('\t');
-		if(index1 == std::string::npos) { std::cerr << "Error Could not parse line " << count << " in file " << in2_filename << std::endl; break; }
-		index2 = line.find('\t',index1+1);
-		if(index2 == std::string::npos) { std::cerr << "Error Could not parse line " << count << " in file " << in2_filename << std::endl; break; }
-		std::string name2 = line.substr(index1+1,index2-index1-1);
-		end = line.find_first_not_of("0123456789",index2+1);
-		if(end == std::string::npos) { if(index2 < line.length()-1) { end=line.length()-1;} else { std::cerr << "Error Could not parse line " << count << " in file " << in2_filename << std::endl; break; }}
-		else { end -= 1; }
-		std::string taxon_id2 = line.substr(index2+1,end-index2);
+		if(!(classified2=='C' || classified2 =='U')) { std::cerr << "Error: Line " << count << " in file "<< in2_filename << " does not start with C or U. "<< std::endl; break; }
+		index_tab1 = line.find('\t');
+		if(index_tab1 == std::string::npos) { std::cerr << "Error: Could not parse line " << count << " in file " << in1_filename << std::endl; break; }
+		index_tab2 = line.find('\t', index_tab1 + 1);
+		if(index_tab2 == std::string::npos) { std::cerr << "Error: Could not parse line " << count << " in file " << in1_filename << std::endl; break; }
+		std::string name2 = line.substr(index_tab1 + 1, index_tab2 - index_tab1 - 1);
+		std::string taxon_id2;
+		std::string score2s = "0";
+		if(use_score and classified2=='C') { // look for third tab
+			size_t index_tab3 = line.find('\t', index_tab2 + 1);
+			if(index_tab3 == std::string::npos) { std::cerr << "Error: No score column (4th col) found in line " << count << " in file " << in2_filename << std::endl; break; }
+			// taxon id is between tab2 and tab3
+			taxon_id2 = line.substr(index_tab2 + 1, index_tab3 - index_tab2 - 1);
+			// score follows after tab3
+			size_t end = line.find_first_not_of(".0123456789",index_tab3 + 1);
+			if(end == std::string::npos) {
+				if(index_tab3 < line.length()-1){
+					end = line.length()-1;
+				}
+				else { std::cerr << "Error Could not parse line " << count << " in file " << in1_filename << std::endl; break; }
+			}
+			else {
+				end -= 1;
+			}
+			score2s = line.substr(index_tab3 + 1, end - index_tab3);
+		}
+		else { // look to the end of the taxon id (which starts after second tab), it can either be the line end or some other columns following
+			size_t end = line.find_first_not_of("0123456789",index_tab2 + 1);
+			if(end == std::string::npos) {
+				if(index_tab2 < line.length()-1){
+					end = line.length()-1;
+				}
+				else { std::cerr << "Error Could not parse line " << count << " in file " << in1_filename << std::endl; break; }
+			}
+			else {
+				end -= 1;
+			}
+			taxon_id2 = line.substr(index_tab2 + 1, end - index_tab2);
+		}
 
-		//if(debug) std::cerr << "Name2=" << name1 <<" ID2=>" << taxon_id2 << "<"<< std::endl;
+		if(debug) std::cerr << "Name2=" << name2 <<" ID2=" << taxon_id2 << (use_score ? " Score="+score2s+"\n" : "\n");
 
 		if(name1 != name2) {
 			std::cerr << "Error: Read names are not identical between the two input files on line " << count << std::endl;
 			break;
 		}
-		if(!(classified1=='C' || classified1 =='U')) {
-			std::cerr << "Error: Line " << count << " in file "<< in1_filename << " does not start with C or U. "<< std::endl;
-			break;
-		}
-		if(!(classified2=='C' || classified2 =='U')) {
-			std::cerr << "Error: Line " << count << " in file "<< in2_filename << " does not start with C or U. "<< std::endl;
-			break;
-		}
 
 		if(classified1=='C' && classified2=='C')  {
 			std::string lca;
+
+			std::string output_score;
+			bool same_score = true;
+			double score1d = 0.0;
+			double score2d = 0.0;
+			// parse score strings
+			if(use_score) {
+				try { score1d = std::stod(score1s); } catch (const std::exception&) { std::cerr << "Error while parsing score on line " << count << "in file " << in1_filename << std::endl; }
+				try { score2d = std::stod(score2s); } catch (const std::exception&) { std::cerr << "Error while parsing score on line " << count << "in file " << in2_filename << std::endl; }
+				if(score1d != score2d) { same_score = false; }
+			}
+
 			if(taxon_id1==taxon_id2) {
 				lca = taxon_id1;
+				if(use_score) { output_score = (score2d > score1d) ? score2s : score1s; }
 			}
 			else { // different taxon ids in both files
-				if(conflict=="1") {
-					lca = taxon_id1;
-				}
-				else if(conflict=="2") {
-					lca = taxon_id2;
-				}
-				else if(conflict=="lowest") {
-					if(is_ancestor(nodes,taxon_id1,taxon_id2)) {
-						lca = taxon_id2;
-					}
-					else if(is_ancestor(nodes,taxon_id2,taxon_id1)) {
+				if(same_score) {
+					output_score = score1s;
+					if(conflict=="1") {
 						lca = taxon_id1;
 					}
-					else {
-						lca = calc_lca(nodes, taxon_id1, taxon_id2);
+					else if(conflict=="2") {
+						lca = taxon_id2;
 					}
-					if(lca=="0") { std::cerr << "Error while calculating lowest node of " << taxon_id1 << " and " << taxon_id2 << " in line " << count << ", setting taxon id to " << taxon_id1 << std::endl; lca=taxon_id1; }
+					else if(conflict=="lowest") {
+						if(is_ancestor(nodes,taxon_id1,taxon_id2)) {
+							lca = taxon_id2;
+						}
+						else if(is_ancestor(nodes,taxon_id2,taxon_id1)) {
+							lca = taxon_id1;
+						}
+						else {
+							lca = calc_lca(nodes, taxon_id1, taxon_id2);
+						}
+						if(lca=="0") { std::cerr << "Error while calculating lowest node of " << taxon_id1 << " and " << taxon_id2 << " in line " << count << ", setting taxon id to " << taxon_id1 << std::endl; lca=taxon_id1; }
+					}
+					else {
+						assert(conflict=="lca");
+						lca = calc_lca(nodes, taxon_id1, taxon_id2);
+						if(lca=="0") { std::cerr << "Error while calculating lowest node of " << taxon_id1 << " and " << taxon_id2 << " in line " << count << ", setting taxon id to " << taxon_id1 << std::endl; lca=taxon_id1; }
+						if(debug) std::cerr << "LCA of "<< taxon_id1 << " and " << taxon_id2 << " is "  << lca << std::endl;
+					}
 				}
-				else {
-					assert(conflict=="lca");
-					lca = calc_lca(nodes, taxon_id1, taxon_id2);
-					if(lca=="0") { std::cerr << "Error while calculating lowest node of " << taxon_id1 << " and " << taxon_id2 << " in line " << count << ", setting taxon id to " << taxon_id1 << std::endl; lca=taxon_id1; }
-					if(debug) std::cerr << "LCA of "<< taxon_id1 << " and " << taxon_id2 << " is "  << lca << std::endl;
+				else { //different scores
+					if(score1d > score2d) {
+						lca = taxon_id1;
+						output_score = score1s;
+					}
+					else {
+						assert(score1d < score2d);
+						lca = taxon_id2;
+						output_score = score2s;
+					}
 				}
 			}
 			countC1++; countC2++; countC12++; countC3++;
-			(*out_stream) << "C" << "\t" << name1 << "\t" << lca <<"\n";
+			(*out_stream) << "C" << "\t" << name1 << "\t" << lca << (use_score ? "\t"+output_score+"\n" : "\n");
 		}
 		else if(classified1=='C') {
 			assert(classified2=='U');
 			countC1++; countC1notC2++; countC3++;
-			(*out_stream) << "C" << "\t" << name1 << "\t" << taxon_id1 <<"\n";
-
+			(*out_stream) << "C" << "\t" << name1 << "\t" << taxon_id1 << (use_score ? "\t"+score1s+"\n" : "\n");
 		}
 		else if(classified2=='C') {
 			assert(classified1=='U');
 			countC2++; countC2notC1++; countC3++;
-			(*out_stream) << "C" << "\t" << name1 << "\t" << taxon_id2 <<"\n";
-
+			(*out_stream) << "C" << "\t" << name1 << "\t" << taxon_id2 << (use_score ? "\t"+score2s+"\n" : "\n");
 		}
 		else {
 			assert(classified1=='U' && classified2=='U');
@@ -244,7 +324,7 @@ int main(int argc, char** argv) {
 
 void usage(const char * progname) {
 	print_usage_header();
-	fprintf(stderr, "Usage:\n   %s -i in1.tsv -j in2.tsv [-o outfile.tsv] [-c 1|2|lca] [-t nodes.dmp] [-v] [-d]\n", progname);
+	fprintf(stderr, "Usage:\n   %s -i in1.tsv -j in2.tsv [-o outfile.tsv] [-c 1|2|lca|lowest] [-s] [-t nodes.dmp] [-v] [-d]\n", progname);
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Mandatory arguments:\n");
 	fprintf(stderr, "   -i FILENAME   Name of first input file\n");
@@ -252,8 +332,9 @@ void usage(const char * progname) {
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Optional arguments:\n");
 	fprintf(stderr, "   -o FILENAME   Name of output file.\n");
-	fprintf(stderr, "   -c STRING     Conflict resolution mode, must be 1, 2 or lca (default: 1)\n");
+	fprintf(stderr, "   -c STRING     Conflict resolution mode, must be 1, 2,  lca, or lowest (default: lca)\n");
 	fprintf(stderr, "   -t FILENAME   Name of nodes.dmp file, only required when -c is set to lca\n");
+	fprintf(stderr, "   -s            Use 4th column with classification score to give precedence to taxon with better score.\n");
 	fprintf(stderr, "   -v            Enable verbose output, which will print a summary in the end.\n");
 	fprintf(stderr, "   -d            Enable debug output.\n");
 	fprintf(stderr, "\n");
@@ -264,7 +345,7 @@ void usage(const char * progname) {
 	fprintf(stderr, "  '1' -> the taxon id from the first input file is used.\n");
 	fprintf(stderr, "  '2' -> the taxon id from the second input file is used.\n");
 	fprintf(stderr, "  'lca' -> the least common ancestor of the two taxon ids from both input files is used.\n");
-	fprintf(stderr, "  'lowest' -> the lowest ranking of the two nodes is used if they are within the same lineage. Otherwise the LCA is used.\n");
+	fprintf(stderr, "  'lowest' -> the lower rank of the two taxa is used if they are within the same lineage. Otherwise the LCA is used.\n");
 	fprintf(stderr, "When using values 'lca' or 'lowest', the path to the file nodes.dmp needs to be specified via option -t.\n");
 	exit(EXIT_FAILURE);
 }
