@@ -397,19 +397,20 @@ then
 	mkdir -p $DB
 	if [ $index_only -eq 0 ]
 	then
+		fname="U-RVDBv16.0-prot.fasta.bz2"
 		if [ $DL -eq 1 ]
 		then
 			echo Downloading RVDB
-			wget -c -N -nv $wgetProgress -P $DB https://rvdb-prot.pasteur.fr/files/U-RVDBv15.1-prot.fasta.bz2
+			wget -c -N -nv $wgetProgress -P $DB https://rvdb-prot.pasteur.fr/files/$fname
 			echo Downloading prot.accession2taxid.gz
 			wget -c -N -nv $wgetProgress -P $DB ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/prot.accession2taxid.gz
 		fi
-		[ -r $DB/U-RVDBv15.1-prot.fasta.bz2 ] || { echo Missing file U-RVDBv15.1-prot.fasta.bz2; exit 1; }
+		[ -r $DB/$fname ] || { echo Missing file $fname; exit 1; }
 		[ -r $DB/prot.accession2taxid.gz ] || { echo Missing file prot.accession2taxid.gz; exit 1; }
 		echo Unpacking prot.accession2taxid.gz
 		gunzip -c $DB/prot.accession2taxid.gz > $DB/prot.accession2taxid
-		echo Extracting protein sequences from U-RVDBv15.1-prot.fasta.bz2
-		bunzip2 -c $DB/U-RVDBv15.1-prot.fasta.bz2 | perl -lsne 'BEGIN{open(F,$m);while(<F>){@F=split;$h{$F[1]}=$F[2]}}if(/>[^\|]+\|[^\|]+\|([^\|]+)/){print ">",$1,"_",$h{$1};}else{print}' -- -m=$DB/prot.accession2taxid > $DB/kaiju_db_$DB.faa
+		echo Extracting protein sequences from $fname
+		bunzip2 -c $DB/$fname | perl -lsne 'BEGIN{open(F,$m);while(<F>){@F=split;$h{$F[1]}=$F[2]}}if(/>[^\|]+\|[^\|]+\|([^\|]+)/){print ">",$1,"_",$h{$1};}else{print}' -- -m=$DB/prot.accession2taxid > $DB/kaiju_db_$DB.faa
 	fi
 	[ -r $DB/kaiju_db_$DB.faa ] || { echo Missing file $DB/kaiju_db_$DB.faa; exit 1; }
 	echo Creating Borrows-Wheeler transform
