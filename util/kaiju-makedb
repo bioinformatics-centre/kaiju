@@ -20,7 +20,7 @@ index_only=0
 usage() {
 	echo
 	echo kaiju-makedb
-	echo Copyright 2015-2019 Peter Menzel, Anders Krogh
+	echo Copyright 2015-2020 Peter Menzel, Anders Krogh
 	echo License GPLv3+: GNU GPL version 3 or later, http://gnu.org/licenses/gpl.html
 	echo
 	echo This program creates a protein reference database and index for Kaiju.
@@ -397,7 +397,7 @@ then
 	mkdir -p $DB
 	if [ $index_only -eq 0 ]
 	then
-		fname="U-RVDBv16.0-prot.fasta.bz2"
+		fname="U-RVDBv17.0-prot.fasta.bz2"
 		if [ $DL -eq 1 ]
 		then
 			echo Downloading RVDB
