@@ -316,7 +316,7 @@ then
 		if [ $DL -eq 1 ]
 		then
 			echo Downloading proGenomes database
-			wget -N -nv $wgetProgress -P $DB/source http://progenomes.embl.de/data/repGenomes/representatives.proteins.fasta.gz
+			wget -N -nv $wgetProgress -P $DB/source http://progenomes.embl.de/data/repGenomes/freeze12.proteins.representatives.fasta.gz
 			echo Downloading virus genomes from RefSeq
 			wget -N -nv $wgetProgress -P $DB/source ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.1.genomic.gbff.gz
 			wget -N -nv $wgetProgress -P $DB/source ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.2.genomic.gbff.gz
@@ -324,7 +324,8 @@ then
 		fi
 		[ -r $DB/source/viral.1.genomic.gbff.gz ] || { echo Missing file $DB/source/viral.1.genomic.gbff.gz; exit 1;}
 		[ -r $DB/source/viral.2.genomic.gbff.gz ] || { echo Missing file $DB/source/viral.2.genomic.gbff.gz; exit 1;}
-		gunzip -c $DB/source/representatives.proteins.fasta.gz | perl -lne 'if(/>(\d+)\.(\S+)/){print ">",$2,"_",$1}else{y/BZ/DE/;s/[^ARNDCQEGHILKMFPSTWYV]//gi;print if length}' > $DB/source/representatives.proteins.faa
+		echo Extracting protein sequences from downloaded files
+		gunzip -c $DB/source/freeze12.proteins.representatives.fasta.gz | perl -lne 'if(/>(\d+)\.(\S+)/){print ">",$2,"_",$1}else{y/BZ/DE/;s/[^ARNDCQEGHILKMFPSTWYV]//gi;print if length}' > $DB/source/representatives.proteins.faa
 		find $DB/source -name "viral.*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX kaiju-gbk2faa.pl XX XX.faa
 		# on-the-fly substitution of taxon IDs found in merged.dmp by their updated IDs
 		find $DB/source -name '*.faa' -print0 | xargs -0 cat | perl -lsne 'BEGIN{open(F,$m);while(<F>){@F=split(/[\|\s]+/);$h{$F[0]}=$F[1]}}if(/(>.+)_(\d+)/){print $1,"_",defined($h{$2})?$h{$2}:$2;}else{print}' -- -m=merged.dmp  > $DB/kaiju_db_$DB.faa
