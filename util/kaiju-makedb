@@ -261,7 +261,7 @@ then
 			awk 'BEGIN{FS="\t";OFS="/"}$11=="latest"{l=split($20,a,"/");print $20,a[l]"_genomic.gbff.gz"}' $DB/assembly_summary.txt > $DB/downloadlist.txt
 			nfiles=`cat $DB/downloadlist.txt| wc -l`
 			echo Downloading $nfiles genome files from NCBI FTP server
-			cat $DB/downloadlist.txt | xargs -P $parallelDL -n 1 wget -N -c -P $DB/source -nv
+			cat $DB/downloadlist.txt | xargs -P $parallelDL -n 1 wget -P $DB/source -nv
 		fi
 		echo Extracting protein sequences from downloaded files
 		find $DB/source -name "*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX kaiju-gbk2faa.pl XX XX.faa
@@ -376,6 +376,7 @@ then
 			wget -N -nv $wgetProgress -P $DB/source ftp://ftp.ncbi.nlm.nih.gov/refseq/release/plasmid/plasmid.4.genomic.gbff.gz
 			wget -N -nv $wgetProgress -P $DB/source ftp://ftp.ncbi.nlm.nih.gov/refseq/release/plasmid/plasmid.5.genomic.gbff.gz
 			wget -N -nv $wgetProgress -P $DB/source ftp://ftp.ncbi.nlm.nih.gov/refseq/release/plasmid/plasmid.6.genomic.gbff.gz || true
+			wget -N -nv $wgetProgress -P $DB/source ftp://ftp.ncbi.nlm.nih.gov/refseq/release/plasmid/plasmid.7.genomic.gbff.gz || true
 		fi
 		[ -r $DB/source/plasmid.1.genomic.gbff.gz ] || { echo Missing file $DB/source/plasmid.1.genomic.gbff.gz; exit 1; }
 		[ -r $DB/source/plasmid.2.genomic.gbff.gz ] || { echo Missing file $DB/source/plasmid.2.genomic.gbff.gz; exit 1; }
@@ -398,7 +399,7 @@ then
 	mkdir -p $DB
 	if [ $index_only -eq 0 ]
 	then
-		fname="U-RVDBv17.0-prot.fasta.bz2"
+		fname="U-RVDBv18.0-prot.fasta.bz2"
 		if [ $DL -eq 1 ]
 		then
 			echo Downloading RVDB

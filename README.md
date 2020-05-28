@@ -18,7 +18,7 @@ See the release notes for all releases [here](http://kaiju.binf.ku.dk/index.html
 
 ### License
 
-Copyright (c) 2015-2019 Peter Menzel and Anders Krogh
+Copyright (c) 2015-2020 Peter Menzel and Anders Krogh
 
 Kaiju is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -74,23 +74,23 @@ cd kaijudb
 kaiju-makedb -s <DB>
 ```
 The table below lists the available source databases.
-Use the database name in the first column as argument to option `-s` in `kaiju-makedb`.
+Use the database name shown in the first column as argument to option `-s` in `kaiju-makedb`.
 The last column denotes the required memory for running Kaiju with the
 respective database and for creating the database (in brackets).
 
 | Option | Description | Sequences<sup>\*</sup> | RAM in GB (makedb)<sup>\*</sup> |
 | --- | --- | --- | --- |
-| `refseq` | Completely assembled and annotated reference genomes of Archaea, Bacteria, and viruses from the NCBI RefSeq database. | 50.9M | 35 (44) |
-| `progenomes` |  Representative set of genomes from the [proGenomes](http://progenomes.embl.de/) database and viruses from the NCBI RefSeq database. | 19.7M | 14 (17) |
-| `viruses` |  Only viruses from the NCBI RefSeq database. | 0.35M | 0.28 (0.3) |
-| `plasmids` |  Plasmid sequences from the NCBI RefSeq database. | 1.6M | 1 (1.5) |
-| `fungi` |  [Fungi](ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/fungi) sequences from the NCBI RefSeq database. | 2.7M | 2.7 (3.6) |
-| `nr` | Subset of NCBI BLAST _nr_ database containing all proteins belonging to Archaea, Bacteria and Viruses. | 164M | 87 (150) |
-| `nr_euk` | As option `-s nr` and additionally include proteins from fungi and microbial eukaryotes, see taxon list in `bin/kaiju-taxonlistEuk.tsv`. | 178M | 98 (162) |
+| `refseq` | Completely assembled and annotated reference genomes of Archaea, Bacteria, and viruses from the NCBI RefSeq database. | 63M | 43 (55) |
+| `progenomes` |  Representative set of genomes from the [proGenomes](http://progenomes.embl.de/) database and viruses from the NCBI RefSeq database. | 41.8M | 30 (35) |
+| `viruses` |  Only viruses from the NCBI RefSeq database. | 0.37M | 0.3 (0.3) |
+| `plasmids` |  Plasmid sequences from the NCBI RefSeq database. | 2M | 1.3 (2) |
+| `fungi` |  [Fungi](ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/fungi) sequences from the NCBI RefSeq database. | 3.2M | 3 (4) |
+| `nr` | Subset of NCBI BLAST _nr_ database containing all proteins belonging to Archaea, Bacteria and Viruses. | 196M | 105 (175) |
+| `nr_euk` | Like option `-s nr` and additionally include proteins from fungi and microbial eukaryotes, see taxon list in `bin/kaiju-taxonlistEuk.tsv`. | 213M | 117 (194) |
 | `mar` | Protein sequences from all [Mar databases](https://mmp.sfb.uit.no/). Subsets can be chosen by `mar_ref`, `mar_db`, or `mar_mag`. | 32.6M |  21 (27) |
-| `rvdb` | Protein sequences from [RVDB-prot](https://rvdb-prot.pasteur.fr/) | 3.9M |  2.8 (133) |
+| `rvdb` | Protein sequences from [RVDB-prot](https://rvdb-prot.pasteur.fr/) | 4.6M |  4 (149) |
 
-\* as of June 2019. The databases can also be downloaded from the [web server page](http://kaiju.binf.ku.dk/server).
+\* as of May 2020. The databases can also be downloaded from the [web server page](http://kaiju.binf.ku.dk/server).
 
 By default, `kaiju-makedb` uses 5 parallel threads for constructing the index, which can
 be changed by using the option `-t`. Note that a higher number of threads
