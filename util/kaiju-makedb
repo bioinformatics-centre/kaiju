@@ -290,12 +290,9 @@ then
 			echo Downloading $nfiles genome files from NCBI FTP server
 			cat $DB/downloadlist.txt | xargs -P $parallelDL -n 1 wget -P $DB/source -nv
 			echo Downloading virus genomes from RefSeq
-			wget -N -nv $wgetProgress -P $DB/source ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.1.genomic.gbff.gz
-			wget -N -nv $wgetProgress -P $DB/source ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.2.genomic.gbff.gz
-			wget -N -nv $wgetProgress -P $DB/source ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.3.genomic.gbff.gz || true
+			wget -N -nv $wgetProgress -P $DB/source 'ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.[0-9]*.genomic.gbff.gz'
 		fi
-		[ -r $DB/source/viral.1.genomic.gbff.gz ] || { echo Missing file $DB/source/viral.1.genomic.gbff.gz; exit 1;}
-		[ -r $DB/source/viral.2.genomic.gbff.gz ] || { echo Missing file $DB/source/viral.2.genomic.gbff.gz; exit 1;}
+		[ $(find $DB/source -type f -name "viral.[0-9]*.genomic.gbff.gz" | wc -l) !=0 ] || { echo Missing file $DB/source/viral.\*.genomic.gbff.gz; exit 1;}
 		echo Extracting protein sequences from downloaded files
 		find $DB/source -name "*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX kaiju-gbk2faa.pl XX XX.faa
 		# on-the-fly substitution of taxon IDs found in merged.dmp by their updated IDs
@@ -318,12 +315,9 @@ then
 			echo Downloading proGenomes database
 			wget -N -nv $wgetProgress -P $DB/source http://progenomes.embl.de/data/repGenomes/freeze12.proteins.representatives.fasta.gz
 			echo Downloading virus genomes from RefSeq
-			wget -N -nv $wgetProgress -P $DB/source ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.1.genomic.gbff.gz
-			wget -N -nv $wgetProgress -P $DB/source ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.2.genomic.gbff.gz
-			wget -N -nv $wgetProgress -P $DB/source ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.3.genomic.gbff.gz || true
+			wget -N -nv $wgetProgress -P '$DB/source ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.[0-9]*.genomic.gbff.gz'
 		fi
-		[ -r $DB/source/viral.1.genomic.gbff.gz ] || { echo Missing file $DB/source/viral.1.genomic.gbff.gz; exit 1;}
-		[ -r $DB/source/viral.2.genomic.gbff.gz ] || { echo Missing file $DB/source/viral.2.genomic.gbff.gz; exit 1;}
+		[ $(find $DB/source -type f -name "viral.[0.9]*.genomic.gbff.gz" | wc -l) != 0] || { echo Missing file $DB/source/viral.\*.genomic.gbff.gz; exit 1;}
 		echo Extracting protein sequences from downloaded files
 		gunzip -c $DB/source/freeze12.proteins.representatives.fasta.gz | perl -lne 'if(/>(\d+)\.(\S+)/){print ">",$2,"_",$1}else{y/BZ/DE/;s/[^ARNDCQEGHILKMFPSTWYV]//gi;print if length}' > $DB/source/representatives.proteins.faa
 		find $DB/source -name "viral.*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX kaiju-gbk2faa.pl XX XX.faa
@@ -345,12 +339,9 @@ then
 		if [ $DL -eq 1 ]
 		then
 			echo Downloading virus genomes from RefSeq
-			wget -N -nv $wgetProgress -P $DB/source ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.1.genomic.gbff.gz
-			wget -N -nv $wgetProgress -P $DB/source ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.2.genomic.gbff.gz
-			wget -N -nv $wgetProgress -P $DB/source ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.3.genomic.gbff.gz || true
+			wget -N -nv $wgetProgress -P $DB/source 'ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.[0-9]*.genomic.gbff.gz'
 		fi
-		[ -r $DB/source/viral.1.genomic.gbff.gz ] || { echo Missing file $DB/source/viral.1.genomic.gbff.gz; exit 1;}
-		[ -r $DB/source/viral.2.genomic.gbff.gz ] || { echo Missing file $DB/source/viral.2.genomic.gbff.gz; exit 1;}
+		[ $(find $DB/source -type f -name "viral.[0-9]*.genomic.gbff.gz" | wc -l) != 0 ] || { echo Missing file $DB/source/viral.\*.genomic.gbff.gz; exit 1;}
 		echo Extracting protein sequences from downloaded files
 		find $DB/source -name "viral.*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX kaiju-gbk2faa.pl XX XX.faa
 		find $DB/source -name '*.faa' -print0 | xargs -0 cat | perl -lsne 'BEGIN{open(F,$m);while(<F>){@F=split(/[\|\s]+/);$h{$F[0]}=$F[1]}}if(/(>.+)_(\d+)/){print $1,"_",defined($h{$2})?$h{$2}:$2;}else{print}' -- -m=merged.dmp  > $DB/kaiju_db_$DB.faa
@@ -370,19 +361,9 @@ then
 		if [ $DL -eq 1 ]
 		then
 			echo Downloading plasmid genomes from RefSeq
-			wget -N -nv $wgetProgress -P $DB/source ftp://ftp.ncbi.nlm.nih.gov/refseq/release/plasmid/plasmid.1.genomic.gbff.gz
-			wget -N -nv $wgetProgress -P $DB/source ftp://ftp.ncbi.nlm.nih.gov/refseq/release/plasmid/plasmid.2.genomic.gbff.gz
-			wget -N -nv $wgetProgress -P $DB/source ftp://ftp.ncbi.nlm.nih.gov/refseq/release/plasmid/plasmid.3.genomic.gbff.gz
-			wget -N -nv $wgetProgress -P $DB/source ftp://ftp.ncbi.nlm.nih.gov/refseq/release/plasmid/plasmid.4.genomic.gbff.gz
-			wget -N -nv $wgetProgress -P $DB/source ftp://ftp.ncbi.nlm.nih.gov/refseq/release/plasmid/plasmid.5.genomic.gbff.gz
-			wget -N -nv $wgetProgress -P $DB/source ftp://ftp.ncbi.nlm.nih.gov/refseq/release/plasmid/plasmid.6.genomic.gbff.gz || true
-			wget -N -nv $wgetProgress -P $DB/source ftp://ftp.ncbi.nlm.nih.gov/refseq/release/plasmid/plasmid.7.genomic.gbff.gz || true
+			wget -N -nv $wgetProgress -P $DB/source 'ftp://ftp.ncbi.nlm.nih.gov/refseq/release/plasmid/plasmid.[0-9]*.genomic.gbff.gz'
 		fi
-		[ -r $DB/source/plasmid.1.genomic.gbff.gz ] || { echo Missing file $DB/source/plasmid.1.genomic.gbff.gz; exit 1; }
-		[ -r $DB/source/plasmid.2.genomic.gbff.gz ] || { echo Missing file $DB/source/plasmid.2.genomic.gbff.gz; exit 1; }
-		[ -r $DB/source/plasmid.3.genomic.gbff.gz ] || { echo Missing file $DB/source/plasmid.3.genomic.gbff.gz; exit 1; }
-		[ -r $DB/source/plasmid.4.genomic.gbff.gz ] || { echo Missing file $DB/source/plasmid.4.genomic.gbff.gz; exit 1; }
-		[ -r $DB/source/plasmid.5.genomic.gbff.gz ] || { echo Missing file $DB/source/plasmid.5.genomic.gbff.gz; exit 1; }
+		[ $(find $DB/source -type f -name "plasmid.[0-9]*.genomic.gbff.gz" | wc -l) != 0 ] || { echo Missing file $DB/source/plasmid.\*.genomic.gbff.gz; exit 1; }
 		echo Extracting protein sequences from downloaded files
 		find $DB/source -name "plasmid.*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX kaiju-gbk2faa.pl XX XX.faa
 		find $DB/source -name '*.faa' -print0 | xargs -0 cat | perl -lsne 'BEGIN{open(F,$m);while(<F>){@F=split(/[\|\s]+/);$h{$F[0]}=$F[1]}}if(/(>.+)_(\d+)/){print $1,"_",defined($h{$2})?$h{$2}:$2;}else{print}' -- -m=merged.dmp  > $DB/kaiju_db_$DB.faa
