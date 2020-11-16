@@ -258,7 +258,7 @@ then
 		then
 			echo Downloading file list for complete genomes from RefSeq
 			wget -c -N -nv -P $DB ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/fungi/assembly_summary.txt
-			awk 'BEGIN{FS="\t";OFS="/"}$11=="latest" && $20 ~ /ftp:/ {l=split($20,a,"/");print $20,a[l]"_genomic.gbff.gz"}' $DB/assembly_summary.txt > $DB/downloadlist.txt
+			awk 'BEGIN{FS="\t";OFS="/"} $11=="latest" && $20 ~ /^ftp:/ {l=split($20,a,"/");print $20,a[l]"_genomic.gbff.gz"}' $DB/assembly_summary.txt > $DB/downloadlist.txt
 			nfiles=`cat $DB/downloadlist.txt| wc -l`
 			echo Downloading $nfiles genome files from NCBI FTP server
 			cat $DB/downloadlist.txt | xargs -P $parallelDL -n 1 wget -P $DB/source -nv
@@ -285,7 +285,7 @@ then
 			echo Downloading file list for complete genomes from RefSeq
 			wget -nv -O $DB/assembly_summary.archaea.txt ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/archaea/assembly_summary.txt
 			wget -nv -O $DB/assembly_summary.bacteria.txt ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/bacteria/assembly_summary.txt
-			awk 'BEGIN{FS="\t";OFS="/"}$12=="Complete Genome" && $11=="latest" && $20 ~ /ftp:/ {l=split($20,a,"/");print $20,a[l]"_genomic.gbff.gz"}' $DB/assembly_summary.bacteria.txt $DB/assembly_summary.archaea.txt > $DB/downloadlist.txt
+  		awk 'BEGIN{FS="\t";OFS="/"}$12=="Complete Genome" && $11=="latest" && $20 ~ /^ftp:/ {l=split($20,a,"/");print $20,a[l]"_genomic.gbff.gz"}' $DB/assembly_summary.bacteria.txt $DB/assembly_summary.archaea.txt > $DB/downloadlist.txt
 			nfiles=`cat $DB/downloadlist.txt| wc -l`
 			echo Downloading $nfiles genome files from NCBI FTP server
 			cat $DB/downloadlist.txt | xargs -P $parallelDL -n 1 wget -P $DB/source -nv
@@ -380,7 +380,7 @@ then
 	mkdir -p $DB
 	if [ $index_only -eq 0 ]
 	then
-		fname="U-RVDBv18.0-prot.fasta.bz2"
+		fname="U-RVDBv20.0-prot.fasta.bz2"
 		if [ $DL -eq 1 ]
 		then
 			echo Downloading RVDB
