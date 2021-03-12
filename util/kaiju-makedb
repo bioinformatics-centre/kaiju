@@ -288,11 +288,11 @@ then
   		awk 'BEGIN{FS="\t";OFS="/"}$12=="Complete Genome" && $11=="latest" && $20 ~ /^ftp:/ {l=split($20,a,"/");print $20,a[l]"_genomic.gbff.gz"}' $DB/assembly_summary.bacteria.txt $DB/assembly_summary.archaea.txt > $DB/downloadlist.txt
 			nfiles=`cat $DB/downloadlist.txt| wc -l`
 			echo Downloading $nfiles genome files from NCBI FTP server
-			cat $DB/downloadlist.txt | xargs -P $parallelDL -n 1 wget -P $DB/source -nv
+			cat $DB/downloadlist.txt | xargs -P $parallelDL -n 1 wget -P $DB/source -nv -nc
 			echo Downloading virus genomes from RefSeq
 			wget -N -nv $wgetProgress -P $DB/source 'ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.[0-9]*.genomic.gbff.gz'
 		fi
-		[ $(find $DB/source -type f -name "viral.[0-9]*.genomic.gbff.gz" | wc -l) !=0 ] || { echo Missing file $DB/source/viral.\*.genomic.gbff.gz; exit 1;}
+		[ $(find $DB/source -type f -name "viral.[0-9]*.genomic.gbff.gz" | wc -l) != 0 ] || { echo Missing file $DB/source/viral.\*.genomic.gbff.gz; exit 1;}
 		echo Extracting protein sequences from downloaded files
 		find $DB/source -name "*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX kaiju-gbk2faa.pl XX XX.faa
 		# on-the-fly substitution of taxon IDs found in merged.dmp by their updated IDs
@@ -315,9 +315,9 @@ then
 			echo Downloading proGenomes database
 			wget -N -nv $wgetProgress -P $DB/source http://progenomes.embl.de/data/repGenomes/freeze12.proteins.representatives.fasta.gz
 			echo Downloading virus genomes from RefSeq
-			wget -N -nv $wgetProgress -P '$DB/source ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.[0-9]*.genomic.gbff.gz'
+			wget -N -nv $wgetProgress -P $DB/source 'ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.[0-9]*.genomic.gbff.gz'
 		fi
-		[ $(find $DB/source -type f -name "viral.[0.9]*.genomic.gbff.gz" | wc -l) != 0] || { echo Missing file $DB/source/viral.\*.genomic.gbff.gz; exit 1;}
+		[ $(find $DB/source -type f -name "viral.[0-9]*.genomic.gbff.gz" | wc -l) != 0 ] || { echo Missing file $DB/source/viral.\*.genomic.gbff.gz; exit 1;}
 		echo Extracting protein sequences from downloaded files
 		gunzip -c $DB/source/freeze12.proteins.representatives.fasta.gz | perl -lne 'if(/>(\d+)\.(\S+)/){print ">",$2,"_",$1}else{y/BZ/DE/;s/[^ARNDCQEGHILKMFPSTWYV]//gi;print if length}' > $DB/source/representatives.proteins.faa
 		find $DB/source -name "viral.*.gbff.gz" | xargs -n 1 -P $parallelConversions -IXX kaiju-gbk2faa.pl XX XX.faa
@@ -380,7 +380,7 @@ then
 	mkdir -p $DB
 	if [ $index_only -eq 0 ]
 	then
-		fname="U-RVDBv20.0-prot.fasta.bz2"
+		fname="U-RVDBv21.0-prot.fasta.bz2"
 		if [ $DL -eq 1 ]
 		then
 			echo Downloading RVDB

@@ -80,17 +80,17 @@ respective database and for creating the database (in brackets).
 
 | Option | Description | Sequences<sup>\*</sup> | RAM in GB (makedb)<sup>\*</sup> |
 | --- | --- | --- | --- |
-| `refseq` | Completely assembled and annotated reference genomes of Archaea, Bacteria, and viruses from the NCBI RefSeq database. | 63M | 43 (55) |
-| `progenomes` |  Representative set of genomes from the [proGenomes](http://progenomes.embl.de/) database and viruses from the NCBI RefSeq database. | 41.8M | 30 (35) |
-| `viruses` |  Only viruses from the NCBI RefSeq database. | 0.37M | 0.3 (0.3) |
-| `plasmids` |  Plasmid sequences from the NCBI RefSeq database. | 2M | 1.3 (2) |
-| `fungi` |  [Fungi](ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/fungi) sequences from the NCBI RefSeq database. | 3.2M | 3 (4) |
-| `nr` | Subset of NCBI BLAST _nr_ database containing all proteins belonging to Archaea, Bacteria and Viruses. | 196M | 105 (175) |
-| `nr_euk` | Like option `-s nr` and additionally include proteins from fungi and microbial eukaryotes, see taxon list in `bin/kaiju-taxonlistEuk.tsv`. | 213M | 117 (194) |
+| `refseq` | Completely assembled and annotated reference genomes of Archaea, Bacteria, and viruses from the NCBI RefSeq database. | 77M | 53 (68) |
+| `progenomes` |  Representative set of genomes from the [proGenomes](http://progenomes.embl.de/) database and viruses from the NCBI RefSeq database. | 41M | 30 (35) |
+| `viruses` |  Only viruses from the NCBI RefSeq database. | 0.49M | 0.4 (0.4) |
+| `plasmids` |  Plasmid sequences from the NCBI RefSeq database. | 2.7M | 2 (3) |
+| `fungi` |  [Fungi](ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/fungi) sequences from the NCBI RefSeq database. | 3.5M | 4 (4) |
+| `nr` | Subset of NCBI BLAST _nr_ database containing all proteins belonging to Archaea, Bacteria and Viruses. | 219M | 118 (200) |
+| `nr_euk` | Like option `-s nr` and additionally include proteins from fungi and microbial eukaryotes, see taxon list in `bin/kaiju-taxonlistEuk.tsv`. | 240M | 133 (222) |
 | `mar` | Protein sequences from all [Mar databases](https://mmp.sfb.uit.no/). Subsets can be chosen by `mar_ref`, `mar_db`, or `mar_mag`. | 32.6M |  21 (27) |
-| `rvdb` | Protein sequences from [RVDB-prot](https://rvdb-prot.pasteur.fr/) | 4.6M |  4 (149) |
+| `rvdb` | Protein sequences from [RVDB-prot](https://rvdb-prot.pasteur.fr/) | 5.2M |  5 (160) |
 
-\* as of May 2020. The databases can also be downloaded from the [web server page](http://kaiju.binf.ku.dk/server).
+\* as of March 2021. The databases can also be downloaded from the [web server page](http://kaiju.binf.ku.dk/server).
 
 By default, `kaiju-makedb` uses 5 parallel threads for constructing the index, which can
 be changed by using the option `-t`. Note that a higher number of threads
