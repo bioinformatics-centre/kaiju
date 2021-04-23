@@ -18,7 +18,7 @@ See the release notes for all releases [here](http://kaiju.binf.ku.dk/index.html
 
 ### License
 
-Copyright (c) 2015-2020 Peter Menzel and Anders Krogh
+Copyright (c) 2015-2021 Peter Menzel and Anders Krogh
 
 Kaiju is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

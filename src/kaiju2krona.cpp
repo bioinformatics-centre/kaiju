@@ -1,4 +1,4 @@
-/* This file is part of Kaiju, Copyright 2015,2016 Peter Menzel and Anders Krogh,
+/* This file is part of Kaiju, Copyright 2015-2021 Peter Menzel and Anders Krogh,
  * Kaiju is licensed under the GPLv3, see the file LICENSE. */
 
 #include <unistd.h>
@@ -21,6 +21,7 @@ int main(int argc, char** argv) {
 
 	std::unordered_map<uint64_t,uint64_t> nodes;
 	std::unordered_map<uint64_t, std::string> node2name;
+	std::unordered_map<uint64_t, std::string> node2rank;
 
 	std::string nodes_filename = "";
 	std::string names_filename = "";
@@ -30,10 +31,15 @@ int main(int argc, char** argv) {
 	bool verbose = false;
 	bool count_unclassified = false;
 
+	bool specified_ranks = false;
+	std::string ranks_arg;
+	std::list<std::string> ranks_list;
+	std::set<std::string> ranks_set;
+
 	// --------------------- START ------------------------------------------------------------------
 	// Read command line params
 	int c;
-	while ((c = getopt(argc, argv, "huvn:t:i:o:")) != -1) {
+	while ((c = getopt(argc, argv, "huvn:t:i:o:l:")) != -1) {
 		switch (c)  {
 			case 'h':
 				usage(argv[0]);
@@ -49,6 +55,9 @@ int main(int argc, char** argv) {
 				nodes_filename = optarg; break;
 			case 'i':
 				in1_filename = optarg; break;
+			case 'l': {
+				specified_ranks = true;
+				ranks_arg = optarg; break; }
 			default:
 				usage(argv[0]);
 		}
@@ -59,13 +68,34 @@ int main(int argc, char** argv) {
 	if(nodes_filename.length() == 0) { error("Please specify the location of the nodes.dmp file, using the -t option."); usage(argv[0]); }
 	if(in1_filename.length() == 0) { error("Please specify the location of the input file, using the -i option."); usage(argv[0]); }
 
+	/* parse user-supplied rank list into list and set */
+	if(ranks_arg.length() > 0) {
+		size_t begin = 0;
+		size_t pos = -1;
+		std::string rankname;
+		while((pos = ranks_arg.find(",",pos+1)) != std::string::npos) {
+			rankname = ranks_arg.substr(begin,(pos - begin));
+			if(rankname.length()==0 || rankname==",") { begin=pos+1; continue; }
+			ranks_list.emplace_back(rankname);
+			ranks_set.emplace(rankname);
+			begin = pos+1;
+		}
+		rankname = ranks_arg.substr(begin);
+		if(!(rankname.length()==0 || rankname==",")) {
+			ranks_set.emplace(rankname);
+			ranks_list.emplace_back(rankname);
+		}
+	}
+
+	/* read nodes.dmp */
 	std::ifstream nodes_file;
 	nodes_file.open(nodes_filename);
 	if(!nodes_file.is_open()) { error("Could not open file " + nodes_filename); exit(EXIT_FAILURE); }
 	if(verbose) std::cerr << "Reading taxonomic tree from file " << nodes_filename << std::endl;
-	parseNodesDmp(nodes,nodes_file);
+	parseNodesDmpWithRank(nodes,node2rank,nodes_file);
 	nodes_file.close();
 
+	/* read names.dmp */
 	std::ifstream names_file;
 	names_file.open(names_filename);
 	if(!names_file.is_open()) { error("Could not open file " + names_filename); usage(argv[0]); }
@@ -127,16 +157,28 @@ int main(int argc, char** argv) {
 			std::cerr << "Warning: Taxon ID " << id << " found in input file is not contained in names.dmp file "<< names_filename << ".\n";
 			continue;
 		}
+
 		std::vector<std::string> lineage;
-		lineage.push_back(node2name.at(id));
+
+		if(node2name.count(nodes.at(id))==0) {
+			std::cerr << "Warning: Taxon ID " << nodes.at(id) << " found in input file is not contained in names file "<< names_filename << ".\n";
+		}
+		else {
+			if(!specified_ranks || (node2rank.count(id) > 0 && ranks_set.count(node2rank.at(id)) > 0)) { // rank is in specified list if set
+				lineage.push_back(node2name.at(id));
+			}
+		}
 		while(nodes.count(id)>0 && id != nodes.at(id)) {
-			if(node2name.count(nodes.at(id))==0) {
-				std::cerr << "Warning: Taxon ID " << nodes.at(id) << " found in input file is not contained in names file "<< names_filename << ".\n";
+			uint64_t parent = nodes.at(id);
+			if(node2name.count(parent)==0) {
+				std::cerr << "Warning: Taxon ID " << parent << " found in input file is not contained in names file "<< names_filename << ".\n";
 			}
 			else {
-				lineage.insert(lineage.begin(),node2name.at(nodes.at(id)));
+				if(!specified_ranks || (node2rank.count(parent) > 0 && ranks_set.count(node2rank.at(parent)) > 0)) { // rank is in specified list if set
+					lineage.insert(lineage.begin(), node2name.at(parent));
+				}
 			}
-			id = nodes.at(id);
+			id = parent;
 		}
 		krona_file << it.second ;
 		for(auto  itl : lineage) krona_file << "\t" << itl;
@@ -161,8 +203,10 @@ void usage(char *progname) {
 	fprintf(stderr, "   -n FILENAME   Name of names.dmp file\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Optional arguments:\n");
-	fprintf(stderr, "   -v            Enable verbose output.\n");
+	fprintf(stderr, "   -l            Print taxon path containing only ranks specified by a comma-separated list,\n");
+	fprintf(stderr, "                 for example: superkingdom,phylum,class,order,family,genus,species\n");
 	fprintf(stderr, "   -u            Include count for unclassified reads in output.\n");
+	fprintf(stderr, "   -v            Enable verbose output.\n");
 	exit(EXIT_FAILURE);
 }
 
