@@ -34,9 +34,9 @@ LD_LIBS_STATIC = -Wl,--whole-archive -lpthread -lz -Wl,--no-whole-archive
 endif
 
 
-all: makefile kaiju kaiju2krona kaiju-mergeOutputs kaiju2table kaijux kaijup kaiju-convertNR kaiju-addTaxonNames bwt/mkbwt
+all: makefile kaiju kaiju-multi kaiju2krona kaiju-mergeOutputs kaiju2table kaijux kaijup kaiju-convertNR kaiju-addTaxonNames bwt/mkbwt
 	mkdir -p ../bin
-	cp kaiju kaijux kaijup kaiju2krona kaiju-mergeOutputs kaiju2table kaiju-convertNR kaiju-addTaxonNames ../util/kaiju-gbk2faa.pl ../util/kaiju-makedb ../util/kaiju-taxonlistEuk.tsv ../util/kaiju-excluded-accessions.txt ../util/kaiju-convertMAR.py ../bin/
+	cp kaiju kaiju-multi kaijux kaijup kaiju2krona kaiju-mergeOutputs kaiju2table kaiju-convertNR kaiju-addTaxonNames ../util/kaiju-gbk2faa.pl ../util/kaiju-makedb ../util/kaiju-taxonlistEuk.tsv ../util/kaiju-excluded-accessions.txt ../util/kaiju-convertMAR.py ../bin/
 	cp bwt/mkbwt ../bin/kaiju-mkbwt
 	cp bwt/mkfmi ../bin/kaiju-mkfmi
 
@@ -46,6 +46,9 @@ bwt/mkbwt:
 
 kaiju: makefile bwt/mkbwt kaiju.o ReadItem.o Config.o ConsumerThread.o util.o $(BLASTOBJS)
 	$(CXX) $(LDFLAGS) -o kaiju kaiju.o ReadItem.o Config.o ConsumerThread.o util.o $(BWTOBJS) $(BLASTOBJS) $(LDLIBS)
+
+kaiju-multi: makefile bwt/mkbwt kaiju-multi.o ReadItem.o Config.o ConsumerThread.o util.o $(BLASTOBJS)
+	$(CXX) $(LDFLAGS) -o kaiju-multi kaiju-multi.o ReadItem.o Config.o ConsumerThread.o util.o $(BWTOBJS) $(BLASTOBJS) $(LDLIBS)
 
 kaijux: makefile bwt/mkbwt kaijux.o ReadItem.o Config.o ConsumerThread.o ConsumerThreadx.o util.o $(BLASTOBJS)
 	$(CXX) $(LDFLAGS) -o kaijux kaijux.o ReadItem.o Config.o ConsumerThread.o ConsumerThreadx.o util.o $(BWTOBJS) $(BLASTOBJS) $(LDLIBS)

@@ -1,6 +1,7 @@
 *.o
 *.swp
 kaiju
+kaiju-multi
 kaijux
 kaijup
 kaiju2krona
