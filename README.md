@@ -130,7 +130,7 @@ Kaiju requires at least three arguments:
 ```
 kaiju -t nodes.dmp -f kaiju_db_*.fmi -i inputfile.fastq
 ```
-Replace `kaiju_db_*.fmi` by the actually `.fmi` file depending on the selected database.
+Replace `kaiju_db_*.fmi` by the actual `.fmi` file depending on the selected database.
 For example, when running `kaiju-makedb -s refseq`, the corresponding index file is `refseq/kaiju_db_refseq.fmi`.
 
 For paired-end reads use `-i firstfile.fastq` and `-j secondfile.fastq`.
@@ -151,6 +151,17 @@ kaiju -t nodes.dmp -f kaiju_db.fmi -i inputfile.fastq -o kaiju.out
 Kaiju can use multiple parallel threads, which can be specified with the `-z` option, e.g. for using 25 parallel threads:
 ```
 kaiju -z 25 -t nodes.dmp -f kaiju_db.fmi -i inputfile.fastq -o kaiju.out
+```
+
+**kaiju-multi**  
+While `kaiju` can only process one input, `kaiju-multi` can take a comma-separated list of input files (and optionally output files) for processing multiple samples at once:
+```
+kaiju-multi -z 25 -t nodes.dmp -f kaiju_db.fmi -i sample1_R1.fastq,sample2_R1.fastq,sample3_R1.fastq -j sample1_R2.fastq,sample2_R2.fastq,sample3_R2.fastq  -o sample1.out,sample2.out,sample3.out
+```
+These lists must have the same length.
+It's also possible to merge all outputs into one file using output redirection:
+```
+kaiju-multi -z 25 -t nodes.dmp -f kaiju_db.fmi -i sample1_R1.fastq,sample2_R1.fastq,sample3_R1.fastq -j sample1_R2.fastq,sample2_R2.fastq,sample3_R2.fastq > all_samples.out
 ```
 
 ### Run modes
