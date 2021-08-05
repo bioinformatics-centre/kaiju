@@ -4,7 +4,7 @@
   Authors: Peter Menzel <pmenzel@gmail.com> and
            Anders Krogh <krogh@binf.ku.dk>
 
-  Copyright (C) 2015-2020 Peter Menzel and Anders Krogh
+  Copyright (C) 2015-2021 Peter Menzel and Anders Krogh
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

@@ -502,7 +502,7 @@ int main(int argc, char** argv) {
 
 void usage(char *progname) {
 	print_usage_header();
-	fprintf(stderr, "Usage:\n   %s -t nodes.dmp -f kaiju_db.fmi -i reads.fastq [-j reads2.fastq]\n", progname);
+	fprintf(stderr, "Usage:\n   %s -t nodes.dmp -f kaiju_db.fmi -i sample1_R1.fastq,sample2_R1.fastq [-j sample1_R2.fastq,sample2_R2.fastq] -o sample1.out,sample2.out\n", progname);
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Mandatory arguments:\n");
 	fprintf(stderr, "   -t FILENAME   Name of nodes.dmp file\n");
