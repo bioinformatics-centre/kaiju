@@ -79,7 +79,7 @@ kaiju-convertNR: makefile bwt/mkbwt Config.o kaiju-convertNR.o util.o $(BLASTOBJ
 
 
 clean:
-	rm -f -v bwt/mkbwt bwt/mkfmi kaiju kaijux kaijup kaiju2krona kaiju2table kaiju-mergeOutputs kaiju-convertNR kaiju-addTaxonNames ../bin/*
+	rm -f -v bwt/mkbwt bwt/mkfmi kaiju-multi kaiju kaijux kaijup kaiju2krona kaiju2table kaiju-mergeOutputs kaiju-convertNR kaiju-addTaxonNames ../bin/*
 	find . -name "*.o" -delete
 	$(MAKE) -C bwt/ clean
 
