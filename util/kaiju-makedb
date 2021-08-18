@@ -108,6 +108,7 @@ done
 #check if necessary programs are in the PATH
 command -v awk >/dev/null 2>/dev/null || { echo Error: awk not found; exit 1; }
 command -v wget >/dev/null 2>/dev/null || { echo Error: wget not found; exit 1; }
+command -v curl >/dev/null 2>/dev/null || { echo Error: curl not found; exit 1; }
 command -v xargs >/dev/null 2>/dev/null || { echo Error: xargs not found; exit 1; }
 command -v tar >/dev/null 2>/dev/null || { echo Error: tar not found; exit 1; }
 command -v gunzip >/dev/null 2>/dev/null || { echo Error: gunzip not found; exit 1; }
@@ -290,7 +291,8 @@ then
 			echo Downloading $nfiles genome files from NCBI FTP server
 			cat $DB/downloadlist.txt | xargs -P $parallelDL -n 1 wget -P $DB/source -nv -nc
 			echo Downloading virus genomes from RefSeq
-			wget -N -nv $wgetProgress -P $DB/source 'ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.[0-9]*.genomic.gbff.gz'
+			#wget -N -nv $wgetProgress -P $DB/source 'ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.[0-9]*.genomic.gbff.gz'
+			(cd $DB/source && curl --silent -z -f -O 'https://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.[1-9].genomic.gbff.gz' || true)
 		fi
 		[ $(find $DB/source -type f -name "viral.[0-9]*.genomic.gbff.gz" | wc -l) != 0 ] || { echo Missing file $DB/source/viral.\*.genomic.gbff.gz; exit 1;}
 		echo Extracting protein sequences from downloaded files
@@ -315,7 +317,8 @@ then
 			echo Downloading proGenomes database
 			wget -N -nv $wgetProgress -P $DB/source http://progenomes.embl.de/data/repGenomes/freeze12.proteins.representatives.fasta.gz
 			echo Downloading virus genomes from RefSeq
-			wget -N -nv $wgetProgress -P $DB/source 'ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.[0-9]*.genomic.gbff.gz'
+			#wget -N -nv $wgetProgress -P $DB/source 'ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.[0-9]*.genomic.gbff.gz'
+			(cd $DB/source && curl --silent -z -f -O 'https://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.[1-9].genomic.gbff.gz' || true)
 		fi
 		[ $(find $DB/source -type f -name "viral.[0-9]*.genomic.gbff.gz" | wc -l) != 0 ] || { echo Missing file $DB/source/viral.\*.genomic.gbff.gz; exit 1;}
 		echo Extracting protein sequences from downloaded files
@@ -339,7 +342,8 @@ then
 		if [ $DL -eq 1 ]
 		then
 			echo Downloading virus genomes from RefSeq
-			wget -N -nv $wgetProgress -P $DB/source 'ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.[0-9]*.genomic.gbff.gz'
+			#wget -N -nv $wgetProgress -P $DB/source 'ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.[0-9]*.genomic.gbff.gz'
+			(cd $DB/source && curl --silent -z -f -O 'https://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.[1-9].genomic.gbff.gz' || true)
 		fi
 		[ $(find $DB/source -type f -name "viral.[0-9]*.genomic.gbff.gz" | wc -l) != 0 ] || { echo Missing file $DB/source/viral.\*.genomic.gbff.gz; exit 1;}
 		echo Extracting protein sequences from downloaded files
@@ -361,7 +365,8 @@ then
 		if [ $DL -eq 1 ]
 		then
 			echo Downloading plasmid genomes from RefSeq
-			wget -N -nv $wgetProgress -P $DB/source 'ftp://ftp.ncbi.nlm.nih.gov/refseq/release/plasmid/plasmid.[0-9]*.genomic.gbff.gz'
+			#wget -N -nv $wgetProgress -P $DB/source 'ftp://ftp.ncbi.nlm.nih.gov/refseq/release/plasmid/plasmid.[0-9]*.genomic.gbff.gz'
+			(cd $DB/source && curl --silent -z -f -O 'https://ftp.ncbi.nlm.nih.gov/refseq/release/plasmid/plasmid.[1-9].genomic.gbff.gz' || true)
 		fi
 		[ $(find $DB/source -type f -name "plasmid.[0-9]*.genomic.gbff.gz" | wc -l) != 0 ] || { echo Missing file $DB/source/plasmid.\*.genomic.gbff.gz; exit 1; }
 		echo Extracting protein sequences from downloaded files
