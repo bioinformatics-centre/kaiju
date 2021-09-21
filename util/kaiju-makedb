@@ -385,7 +385,7 @@ then
 	mkdir -p $DB
 	if [ $index_only -eq 0 ]
 	then
-		fname="U-RVDBv21.0-prot.fasta.bz2"
+		fname="U-RVDBv22.0-prot.fasta.xz"
 		if [ $DL -eq 1 ]
 		then
 			echo Downloading RVDB
@@ -398,7 +398,7 @@ then
 		echo Unpacking prot.accession2taxid.gz
 		gunzip -c $DB/prot.accession2taxid.gz > $DB/prot.accession2taxid
 		echo Extracting protein sequences from $fname
-		bunzip2 -c $DB/$fname | perl -lsne 'BEGIN{open(F,$m);while(<F>){@F=split;$h{$F[1]}=$F[2]}}if(/>[^\|]+\|[^\|]+\|([^\|]+)/){print ">",$1,"_",$h{$1};}else{print}' -- -m=$DB/prot.accession2taxid > $DB/kaiju_db_$DB.faa
+		unxz -c $DB/$fname | perl -lsne 'BEGIN{open(F,$m);while(<F>){@F=split;$h{$F[1]}=$F[2]}}if(/>[^\|]+\|[^\|]+\|([^\|]+)/){if(defined($h{$1})){print ">",$1,"_",$h{$1};}}else{print}' -- -m=$DB/prot.accession2taxid > $DB/kaiju_db_$DB.faa
 	fi
 	[ -r $DB/kaiju_db_$DB.faa ] || { echo Missing file $DB/kaiju_db_$DB.faa; exit 1; }
 	echo Creating Borrows-Wheeler transform
