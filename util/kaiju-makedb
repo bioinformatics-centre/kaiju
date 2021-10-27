@@ -166,24 +166,27 @@ then
 			if [ "$DB" = "mar" -o "$DB" = "mar_ref" ]
 			then
 				echo Downloading MarRef reference genomes from the Marine Metagenomics Portal
-				wget -nv -O $DB/dl_list_marref_protein.txt https://s1.sfb.uit.no/public/mar/Resources/kaiju/dl_list_marref_protein.txt
+				wget -nv -O $DB/dl_list_marref_protein.txt https://public.sfb.uit.no/Resources/kaiju/dl_list_marref_protein.txt
 				cat $DB/dl_list_marref_protein.txt | xargs -P $parallelDL wget -P $DB/source -q || true
 			fi
 			if [ "$DB" = "mar" -o "$DB" = "mar_db" ]
 			then
 				echo Downloading MarDB complete genomes from the Marine Metagenomics Portal
-				wget -nv -O $DB/dl_list_mardb_no_mags_protein.txt https://s1.sfb.uit.no/public/mar/Resources/kaiju/dl_list_mardb_no_mags_protein.txt
+				wget -nv -O $DB/dl_list_mardb_no_mags_protein.txt https://public.sfb.uit.no/Resources/kaiju/dl_list_mardb_no_mags_protein.txt
 				cat $DB/dl_list_mardb_no_mags_protein.txt | xargs -P $parallelDL wget -P $DB/source -q || true
 			fi
 			if [ "$DB" = "mar" -o "$DB" = "mar_mag" ]
 			then
 				echo Downloading MarDB metagenomic assembled genomes from the Marine Metagenomics Portal
-				wget -nv -O $DB/dl_list_mardb_mags_protein.txt https://s1.sfb.uit.no/public/mar/Resources/kaiju/dl_list_mardb_mags_protein.txt
+				wget -nv -O $DB/dl_list_mardb_mags_protein.txt https://public.sfb.uit.no/Resources/kaiju/dl_list_mardb_mags_protein.txt
 				cat $DB/dl_list_mardb_mags_protein.txt | xargs -P $parallelDL wget -P $DB/source -q || true
 			fi
 			echo Downloading metadata from MMP
-			wget -nv -O $DB/MarRef.tsv https://s1.sfb.uit.no/public/mar/MarRef/Metadatabase/Current.tsv
-			wget -nv -O $DB/MarDB.tsv https://s1.sfb.uit.no/public/mar/MarDB/Metadatabase/Current.tsv
+			wget -nv -O "$DB/contextual.txt" https://public.sfb.uit.no/Resources/kaiju/contextual.txt
+			mardbContextualURL=$(head -n 1 "$DB/contextual.txt")
+			marrefContextualURL=$(sed -n '2 p' "$DB/contextual.txt")
+			wget -nv -O - "$mardbContextualURL" | gunzip -c > "$DB/MarDB.tsv"
+			wget -nv -O - "$marrefContextualURL" | gunzip -c > "$DB/MarRef.tsv"
 		fi
 		[ -r $DB/MarRef.tsv ] || { echo Missing file MarRef.tsv; exit 1; }
 		[ -r $DB/MarDB.tsv ] || { echo Missing file MarDB.tsv; exit 1; }
