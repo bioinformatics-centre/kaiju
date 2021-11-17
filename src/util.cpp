@@ -98,6 +98,28 @@ void parseNodesDmp(std::unordered_map<uint64_t,uint64_t> & nodes, std::ifstream 
 		}
 }
 
+void parseMergedDmp(std::unordered_map<uint64_t,uint64_t> & merged, std::ifstream & merged_file) {
+		merged.reserve(1e5);
+		std::string line;
+		while(std::getline(merged_file, line)) {
+			if(line.length() == 0) { continue; }
+			try {
+				size_t end = line.find_first_not_of("0123456789");
+				uint64_t old_taxid = stoul(line.substr(0,end));
+				size_t start = line.find_first_of("0123456789",end);
+				end = line.find_first_not_of("0123456789",start+1);
+				uint64_t new_taxid = stoul(line.substr(start,end-start));
+				merged.emplace(old_taxid, new_taxid);
+			}
+			catch(const std::invalid_argument& ia) {
+				std::cerr << "Found bad number in line: " << line << std::endl;
+			}
+			catch(const std::out_of_range& oor) {
+				std::cerr << "Found bad number (out of range error) in line: " << line << std::endl;
+			}
+		}
+}
+
 void parseNodesDmpWithRank(std::unordered_map<uint64_t,uint64_t> & nodes, std::unordered_map<uint64_t,std::string> & node2rank, std::ifstream & nodes_file) {
 	nodes.reserve(2e6);
 	std::string line;

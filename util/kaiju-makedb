@@ -204,18 +204,16 @@ then
 	if [ $DL -eq 1 ]
 	then
 		echo Downloading nr.gz
-		wget -c -N -nv $wgetProgress -P $DB ftp://ftp.ncbi.nih.gov/blast/db/FASTA/nr.gz
+		wget -c -nv $wgetProgress -P $DB https://ftp.ncbi.nih.gov/blast/db/FASTA/nr.gz
 		echo Downloading prot.accession2taxid.gz
-		wget -c -N -nv $wgetProgress -P $DB ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/prot.accession2taxid.gz
+		wget -c -nv $wgetProgress -P $DB https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/prot.accession2taxid.gz
 	fi
 	[ -r $DB/nr.gz ] || { echo Missing file nr.gz; exit 1; }
 	[ -r $DB/prot.accession2taxid.gz ] || { echo Missing file prot.accession2taxid.gz; exit 1; }
-	echo Unpacking prot.accession2taxid.gz
-	gunzip -c $DB/prot.accession2taxid.gz > $DB/prot.accession2taxid
 	if [ $index_only -eq 0 ]
 	then
 		echo Converting NR file to Kaiju database
-		gunzip -c $DB/nr.gz | kaiju-convertNR -t nodes.dmp -g $DB/prot.accession2taxid -e $SCRIPTDIR/kaiju-excluded-accessions.txt -a -o $DB/kaiju_db_$DB.faa -l $SCRIPTDIR/kaiju-taxonlistEuk.tsv
+		gunzip -c $DB/nr.gz | kaiju-convertNR -m merged.dmp -t nodes.dmp -g $DB/prot.accession2taxid.gz -e $SCRIPTDIR/kaiju-excluded-accessions.txt -a -o $DB/kaiju_db_$DB.faa -l $SCRIPTDIR/kaiju-taxonlistEuk.tsv
 	fi
 	[ -r $DB/kaiju_db_$DB.faa ] || { echo Missing file $DB/kaiju_db_$DB.faa; exit 1; }
 	echo Creating BWT from Kaiju database
@@ -236,12 +234,10 @@ then
 	fi
 	[ -r $DB/nr.gz ] || { echo Missing file nr.gz; exit 1; }
 	[ -r $DB/prot.accession2taxid.gz ] || { echo Missing file prot.accession2taxid.gz; exit 1; }
-	echo Unpacking prot.accession2taxid.gz
-	gunzip -c $DB/prot.accession2taxid.gz > $DB/prot.accession2taxid
 	if [ $index_only -eq 0 ]
 	then
 		echo Converting NR file to Kaiju database
-		gunzip -c $DB/nr.gz | kaiju-convertNR -v -t nodes.dmp -g $DB/prot.accession2taxid -e $SCRIPTDIR/kaiju-excluded-accessions.txt -a -o $DB/kaiju_db_$DB.faa 2>log
+		gunzip -c $DB/nr.gz | kaiju-convertNR -m merged.dmp -t nodes.dmp -g $DB/prot.accession2taxid.gz -e $SCRIPTDIR/kaiju-excluded-accessions.txt -a -o $DB/kaiju_db_$DB.faa 2>log
 	fi
 	[ -r $DB/kaiju_db_$DB.faa ] || { echo Missing file $DB/kaiju_db_$DB.faa; exit 1; }
 	echo Creating BWT from Kaiju database
