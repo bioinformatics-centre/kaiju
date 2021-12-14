@@ -317,6 +317,8 @@ first input file (specified by `-i`).  This behavior can be changed using the
 
 Options `lca` and `lowest` require the path to the file `nodes.dmp` by using the `-t` option.
 
+When the two tab-separated output files contain the classification score in the 4th column (by running `kaiju -v`), then option `-s` can be used to give precedence to the classification result with the higher score.
+
 ### KaijuX and KaijuP
 
 The programs `kaijux` and `kaijup` can be used for finding the best matching
