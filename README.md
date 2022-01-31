@@ -43,13 +43,19 @@ git clone https://github.com/bioinformatics-centre/kaiju.git
 ```
 This will create the directory `kaiju` in the current directory.
 
-Kaiju is written in C/C++11 for Linux and does not depend on additional libraries.
+Kaiju is written in C/C++11 for Linux. It uses the zlib library for reading gzip-compressed files.
+If not already installed, it is necessary to install the zlib development library, e.g. on Ubuntu using:
+```
+sudo apt install libz-dev
+```
+
 For compiling Kaiju and its associated programs, type:
 ```
 cd kaiju/src
 make
 ```
-Afterwards, Kaiju's executable files are available in the `kaiju/bin` directory.
+
+After compilation, Kaiju's executable files are available in the `kaiju/bin` directory.
 You can add this directory to your shell's `$PATH` variable or copy the files to a directory in your PATH.
 
 ## Creating the reference database and index
@@ -310,6 +316,8 @@ first input file (specified by `-i`).  This behavior can be changed using the
 - `lowest`: use the lowest ranking of the two taxon identifiers if they are within the same lineage. Otherwise use the LCA.
 
 Options `lca` and `lowest` require the path to the file `nodes.dmp` by using the `-t` option.
+
+When the two tab-separated output files contain the classification score in the 4th column (by running `kaiju -v`), then option `-s` can be used to give precedence to the classification result with the higher score.
 
 ### KaijuX and KaijuP
 

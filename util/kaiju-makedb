@@ -108,6 +108,7 @@ done
 #check if necessary programs are in the PATH
 command -v awk >/dev/null 2>/dev/null || { echo Error: awk not found; exit 1; }
 command -v wget >/dev/null 2>/dev/null || { echo Error: wget not found; exit 1; }
+command -v curl >/dev/null 2>/dev/null || { echo Error: curl not found; exit 1; }
 command -v xargs >/dev/null 2>/dev/null || { echo Error: xargs not found; exit 1; }
 command -v tar >/dev/null 2>/dev/null || { echo Error: tar not found; exit 1; }
 command -v gunzip >/dev/null 2>/dev/null || { echo Error: gunzip not found; exit 1; }
@@ -197,18 +198,16 @@ then
 	if [ $DL -eq 1 ]
 	then
 		echo Downloading nr.gz
-		wget -c -N -nv $wgetProgress -P $DB ftp://ftp.ncbi.nih.gov/blast/db/FASTA/nr.gz
+		wget -c -nv $wgetProgress -P $DB https://ftp.ncbi.nih.gov/blast/db/FASTA/nr.gz
 		echo Downloading prot.accession2taxid.gz
-		wget -c -N -nv $wgetProgress -P $DB ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/prot.accession2taxid.gz
+		wget -c -nv $wgetProgress -P $DB https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/prot.accession2taxid.gz
 	fi
 	[ -r $DB/nr.gz ] || { echo Missing file nr.gz; exit 1; }
 	[ -r $DB/prot.accession2taxid.gz ] || { echo Missing file prot.accession2taxid.gz; exit 1; }
-	echo Unpacking prot.accession2taxid.gz
-	gunzip -c $DB/prot.accession2taxid.gz > $DB/prot.accession2taxid
 	if [ $index_only -eq 0 ]
 	then
 		echo Converting NR file to Kaiju database
-		gunzip -c $DB/nr.gz | kaiju-convertNR -t nodes.dmp -g $DB/prot.accession2taxid -e $SCRIPTDIR/kaiju-excluded-accessions.txt -a -o $DB/kaiju_db_$DB.faa -l $SCRIPTDIR/kaiju-taxonlistEuk.tsv
+		gunzip -c $DB/nr.gz | kaiju-convertNR -m merged.dmp -t nodes.dmp -g $DB/prot.accession2taxid.gz -e $SCRIPTDIR/kaiju-excluded-accessions.txt -a -o $DB/kaiju_db_$DB.faa -l $SCRIPTDIR/kaiju-taxonlistEuk.tsv
 	fi
 	[ -r $DB/kaiju_db_$DB.faa ] || { echo Missing file $DB/kaiju_db_$DB.faa; exit 1; }
 	echo Creating BWT from Kaiju database
@@ -229,12 +228,10 @@ then
 	fi
 	[ -r $DB/nr.gz ] || { echo Missing file nr.gz; exit 1; }
 	[ -r $DB/prot.accession2taxid.gz ] || { echo Missing file prot.accession2taxid.gz; exit 1; }
-	echo Unpacking prot.accession2taxid.gz
-	gunzip -c $DB/prot.accession2taxid.gz > $DB/prot.accession2taxid
 	if [ $index_only -eq 0 ]
 	then
 		echo Converting NR file to Kaiju database
-		gunzip -c $DB/nr.gz | kaiju-convertNR -v -t nodes.dmp -g $DB/prot.accession2taxid -e $SCRIPTDIR/kaiju-excluded-accessions.txt -a -o $DB/kaiju_db_$DB.faa 2>log
+		gunzip -c $DB/nr.gz | kaiju-convertNR -m merged.dmp -t nodes.dmp -g $DB/prot.accession2taxid.gz -e $SCRIPTDIR/kaiju-excluded-accessions.txt -a -o $DB/kaiju_db_$DB.faa 2>log
 	fi
 	[ -r $DB/kaiju_db_$DB.faa ] || { echo Missing file $DB/kaiju_db_$DB.faa; exit 1; }
 	echo Creating BWT from Kaiju database
@@ -251,8 +248,8 @@ then
 		if [ $DL -eq 1 ]
 		then
 			echo Downloading file list for complete genomes from RefSeq
-			wget -c -N -nv -P $DB ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/fungi/assembly_summary.txt
-			awk 'BEGIN{FS="\t";OFS="/"} $11=="latest" && $20 ~ /^ftp:/ {l=split($20,a,"/");print $20,a[l]"_genomic.gbff.gz"}' $DB/assembly_summary.txt > $DB/downloadlist.txt
+			wget -c -N -nv -P $DB https://ftp.ncbi.nlm.nih.gov/genomes/refseq/fungi/assembly_summary.txt
+			awk 'BEGIN{FS="\t";OFS="/"} $11=="latest" && $20 ~ /^https:/ {l=split($20,a,"/");print $20,a[l]"_genomic.gbff.gz"}' $DB/assembly_summary.txt > $DB/downloadlist.txt
 			nfiles=`cat $DB/downloadlist.txt| wc -l`
 			echo Downloading $nfiles genome files from NCBI FTP server
 			cat $DB/downloadlist.txt | xargs -P $parallelDL -n 1 wget -P $DB/source -nv
@@ -277,14 +274,15 @@ then
 		if [ $DL -eq 1 ]
 		then
 			echo Downloading file list for complete genomes from RefSeq
-			wget -nv -O $DB/assembly_summary.archaea.txt ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/archaea/assembly_summary.txt
-			wget -nv -O $DB/assembly_summary.bacteria.txt ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/bacteria/assembly_summary.txt
-  		awk 'BEGIN{FS="\t";OFS="/"}$12=="Complete Genome" && $11=="latest" && $20 ~ /^ftp:/ {l=split($20,a,"/");print $20,a[l]"_genomic.gbff.gz"}' $DB/assembly_summary.bacteria.txt $DB/assembly_summary.archaea.txt > $DB/downloadlist.txt
+			wget -nv -O $DB/assembly_summary.archaea.txt https://ftp.ncbi.nlm.nih.gov/genomes/refseq/archaea/assembly_summary.txt
+			wget -nv -O $DB/assembly_summary.bacteria.txt https://ftp.ncbi.nlm.nih.gov/genomes/refseq/bacteria/assembly_summary.txt
+			awk 'BEGIN{FS="\t";OFS="/"}$12=="Complete Genome" && $11=="latest" && $20 ~ /^https:/ {l=split($20,a,"/");print $20,a[l]"_genomic.gbff.gz"}' $DB/assembly_summary.bacteria.txt $DB/assembly_summary.archaea.txt > $DB/downloadlist.txt
 			nfiles=`cat $DB/downloadlist.txt| wc -l`
 			echo Downloading $nfiles genome files from NCBI FTP server
 			cat $DB/downloadlist.txt | xargs -P $parallelDL -n 1 wget -P $DB/source -nv -nc
 			echo Downloading virus genomes from RefSeq
-			wget -N -nv $wgetProgress -P $DB/source 'ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.[0-9]*.genomic.gbff.gz'
+			#wget -N -nv $wgetProgress -P $DB/source 'ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.[0-9]*.genomic.gbff.gz'
+			(cd $DB/source && curl --silent -z -f -O 'https://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.[1-9].genomic.gbff.gz' || true)
 		fi
 		[ $(find $DB/source -type f -name "viral.[0-9]*.genomic.gbff.gz" | wc -l) != 0 ] || { echo Missing file $DB/source/viral.\*.genomic.gbff.gz; exit 1;}
 		echo Extracting protein sequences from downloaded files
@@ -309,7 +307,8 @@ then
 			echo Downloading proGenomes database
 			wget -N -nv $wgetProgress -P $DB/source http://progenomes.embl.de/data/repGenomes/freeze12.proteins.representatives.fasta.gz
 			echo Downloading virus genomes from RefSeq
-			wget -N -nv $wgetProgress -P $DB/source 'ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.[0-9]*.genomic.gbff.gz'
+			#wget -N -nv $wgetProgress -P $DB/source 'ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.[0-9]*.genomic.gbff.gz'
+			(cd $DB/source && curl --silent -z -f -O 'https://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.[1-9].genomic.gbff.gz' || true)
 		fi
 		[ $(find $DB/source -type f -name "viral.[0-9]*.genomic.gbff.gz" | wc -l) != 0 ] || { echo Missing file $DB/source/viral.\*.genomic.gbff.gz; exit 1;}
 		echo Extracting protein sequences from downloaded files
@@ -333,7 +332,8 @@ then
 		if [ $DL -eq 1 ]
 		then
 			echo Downloading virus genomes from RefSeq
-			wget -N -nv $wgetProgress -P $DB/source 'ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.[0-9]*.genomic.gbff.gz'
+			#wget -N -nv $wgetProgress -P $DB/source 'ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.[0-9]*.genomic.gbff.gz'
+			(cd $DB/source && curl --silent -z -f -O 'https://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.[1-9].genomic.gbff.gz' || true)
 		fi
 		[ $(find $DB/source -type f -name "viral.[0-9]*.genomic.gbff.gz" | wc -l) != 0 ] || { echo Missing file $DB/source/viral.\*.genomic.gbff.gz; exit 1;}
 		echo Extracting protein sequences from downloaded files
@@ -355,7 +355,8 @@ then
 		if [ $DL -eq 1 ]
 		then
 			echo Downloading plasmid genomes from RefSeq
-			wget -N -nv $wgetProgress -P $DB/source 'ftp://ftp.ncbi.nlm.nih.gov/refseq/release/plasmid/plasmid.[0-9]*.genomic.gbff.gz'
+			#wget -N -nv $wgetProgress -P $DB/source 'ftp://ftp.ncbi.nlm.nih.gov/refseq/release/plasmid/plasmid.[0-9]*.genomic.gbff.gz'
+			(cd $DB/source && curl --silent -z -f -O 'https://ftp.ncbi.nlm.nih.gov/refseq/release/plasmid/plasmid.[1-9].genomic.gbff.gz' || true)
 		fi
 		[ $(find $DB/source -type f -name "plasmid.[0-9]*.genomic.gbff.gz" | wc -l) != 0 ] || { echo Missing file $DB/source/plasmid.\*.genomic.gbff.gz; exit 1; }
 		echo Extracting protein sequences from downloaded files
@@ -374,7 +375,7 @@ then
 	mkdir -p $DB
 	if [ $index_only -eq 0 ]
 	then
-		fname="U-RVDBv21.0-prot.fasta.bz2"
+		fname="U-RVDBv22.0-prot.fasta.xz"
 		if [ $DL -eq 1 ]
 		then
 			echo Downloading RVDB
@@ -387,7 +388,7 @@ then
 		echo Unpacking prot.accession2taxid.gz
 		gunzip -c $DB/prot.accession2taxid.gz > $DB/prot.accession2taxid
 		echo Extracting protein sequences from $fname
-		bunzip2 -c $DB/$fname | perl -lsne 'BEGIN{open(F,$m);while(<F>){@F=split;$h{$F[1]}=$F[2]}}if(/>[^\|]+\|[^\|]+\|([^\|]+)/){print ">",$1,"_",$h{$1};}else{print}' -- -m=$DB/prot.accession2taxid > $DB/kaiju_db_$DB.faa
+		unxz -c $DB/$fname | perl -lsne 'BEGIN{open(F,$m);while(<F>){@F=split;$h{$F[1]}=$F[2]}}if(/>[^\|]+\|[^\|]+\|([^\|]+)/){if(defined($h{$1})){print ">",$1,"_",$h{$1};}}else{print}' -- -m=$DB/prot.accession2taxid > $DB/kaiju_db_$DB.faa
 	fi
 	[ -r $DB/kaiju_db_$DB.faa ] || { echo Missing file $DB/kaiju_db_$DB.faa; exit 1; }
 	echo Creating Borrows-Wheeler transform

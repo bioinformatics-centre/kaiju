@@ -69,7 +69,7 @@ kaiju-addTaxonNames: makefile bwt/mkbwt kaiju-addTaxonNames.o util.o
 	$(CXX) $(LDFLAGS) -o kaiju-addTaxonNames kaiju-addTaxonNames.o util.o $(BWTOBJS)
 
 kaiju-convertNR: makefile bwt/mkbwt Config.o kaiju-convertNR.o util.o $(BLASTOBJS)
-	$(CXX) $(LDFLAGS) -o kaiju-convertNR kaiju-convertNR.o Config.o util.o $(BWTOBJS) $(BLASTOBJS)
+	$(CXX) $(LDFLAGS) -o kaiju-convertNR kaiju-convertNR.o Config.o util.o $(BWTOBJS) $(BLASTOBJS) -lz
 
 
 %.o : %.c

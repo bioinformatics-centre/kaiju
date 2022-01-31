@@ -1,0 +1,21 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  build_and_test_viruses:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build
+      run: cd src && make -j 2
+    - name: Make DB
+      run: ./test/viruses/makedb.sh
+    - name: Run dataset SARS-CoV-2 single end
+      run: ./test/viruses/sars-cov-2-SE.sh
+
