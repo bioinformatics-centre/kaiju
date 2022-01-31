@@ -35,8 +35,8 @@ usage() {
 	echo
 	echo  " nr_euk: nr and additionally including fungi and microbial eukaryotes"
 	echo
-	echo  " mar_ref, mar_db, mar_mag: individual marine reference databases or assembled genomes from the Marine Metagenomics Portal"
-	echo  " mar: combination of all three MAR databases"
+	echo  " mar_ref, mar_db: individual marine reference databases or assembled genomes from the Marine Metagenomics Portal"
+	echo  " mar: combination of both MAR databases"
 	echo
 	echo  " fungi: All fungi genomes from NCBI RefSeq (any assembly status)."
 	echo
@@ -165,24 +165,18 @@ then
 			if [ "$DB" = "mar" -o "$DB" = "mar_ref" ]
 			then
 				echo Downloading MarRef reference genomes from the Marine Metagenomics Portal
-				wget -nv -O $DB/dl_list_marref_protein.txt https://s1.sfb.uit.no/public/mar/Resources/kaiju/dl_list_marref_protein.txt
-				cat $DB/dl_list_marref_protein.txt | xargs -P $parallelDL wget -P $DB/source -q || true
+				wget -nv -O $DB/MarRef_protein.tar.gz 'https://databasesapi.sfb.uit.no/rpc/v1/MarRef/resources?attr=asmbl:sequences&mode=merged&glob=protein'
+				tar -zxf $DB/MarRef_protein.tar.gz -C $DB/source
 			fi
 			if [ "$DB" = "mar" -o "$DB" = "mar_db" ]
 			then
 				echo Downloading MarDB complete genomes from the Marine Metagenomics Portal
-				wget -nv -O $DB/dl_list_mardb_no_mags_protein.txt https://s1.sfb.uit.no/public/mar/Resources/kaiju/dl_list_mardb_no_mags_protein.txt
-				cat $DB/dl_list_mardb_no_mags_protein.txt | xargs -P $parallelDL wget -P $DB/source -q || true
-			fi
-			if [ "$DB" = "mar" -o "$DB" = "mar_mag" ]
-			then
-				echo Downloading MarDB metagenomic assembled genomes from the Marine Metagenomics Portal
-				wget -nv -O $DB/dl_list_mardb_mags_protein.txt https://s1.sfb.uit.no/public/mar/Resources/kaiju/dl_list_mardb_mags_protein.txt
-				cat $DB/dl_list_mardb_mags_protein.txt | xargs -P $parallelDL wget -P $DB/source -q || true
+				wget -nv -O $DB/MarDB_protein.tar.gz 'https://databasesapi.sfb.uit.no/rpc/v1/MarDB/resources?attr=asmbl:sequences&mode=merged&glob=protein'
+				tar -zxf $DB/MarRef_protein.tar.gz -C $DB/source
 			fi
 			echo Downloading metadata from MMP
-			wget -nv -O $DB/MarRef.tsv https://s1.sfb.uit.no/public/mar/MarRef/Metadatabase/Current.tsv
-			wget -nv -O $DB/MarDB.tsv https://s1.sfb.uit.no/public/mar/MarDB/Metadatabase/Current.tsv
+			curl "https://databasesapi.sfb.uit.no/rpc/v1/MarRef/graphs?x%5Basmbl%3Asequences%5D=each&y_yName%5Btax%3Aorganism%5D=setR" -o MarRef.json -L
+			curl "https://databasesapi.sfb.uit.no/rpc/v1/MarDB/graphs?x%5Basmbl%3Asequences%5D=each&y_yName%5Btax%3Aorganism%5D=setR" -o MarDB.json -L
 		fi
 		[ -r $DB/MarRef.tsv ] || { echo Missing file MarRef.tsv; exit 1; }
 		[ -r $DB/MarDB.tsv ] || { echo Missing file MarDB.tsv; exit 1; }
