@@ -175,7 +175,7 @@ then
 				echo Downloading MarDB complete genomes from the Marine Metagenomics Portal
 				wget -O $DB/MarDB_protein.tar.gz 'https://databasesapi.sfb.uit.no/rpc/v1/MarDB/resources?attr=asmbl:sequences&glob=protein'
 				echo Extracting MarDB complete genomes
-				tar -zxf $DB/MarRef_protein.tar.gz -C $DB/source
+				tar -zxf $DB/MarDB_protein.tar.gz -C $DB/source
 			fi
 			echo Downloading metadata from MMP
 			curl "https://databasesapi.sfb.uit.no/rpc/v1/MarRef/graphs?x%5Basmbl%3Asequences%5D=each&y_yName%5Btax%3Aorganism%5D=setR" -o $DB/MarRef.json -L
