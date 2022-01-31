@@ -156,7 +156,7 @@ echo Extracting taxdump.tar.gz
 tar xf taxdump.tar.gz nodes.dmp names.dmp merged.dmp
 
 #----------------------------------------------------------------------------------------------------------------------------------
-if [ "$DB" = "mar" -o "$DB" = "mar_ref" -o "$DB" = "mar_db" -o "$DB" = "mar_mag" ]
+if [ "$DB" = "mar" -o "$DB" = "mar_ref" -o "$DB" = "mar_db" ]
 then
 	mkdir -p $DB/source
 	if [ $index_only -eq 0 ]
@@ -166,23 +166,25 @@ then
 			if [ "$DB" = "mar" -o "$DB" = "mar_ref" ]
 			then
 				echo Downloading MarRef reference genomes from the Marine Metagenomics Portal
-				wget -nv -O $DB/MarRef_protein.tar.gz 'https://databasesapi.sfb.uit.no/rpc/v1/MarRef/resources?attr=asmbl:sequences&mode=merged&glob=protein'
+				wget -O $DB/MarRef_protein.tar.gz 'https://databasesapi.sfb.uit.no/rpc/v1/MarRef/resources?attr=asmbl:sequences&glob=protein'
+				echo Extracting MarRef reference genomes
 				tar -zxf $DB/MarRef_protein.tar.gz -C $DB/source
 			fi
 			if [ "$DB" = "mar" -o "$DB" = "mar_db" ]
 			then
 				echo Downloading MarDB complete genomes from the Marine Metagenomics Portal
-				wget -nv -O $DB/MarDB_protein.tar.gz 'https://databasesapi.sfb.uit.no/rpc/v1/MarDB/resources?attr=asmbl:sequences&mode=merged&glob=protein'
+				wget -O $DB/MarDB_protein.tar.gz 'https://databasesapi.sfb.uit.no/rpc/v1/MarDB/resources?attr=asmbl:sequences&glob=protein'
+				echo Extracting MarDB complete genomes
 				tar -zxf $DB/MarRef_protein.tar.gz -C $DB/source
 			fi
 			echo Downloading metadata from MMP
-			curl "https://databasesapi.sfb.uit.no/rpc/v1/MarRef/graphs?x%5Basmbl%3Asequences%5D=each&y_yName%5Btax%3Aorganism%5D=setR" -o MarRef.json -L
-			curl "https://databasesapi.sfb.uit.no/rpc/v1/MarDB/graphs?x%5Basmbl%3Asequences%5D=each&y_yName%5Btax%3Aorganism%5D=setR" -o MarDB.json -L
+			curl "https://databasesapi.sfb.uit.no/rpc/v1/MarRef/graphs?x%5Basmbl%3Asequences%5D=each&y_yName%5Btax%3Aorganism%5D=setR" -o $DB/MarRef.json -L
+			curl "https://databasesapi.sfb.uit.no/rpc/v1/MarDB/graphs?x%5Basmbl%3Asequences%5D=each&y_yName%5Btax%3Aorganism%5D=setR" -o $DB/MarDB.json -L
 		fi
-		[ -r $DB/MarRef.tsv ] || { echo Missing file MarRef.tsv; exit 1; }
-		[ -r $DB/MarDB.tsv ] || { echo Missing file MarDB.tsv; exit 1; }
+		[ -r $DB/MarRef.json ] || { echo Missing file MarRef.json; exit 1; }
+		[ -r $DB/MarDB.json ] || { echo Missing file MarDB.json; exit 1; }
 		echo Converting MMP data to Kaiju format
-		python $SCRIPTDIR/kaiju-convertMAR.py --ref $DB/MarRef.tsv --db $DB/MarDB.tsv --genomes $DB/source > $DB/kaiju_db_tmp.faa
+		python $SCRIPTDIR/kaiju-convertMAR.py --ref $DB/MarRef.json --db $DB/MarDB.json --genomes $DB/source > $DB/kaiju_db_tmp.faa
 		cat $DB/kaiju_db_tmp.faa | perl -lsne 'BEGIN{open(F,$m);while(<F>){@F=split(/[\|\s]+/);$h{$F[0]}=$F[1]}}if(/(>.+)_(\d+)/){print $1,"_",defined($h{$2})?$h{$2}:$2;}else{print}' -- -m=merged.dmp > $DB/kaiju_db_$DB.faa
 		rm $DB/kaiju_db_tmp.faa
 	fi
