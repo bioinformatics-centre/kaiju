@@ -196,7 +196,7 @@ then
 				mv -n $DB/source/public.sfb.uit.no/MarDB/genomes/* $DB/source
 				rm -rf $DB/source/public.sfb.uit.no
 				echo "${GREEN}Converting MarRef data to Kaiju format${NC}"
-				python $SCRIPTDIR/kaiju-convertMAR.py --ref $DB/MarRef.json --genomes $DB/source >> $DB/kaiju_db_tmp.faa
+				python $SCRIPTDIR/kaiju-convertMAR.py --ref $DB/MarDB.json --genomes $DB/source >> $DB/kaiju_db_tmp.faa
 			fi
 		fi
 	fi
