@@ -170,7 +170,6 @@ def process_mardb(ref, nodes, genomes):
         (
             "# Warnings / Sequences removed:\n"
             "# Duplicates: {duplicates}\n"
-            "# Accessions with no taxonomic lineage: {no_lineage}\n"
             "# Accessions with no taxid in nodes.dmp: {no_tax}\n"
             "# Sequences with asterix: {asterix}\n"
         ).format(
