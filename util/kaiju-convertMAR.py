@@ -153,22 +153,26 @@ def process_genomes(genome_dir, lineage_map, tax_ids):
                 processed_accessions.add(accession)
     return warnings
 
-def process_mardb(ref, db, nodes, genomes):
+def process_mardb(ref, nodes, genomes):
     """
     Parse TSVs and reformat MarDB genomes to accommodate Kaiju FASTA
     reference requirements.
     """
-    lineage_map = parse_json(ref)
-    lineage_map = parse_json(db, db_map=lineage_map)
+    if args.ref:
+        lineage_map = parse_json(ref)
+    else:
+        exit("No JSON metadata specified (--ref)")
+    #lineage_map = parse_json(db, db_map=lineage_map)
     tax_ids = parse_nodes(nodes)
     warn = process_genomes(genomes, lineage_map, tax_ids)
     # Output simple statistic to stderr
     sys.stderr.write(
         (
-            "Warnings / Sequences removed:\nDuplicates: "
-            "{duplicates}\nAccessions with no taxonomic lineage: {no_lineage}\n"
-            "Accessions with no taxid in nodes.dmp: {no_tax}\n"
-            "Sequences with asterix: {asterix}\n"
+            "# Warnings / Sequences removed:\n"
+            "# Duplicates: {duplicates}\n"
+            "# Accessions with no taxonomic lineage: {no_lineage}\n"
+            "# Accessions with no taxid in nodes.dmp: {no_tax}\n"
+            "# Sequences with asterix: {asterix}\n"
         ).format(
             duplicates=warn["duplicate"],
             no_lineage=warn["nolineage"],
@@ -181,9 +185,9 @@ def process_mardb(ref, db, nodes, genomes):
 if __name__ == "__main__":
     p = argparse.ArgumentParser(description=__doc__,
             formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    p.add_argument("--ref", default="MarRef.json", help="MarRef TSV file path")
-    p.add_argument("--db", default="MarDB.json", help="MarDB TSV file path")
+    p.add_argument("--ref", default=False, help="Mar metadta JSON file path")
+    #p.add_argument("--db", default=False, help="MarDB TSV file path")
     p.add_argument("--nodes", default="nodes.dmp", help="NCBI nodes.dmp file path")
     p.add_argument("--genomes", default="genomes", help="genomes download directory")
     args = p.parse_args()
-    process_mardb(args.ref, args.db, args.nodes, args.genomes)
+    process_mardb(args.ref, args.nodes, args.genomes)
