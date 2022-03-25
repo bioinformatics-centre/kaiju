@@ -177,7 +177,8 @@ then
 				MARREF_COUNT=$(jq .graph[].x $DB/MarRef.json | wc -l)
 				echo "${GREEN}Downloading MarRef reference genomes from the Marine Metagenomics Portal using $parallelDL threads${NC}"
 				jq .graph[].x $DB/MarRef.json | tr -d '"' | xargs -I{} -P $parallelDL wget -P $DB/source -q -np --recursive https://public.sfb.uit.no/MarRef/genomes/{}/protein.faa || true
-				mv $DB/source/public.sfb.uit.no/MarRef/genomes/* $DB/source
+				# Some genomes might be part of both DBs, causing 
+				mv -n $DB/source/public.sfb.uit.no/MarRef/genomes/* $DB/source
 				rm -rf $DB/source/public.sfb.uit.no
 				echo "${GREEN}Converting MarRef data to Kaiju format${NC}"
 				python $SCRIPTDIR/kaiju-convertMAR.py --ref $DB/MarRef.json --genomes $DB/source >> $DB/kaiju_db_tmp.faa
@@ -186,12 +187,13 @@ then
 			then
 				echo "${GREEN}Downloading MarDB metadata from MMP (databasesapi.sfb.uit.no)${NC}"
 				MARDB_VERSION=$(curl -Ls -o /dev/null -w %{url_effective} https://databasesapi.sfb.uit.no/rest/v1/MarDB/records | grep -Po 'ver=\K\d+\.\d+')
+				echo "${GREEN}Current MarDB version is: ${MARDB_VERSION}${NC}"
 				curl "https://databasesapi.sfb.uit.no/rpc/v1/MarDB/graphs?x%5Basmbl%3Asequences%5D=each&y_yName%5Btax%3Aorganism%5D=setR" -o $DB/MarDB.json -L
 				[ -r $DB/MarDB.json ] || { echo -e "${RED}Missing file MarDB.json${NC}"; exit 1; }
 				MARDB_COUNT=$(jq .graph[].x $DB/MarDB.json | wc -l)
 				echo "${GREEN}Downloading MarDB complete genomes from the Marine Metagenomics Portal using $parallelDL threads${NC}"
 				jq .graph[].x $DB/MarDB.json | tr -d '"' | xargs -I{} -P $parallelDL wget -P $DB/source -q -np --recursive https://public.sfb.uit.no/MarDB/genomes/{}/protein.faa || true
-				mv $DB/source/public.sfb.uit.no/MarDB/genomes/* $DB/source
+				mv -n $DB/source/public.sfb.uit.no/MarDB/genomes/* $DB/source
 				rm -rf $DB/source/public.sfb.uit.no
 				echo "${GREEN}Converting MarRef data to Kaiju format${NC}"
 				python $SCRIPTDIR/kaiju-convertMAR.py --ref $DB/MarRef.json --genomes $DB/source >> $DB/kaiju_db_tmp.faa
@@ -207,20 +209,20 @@ then
 	kaiju-mkfmi $DB/kaiju_db_$DB
 	if [ "$DB" = "mar" ]
 	then
-		echo "${GREEN}Built MarRef v${MARREF_VERSION}\n--Metadata contains ${MARREF_COUNT} entries${NC}"
-		echo "${GREEN}Built MarDB v${MARDB_VERSION}\n--Metadata contains ${MARDB_COUNT} entries${NC}"
+		echo "${GREEN}Added MarRef v${MARREF_VERSION}\n--Metadata contains ${MARREF_COUNT} entries${NC}"
+		echo "${GREEN}Added MarDB v${MARDB_VERSION}\n--Metadata contains ${MARDB_COUNT} entries${NC}"
 		MARREF_MARDB_COUNT=`expr ${MARREF_COUNT} + ${MARDB_COUNT}`
 		echo "${GREEN}Combined\n--Metadata contains: ${MARREF_MARDB_COUNT} entries"
 	fi
 	if [ "$DB" = "mar_ref" ]
 	then
-		echo "${GREEN}Built MarRef v${MARREF_VERSION}\n--Metadata contains ${MARREF_COUNT} entries${NC}"
+		echo "${GREEN}Added MarRef v${MARREF_VERSION}\n--Metadata contains ${MARREF_COUNT} entries${NC}"
 	fi
 	if [ "$DB" = "mar_db" ]
 	then
-		echo "${GREEN}Built MarDB v${MARDB_VERSION}\n--Metadata contains ${MARDB_COUNT} entries${NC}"
+		echo "${GREEN}Added MarDB v${MARDB_VERSION}\n--Metadata contains ${MARDB_COUNT} entries${NC}"
 	fi
-	echo "${GREEN}Kaiju-db has `ls -1 $DB/source|wc -l` genomes. (This number should add up to total metadata entries. If not, some genomes have missing sequence data either from NCBI or from local MMP backend processing for various reasons and/or criteria)${NC}"
+	echo "${GREEN}\nCreated database ${DB}/ has sequences from `ls -1 $DB/source|wc -l` genomes.\n(This number should add up to total metadata entries. If not, some genomes have missing sequence data either from NCBI or from local MMP backend processing for various reasons and/or criteria)${NC}"
 	echo "${GREEN}\nYou should keep this information${NC}"
 	echo "${GREEN}Read more about the Mar databases here: https://mmp2.sfb.uit.no/databases/${NC}"
 fi
