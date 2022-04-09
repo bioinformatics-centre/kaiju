@@ -7,6 +7,9 @@ SCRIPTDIR=$(dirname $0)
 
 PATH=$SCRIPTDIR:$PATH
 
+GREEN='\033[0;32m' # For status echoes
+RED='\033[0;31m' # For errors
+NC='\033[0m' # No Color / Reset
 threadsBWT=5
 parallelDL=5
 parallelConversions=5
@@ -35,8 +38,8 @@ usage() {
 	echo
 	echo  " nr_euk: nr and additionally including fungi and microbial eukaryotes"
 	echo
-	echo  " mar_ref, mar_db, mar_mag: individual marine reference databases or assembled genomes from the Marine Metagenomics Portal"
-	echo  " mar: combination of all three MAR databases"
+	echo  " mar_ref, mar_db: individual marine reference databases or assembled genomes from the Marine Metagenomics Portal"
+	echo  " mar: combination of both MAR databases"
 	echo
 	echo  " fungi: All fungi genomes from NCBI RefSeq (any assembly status)."
 	echo
@@ -131,6 +134,7 @@ command -v kaiju-convertNR >/dev/null 2>/dev/null || { echo Error: kaiju-convert
 if [ "$DB" = "mar" -o "$DB" = "mar_ref" -o "$DB" = "mar_db" -o "$DB" = "mar_mag" ]
 then
 	command -v python >/dev/null 2>/dev/null || { echo Error: python not found; exit 1; }
+	jq --help >/dev/null 2>/dev/null || { echo jq is not installed; exit 1; }
 	python -c 'from collections import Counter' >/dev/null 2>/dev/null || { echo Error: Python version too low for using Counter; exit 1; }
 fi
 
@@ -148,15 +152,15 @@ set -e
 #download taxdump, this is needed in all cases
 if [ $DL -eq 1 ]
 then
-	echo Downloading taxdump.tar.gz
+	echo "${GREEN}Downloading taxdump.tar.gz${NC}"
 	wget -N -nv $wgetProgress ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz
 fi
 [ -r taxdump.tar.gz ] || { echo Missing file taxdump.tar.gz; exit 1; }
-echo Extracting taxdump.tar.gz
+echo "${GREEN}Extracting taxdump.tar.gz${NC}"
 tar xf taxdump.tar.gz nodes.dmp names.dmp merged.dmp
 
 #----------------------------------------------------------------------------------------------------------------------------------
-if [ "$DB" = "mar" -o "$DB" = "mar_ref" -o "$DB" = "mar_db" -o "$DB" = "mar_mag" ]
+if [ "$DB" = "mar" -o "$DB" = "mar_ref" -o "$DB" = "mar_db" ]
 then
 	mkdir -p $DB/source
 	if [ $index_only -eq 0 ]
@@ -165,37 +169,62 @@ then
 		then
 			if [ "$DB" = "mar" -o "$DB" = "mar_ref" ]
 			then
-				echo Downloading MarRef reference genomes from the Marine Metagenomics Portal
-				wget -nv -O $DB/dl_list_marref_protein.txt https://s1.sfb.uit.no/public/mar/Resources/kaiju/dl_list_marref_protein.txt
-				cat $DB/dl_list_marref_protein.txt | xargs -P $parallelDL wget -P $DB/source -q || true
+				echo "${GREEN}Downloading MarRef metadata from MMP (databasesapi.sfb.uit.no)${NC}"
+				MARREF_VERSION=$(curl -Ls -o /dev/null -w %{url_effective} https://databasesapi.sfb.uit.no/rest/v1/MarRef/records | grep -Po 'ver=\K\d+\.\d+')
+				echo "${GREEN}Current MarRef version is: ${MARREF_VERSION}${NC}"
+				curl "https://databasesapi.sfb.uit.no/rpc/v1/MarRef/graphs?x%5Basmbl%3Asequences%5D=each&y_yName%5Btax%3Aorganism%5D=setR" -o $DB/MarRef.json -L
+				[ -r $DB/MarRef.json ] || { echo -e "${RED}Missing file MarRef.json${NC}"; exit 1; }
+				MARREF_COUNT=$(jq .graph[].x $DB/MarRef.json | wc -l)
+				echo "${GREEN}Downloading MarRef reference genomes from the Marine Metagenomics Portal using $parallelDL threads${NC}"
+				jq .graph[].x $DB/MarRef.json | tr -d '"' | xargs -I{} -P $parallelDL wget -P $DB/source -q -np --recursive https://public.sfb.uit.no/MarRef/genomes/{}/protein.faa || true
+				# Some genomes might be part of both DBs, causing 
+				mv -n $DB/source/public.sfb.uit.no/MarRef/genomes/* $DB/source
+				rm -rf $DB/source/public.sfb.uit.no
+				echo "${GREEN}Converting MarRef data to Kaiju format${NC}"
+				python $SCRIPTDIR/kaiju-convertMAR.py --ref $DB/MarRef.json --genomes $DB/source >> $DB/kaiju_db_tmp.faa
 			fi
 			if [ "$DB" = "mar" -o "$DB" = "mar_db" ]
 			then
-				echo Downloading MarDB complete genomes from the Marine Metagenomics Portal
-				wget -nv -O $DB/dl_list_mardb_no_mags_protein.txt https://s1.sfb.uit.no/public/mar/Resources/kaiju/dl_list_mardb_no_mags_protein.txt
-				cat $DB/dl_list_mardb_no_mags_protein.txt | xargs -P $parallelDL wget -P $DB/source -q || true
+				echo "${GREEN}Downloading MarDB metadata from MMP (databasesapi.sfb.uit.no)${NC}"
+				MARDB_VERSION=$(curl -Ls -o /dev/null -w %{url_effective} https://databasesapi.sfb.uit.no/rest/v1/MarDB/records | grep -Po 'ver=\K\d+\.\d+')
+				echo "${GREEN}Current MarDB version is: ${MARDB_VERSION}${NC}"
+				curl "https://databasesapi.sfb.uit.no/rpc/v1/MarDB/graphs?x%5Basmbl%3Asequences%5D=each&y_yName%5Btax%3Aorganism%5D=setR" -o $DB/MarDB.json -L
+				[ -r $DB/MarDB.json ] || { echo -e "${RED}Missing file MarDB.json${NC}"; exit 1; }
+				MARDB_COUNT=$(jq .graph[].x $DB/MarDB.json | wc -l)
+				echo "${GREEN}Downloading MarDB complete genomes from the Marine Metagenomics Portal using $parallelDL threads${NC}"
+				jq .graph[].x $DB/MarDB.json | tr -d '"' | xargs -I{} -P $parallelDL wget -P $DB/source -q -np --recursive https://public.sfb.uit.no/MarDB/genomes/{}/protein.faa || true
+				mv -n $DB/source/public.sfb.uit.no/MarDB/genomes/* $DB/source
+				rm -rf $DB/source/public.sfb.uit.no
+				echo "${GREEN}Converting MarRef data to Kaiju format${NC}"
+				python $SCRIPTDIR/kaiju-convertMAR.py --ref $DB/MarDB.json --genomes $DB/source >> $DB/kaiju_db_tmp.faa
 			fi
-			if [ "$DB" = "mar" -o "$DB" = "mar_mag" ]
-			then
-				echo Downloading MarDB metagenomic assembled genomes from the Marine Metagenomics Portal
-				wget -nv -O $DB/dl_list_mardb_mags_protein.txt https://s1.sfb.uit.no/public/mar/Resources/kaiju/dl_list_mardb_mags_protein.txt
-				cat $DB/dl_list_mardb_mags_protein.txt | xargs -P $parallelDL wget -P $DB/source -q || true
-			fi
-			echo Downloading metadata from MMP
-			wget -nv -O $DB/MarRef.tsv https://s1.sfb.uit.no/public/mar/MarRef/Metadatabase/Current.tsv
-			wget -nv -O $DB/MarDB.tsv https://s1.sfb.uit.no/public/mar/MarDB/Metadatabase/Current.tsv
 		fi
-		[ -r $DB/MarRef.tsv ] || { echo Missing file MarRef.tsv; exit 1; }
-		[ -r $DB/MarDB.tsv ] || { echo Missing file MarDB.tsv; exit 1; }
-		echo Converting MMP data to Kaiju format
-		python $SCRIPTDIR/kaiju-convertMAR.py --ref $DB/MarRef.tsv --db $DB/MarDB.tsv --genomes $DB/source > $DB/kaiju_db_tmp.faa
-		cat $DB/kaiju_db_tmp.faa | perl -lsne 'BEGIN{open(F,$m);while(<F>){@F=split(/[\|\s]+/);$h{$F[0]}=$F[1]}}if(/(>.+)_(\d+)/){print $1,"_",defined($h{$2})?$h{$2}:$2;}else{print}' -- -m=merged.dmp > $DB/kaiju_db_$DB.faa
-		rm $DB/kaiju_db_tmp.faa
 	fi
-	echo Creating Borrows-Wheeler transform
+	echo "${GREEN}Performing Perl oneliner-wizardry${NC}"
+	cat $DB/kaiju_db_tmp.faa | perl -lsne 'BEGIN{open(F,$m);while(<F>){@F=split(/[\|\s]+/);$h{$F[0]}=$F[1]}}if(/(>.+)_(\d+)/){print $1,"_",defined($h{$2})?$h{$2}:$2;}else{print}' -- -m=merged.dmp > $DB/kaiju_db_$DB.faa
+	rm $DB/kaiju_db_tmp.faa
+	echo "${GREEN}Creating Borrows-Wheeler transform${NC}"
 	kaiju-mkbwt -n $threadsBWT -e $exponentSA -a ACDEFGHIKLMNPQRSTVWY -o $DB/kaiju_db_$DB $DB/kaiju_db_$DB.faa
-	echo Creating FM-Index
+	echo "${GREEN}Creating FM-Index${NC}"
 	kaiju-mkfmi $DB/kaiju_db_$DB
+	if [ "$DB" = "mar" ]
+	then
+		echo "${GREEN}Added MarRef v${MARREF_VERSION}\n--Metadata contains ${MARREF_COUNT} entries${NC}"
+		echo "${GREEN}Added MarDB v${MARDB_VERSION}\n--Metadata contains ${MARDB_COUNT} entries${NC}"
+		MARREF_MARDB_COUNT=`expr ${MARREF_COUNT} + ${MARDB_COUNT}`
+		echo "${GREEN}Combined\n--Metadata contains: ${MARREF_MARDB_COUNT} entries"
+	fi
+	if [ "$DB" = "mar_ref" ]
+	then
+		echo "${GREEN}Added MarRef v${MARREF_VERSION}\n--Metadata contains ${MARREF_COUNT} entries${NC}"
+	fi
+	if [ "$DB" = "mar_db" ]
+	then
+		echo "${GREEN}Added MarDB v${MARDB_VERSION}\n--Metadata contains ${MARDB_COUNT} entries${NC}"
+	fi
+	echo "${GREEN}\nCreated database ${DB}/ has sequences from `ls -1 $DB/source|wc -l` genomes.\n(This number should add up to total metadata entries. If not, some genomes have missing sequence data either from NCBI or from local MMP backend processing for various reasons and/or criteria)${NC}"
+	echo "${GREEN}\nYou should keep this information${NC}"
+	echo "${GREEN}Read more about the Mar databases here: https://mmp2.sfb.uit.no/databases/${NC}"
 fi
 #----------------------------------------------------------------------------------------------------------------------------------
 if [ "$DB" = "nr_euk" ]

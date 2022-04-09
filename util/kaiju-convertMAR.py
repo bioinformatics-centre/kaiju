@@ -11,6 +11,7 @@ Espen M. Robertsen, 2017. espen.m.robertsen@uit.no
 import argparse
 import os
 import sys
+import json
 from collections import Counter
 
 
@@ -64,6 +65,8 @@ def readfq(fp):
 
 def parse_tsv(tsv, db_map=None):
     """
+    DEPRECATED as of 2022
+
     Hardcoded columns refer to taxon_lineage_ids and mmp_ID within MarRef
     and MarDB reference files. Returns a dictionary linking mmp_ID to
     last element of taxon_lineage_ids.
@@ -81,6 +84,19 @@ def parse_tsv(tsv, db_map=None):
             db_map[tokens[101]] = lineage
     return db_map
 
+def parse_json(metadata, db_map=None):
+    """
+    Parse json files retrieved from mmp api. Returns a dictionary linking NCBI
+    assembly accession (GCA) to NCBI taxonomic id
+    """
+    if db_map is None:
+        tmp = json.load(open(metadata, "r"))
+        db_map = {entry['x']:entry['y_yName'][0].split(":")[-1] for entry in tmp['graph']}
+    else:
+        tmp = json.load(open(metadata, "r"))
+        tmp = {entry['x']:entry['y_yName'][0].split(":")[-1] for entry in tmp['graph']}
+        db_map = {**db_map, **tmp}
+    return db_map
 
 def parse_nodes(nodes):
     """
@@ -93,34 +109,33 @@ def parse_nodes(nodes):
     		ids.add(line.partition("|")[0].strip())
     return ids
 
-
 def process_genomes(genome_dir, lineage_map, tax_ids):
     """
     Walk through the genomes directory parsing .faa files, updating the
     sequence header to include the NCBI taxonomy. Prints to STDOUT.
     """
-    processed_mmp = set()
+    processed_accessions = set()
     warnings = Counter()
     for root, dirs, files in os.walk(genome_dir):
-        for filename in files:
-            if not filename.endswith(".faa"):
-                continue
-
-            with open(os.path.join(root, filename)) as fh:
+        for dirname in dirs:
+            accession = dirname
+            filename = os.path.join(dirname, "protein.faa")
+            filename = os.path.join(root, filename)
+            with open(filename) as fh:
                 for i, (name, seq, _) in enumerate(readfq(fh), start=1):
-                    mmp_id = name.rpartition("_")[-1]
+
                     # If this mmp accession is a duplicate (already processed), skip it.
-                    if mmp_id in processed_mmp:
+                    if accession in processed_accessions:
                         warnings.update(["duplicate"])
                         break
 
                     # If this mmp accession has no taxonomic linage for some reason, skip it.
-                    if not mmp_id in lineage_map:
+                    if not accession in lineage_map:
                         warnings.update(["nolineage"])
                         break
 
                     # If taxonomic id is not in nodes.dmp, skip.
-                    if not lineage_map[mmp_id] in tax_ids:
+                    if not lineage_map[accession] in tax_ids:
                         warnings.update(["notax"])
                         break
 
@@ -129,32 +144,34 @@ def process_genomes(genome_dir, lineage_map, tax_ids):
                         warnings.update(["asterix"])
                         continue
 
-                    current_lineage = lineage_map[mmp_id]
+                    current_lineage = lineage_map[accession]
                     sys.stdout.write(
                         ">{index}_{id}_{lineage}\n{seq}\n".format(
-                            index=i, id=mmp_id, lineage=current_lineage, seq=seq
+                            index=i, id=accession, lineage=current_lineage, seq=seq
                         )
                     )
-                processed_mmp.add(mmp_id)
+                processed_accessions.add(accession)
     return warnings
 
-
-def process_mardb(ref, db, nodes, genomes):
+def process_mardb(ref, nodes, genomes):
     """
     Parse TSVs and reformat MarDB genomes to accommodate Kaiju FASTA
     reference requirements.
     """
-    lineage_map = parse_tsv(ref)
-    lineage_map = parse_tsv(db, db_map=lineage_map)
+    if args.ref:
+        lineage_map = parse_json(ref)
+    else:
+        exit("No JSON metadata specified (--ref)")
+    #lineage_map = parse_json(db, db_map=lineage_map)
     tax_ids = parse_nodes(nodes)
     warn = process_genomes(genomes, lineage_map, tax_ids)
     # Output simple statistic to stderr
     sys.stderr.write(
         (
-            "Warnings / Sequences removed:\nDuplicates: "
-            "{duplicates}\nAccessions with no taxonomic lineage: {no_lineage}\n"
-            "Accessions with no taxid in nodes.dmp: {no_tax}\n"
-            "Sequences with asterix: {asterix}\n"
+            "# Warnings / Sequences removed:\n"
+            "# Duplicates: {duplicates}\n"
+            "# Accessions with no taxid in nodes.dmp: {no_tax}\n"
+            "# Sequences with asterix: {asterix}\n"
         ).format(
             duplicates=warn["duplicate"],
             no_lineage=warn["nolineage"],
@@ -167,9 +184,9 @@ def process_mardb(ref, db, nodes, genomes):
 if __name__ == "__main__":
     p = argparse.ArgumentParser(description=__doc__,
             formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    p.add_argument("--ref", default="MarRef.tsv", help="MarRef TSV file path")
-    p.add_argument("--db", default="MarDB.tsv", help="MarDB TSV file path")
+    p.add_argument("--ref", default=False, help="Mar metadta JSON file path")
+    #p.add_argument("--db", default=False, help="MarDB TSV file path")
     p.add_argument("--nodes", default="nodes.dmp", help="NCBI nodes.dmp file path")
     p.add_argument("--genomes", default="genomes", help="genomes download directory")
     args = p.parse_args()
-    process_mardb(args.ref, args.db, args.nodes, args.genomes)
+    process_mardb(args.ref, args.nodes, args.genomes)
