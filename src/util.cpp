@@ -1,4 +1,4 @@
-/* This file is part of Kaiju, Copyright 2015-2021 Peter Menzel and Anders Krogh,
+/* This file is part of Kaiju, Copyright 2015-2022 Peter Menzel and Anders Krogh,
  * Kaiju is licensed under the GPLv3, see the file LICENSE. */
 
 #include "util.hpp"
@@ -9,7 +9,7 @@ extern "C" {
 
 void print_usage_header() {
 	fprintf(stderr, "Kaiju %s\n",KAIJUVERSION);
-	fprintf(stderr, "Copyright 2015-2021 Peter Menzel, Anders Krogh\n");
+	fprintf(stderr, "Copyright 2015-2022 Peter Menzel, Anders Krogh\n");
 	fprintf(stderr, "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>\n");
 	fprintf(stderr, "\n");
 }

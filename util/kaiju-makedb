@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# This file is part of Kaiju, Copyright 2015-2019 Peter Menzel and Anders Krogh
+# This file is part of Kaiju, Copyright 2015-2022 Peter Menzel and Anders Krogh
 # Kaiju is licensed under the GPLv3, see the file LICENSE.
 #
 SCRIPTDIR=$(dirname $0)
@@ -23,7 +23,7 @@ index_only=0
 usage() {
 	echo
 	echo kaiju-makedb
-	echo Copyright 2015-2020 Peter Menzel, Anders Krogh
+	echo Copyright 2015-2022 Peter Menzel, Anders Krogh
 	echo License GPLv3+: GNU GPL version 3 or later, http://gnu.org/licenses/gpl.html
 	echo
 	echo This program creates a protein reference database and index for Kaiju.

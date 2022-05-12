@@ -44,7 +44,7 @@ class Config {
 		unsigned int mismatches = 3; // in Greedy mode
 		unsigned int min_score = 65; // in Greedy mode
 		unsigned int seed_length = 7; // in Greedy mode
-		bool use_Evalue = false; // can only be used in Greedy mode
+		bool use_Evalue = true; // can only be used in Greedy mode
 		double min_Evalue = 0.01; // can only be used in Greedy mode
 		double db_length;
 

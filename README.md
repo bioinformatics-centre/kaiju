@@ -176,18 +176,13 @@ kaiju-multi -z 25 -t nodes.dmp -f kaiju_db.fmi -i sample1_R1.fastq,sample2_R1.fa
 The default run mode is **Greedy** with three allowed mismatches.
 The number of allowed mismatches can be changed using option `-e`.
 
+In Greedy mode, matches are filtered by a minimum length and score, but also by their E-value (similar to blastp), which can be adjusted with the option `-E`. The default value is 0.01.
+The cutoffs for minimum required match length and match score can be changed using the options `-m` (default: 11) and `-s` (default: 65).
+
 The run mode can be changed to **MEM** using option `-a`:
 ```
 kaiju -t nodes.dmp -f kaiju_db.fmi -i inputfile.fastq -a mem
 ```
-The cutoffs for minimum required match length and match score can be changed using the options `-m` (default: 11) and `-s` (default: 65).
-
-In Greedy mode, the option `-E` can be used to filter matches by E-value, similar to blastp.
-For example, a cutoff of 0.05 can be set by:
-```
-kaiju -t nodes.dmp -f kaiju_db.fmi -i inputfile.fastq -a greedy -e 5 -E 0.05
-```
-NB: The thresholds for minimum match length and score are still applied.
 
 If the input sequences are already protein sequences, use option `-p` to disable translation of the input.
 
