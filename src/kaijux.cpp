@@ -52,6 +52,9 @@ int main(int argc, char** argv) {
 										config->mode = MEM;
 										config->use_Evalue = false;
 									}
+									else if("greedy" == std::string(optarg)) {
+										config->mode = GREEDY;
+									}
 									else { std::cerr << "-a must be a valid mode.\n"; usage(argv[0]); }
 									break;
 								}
@@ -162,6 +165,7 @@ int main(int argc, char** argv) {
 	}
 	if(fmi_filename.length() == 0) { error("Please specify the location of the FMI file, using the -f option."); usage(argv[0]); }
 	if(in1_filename.length() == 0) { error("Please specify the location of the input file, using the -i option."); usage(argv[0]); }
+	if(config->use_Evalue && config->mode == MEM) { error("E-value calculation is only possible in Greedy run mode."); usage(argv[0]); }
 
 	if(verbose) {
 		std::cerr << "Parameters: \n";

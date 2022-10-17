@@ -74,8 +74,13 @@ int main(int argc, char** argv) {
 	while ((c = getopt(argc, argv, "a:hdpxXvn:m:e:E:l:t:f:i:j:s:z:o:")) != -1) {
 		switch (c)  {
 			case 'a': {
-									if("mem" == std::string(optarg)) config->mode = MEM;
-									else if("greedy" == std::string(optarg)) config->mode = GREEDY;
+									if("mem" == std::string(optarg)) {
+										config->mode = MEM;
+										config->use_Evalue = false;
+									}
+									else if("greedy" == std::string(optarg)) {
+										config->mode = GREEDY;
+									}
 									else { std::cerr << "-a must be a valid mode.\n"; usage(argv[0]); }
 									break;
 								}
@@ -195,17 +200,18 @@ int main(int argc, char** argv) {
 	if(fmi_filename.length() == 0) { error("Please specify the location of the FMI file, using the -f option."); usage(argv[0]); }
 	if(in1_filename.length() == 0) { error("Please specify the location of the input file, using the -i option."); usage(argv[0]); }
 	if(paired && config->input_is_protein) { error("Protein input only supports one input file."); usage(argv[0]); }
-	if(config->use_Evalue && config->mode != GREEDY ) { error("E-value calculation is only available in Greedy mode. Use option: -a greedy"); usage(argv[0]); }
+	if(config->use_Evalue && config->mode == MEM) { error("E-value calculation is only possible in Greedy run mode."); usage(argv[0]); }
 
-	if(debug) {
+	if(verbose) {
 		std::cerr << "Parameters: \n";
-		std::cerr << "  minimum match length: " << config->min_fragment_length << "\n";
-		std::cerr << "  minimum blosum62 score for matches: " << config->min_score << "\n";
-		std::cerr << "  seed length for greedy matches: " << config->seed_length << "\n";
-		if(config->use_Evalue)
-			std::cerr << "  minimum E-value: " << config->min_Evalue << "\n";
-		std::cerr << "  max number of mismatches within a match: "  << config->mismatches << "\n";
 		std::cerr << "  run mode: "  << ((config->mode==MEM) ? "MEM" : "Greedy") << "\n";
+		std::cerr << "  minimum match length: " << config->min_fragment_length << "\n";
+		if(config->mode==GREEDY) {
+			std::cerr << "  seed length: " << config->seed_length << "\n";
+			std::cerr << "  minimum blosum62 score for matches: " << config->min_score << "\n";
+			std::cerr << "  minimum E-value: " << config->min_Evalue << "\n";
+			std::cerr << "  max number of mismatches within a match: "  << config->mismatches << "\n";
+		}
 		std::cerr << "  input files 1: " << in1_filename << "\n";
 		if(in2_filename.length() > 0)
 			std::cerr << "  input files 2: " << in2_filename << "\n";
