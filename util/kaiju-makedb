@@ -153,7 +153,7 @@ set -e
 if [ $DL -eq 1 ]
 then
 	echo "${GREEN}Downloading taxdump.tar.gz${NC}"
-	wget -N -nv $wgetProgress ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz
+	wget -N -nv $wgetProgress http://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz
 fi
 [ -r taxdump.tar.gz ] || { echo Missing file taxdump.tar.gz; exit 1; }
 echo "${GREEN}Extracting taxdump.tar.gz${NC}"
