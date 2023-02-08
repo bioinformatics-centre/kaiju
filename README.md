@@ -1,9 +1,7 @@
 # Kaiju
 
-Authors:  
-Peter Menzel <pmenzel@gmail.com>   
-Anders Krogh <krogh@binf.ku.dk>   
-
+[![CI](https://github.com/bioinformatics-centre/kaiju/actions/workflows/ci.yaml/badge.svg)](https://github.com/bioinformatics-centre/kaiju/actions/workflows/ci.yaml)
+[![Kaiju](https://img.shields.io/conda/dn/bioconda/kaiju.svg?label=Bioconda )](https://anaconda.org/bioconda/kaiju)
 
 Kaiju is a program for the taxonomic classification of high-throughput sequencing
 reads, e.g., Illumina or Roche/454, from whole-genome sequencing of
@@ -15,6 +13,12 @@ The program is described in [Menzel, P. et al. (2016) Fast and sensitive taxonom
 Kaiju can be installed locally (see below) or used via a [web server](http://kaiju.binf.ku.dk/).
 
 See the release notes for all releases [here](http://kaiju.binf.ku.dk/index.html#releases).
+
+
+### Authors
+Peter Menzel <pmenzel@gmail.com>   
+Anders Krogh <krogh@binf.ku.dk>   
+
 
 ### License
 
