@@ -117,7 +117,7 @@ int main(int argc, char** argv) {
 	if(nodes_filename.length() == 0) { error("Please specify the location of the nodes.dmp file with the -t option."); usage(argv[0]); }
 	if(out_filename.length() == 0) { error("Please specify the name of the output file with the -o option."); usage(argv[0]); }
 	if(rank.length() == 0) { error("Please specify the rank (phylum, class, order, family, genus, or species) with the -r option."); usage(argv[0]); }
-	if(ranks_arg.length() > 0 && full_path) { error("Please use either option -r or -l, but not both of them."); usage(argv[0]); }
+	if(ranks_arg.length() > 0 && full_path) { error("Please use either option -p or -l, but not both of them."); usage(argv[0]); }
 	if(!(rank.compare("phylum")==0 || rank.compare("class")==0 || rank.compare("order")==0 || rank.compare("family")==0 || rank.compare("genus")==0 || rank.compare("species")==0)) {
 		error("Rank must be one of: phylum, class, order, family, genus, species."); usage(argv[0]);
 	}
