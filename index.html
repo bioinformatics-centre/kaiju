@@ -1,10 +1,306 @@
 <!DOCTYPE html>
-<html>
-<head>
-<meta http-equiv="Refresh" content="0; url=http://kaiju.binf.ku.dk/">
-</head>
-<body>
-<p>Please visit the <a href="http://kaiju.binf.ku.dk/">Kaiju website</a>.</p>
-</body>
-</html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+		<meta name="description" content="Kaiju is a program for sensitive taxonomic classification of high-throughput sequencing reads from metagenomic whole genome sequencing experiments.">
+		<link rel="icon" type="image/gif" href="/images/kaiju3_favicon.gif" />
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+    <title>Kaiju: Fast and sensitive taxonomic classification for metagenomics</title>
+  </head>
 
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+					<a id="home_banner" href="/">Home</a>
+					<a id="cloud_banner" href="https://kaiju.binf.ku.dk/server">Web Server</a>
+					<a id="forkme_banner" title="View source code on GitHub" href="https://github.com/bioinformatics-centre/kaiju">Source</a>
+
+					<img style="border:none" src="/images/kaiju3_header.gif"/>
+          <h2 id="project_tagline">Fast and sensitive taxonomic classification for metagenomics</h2>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+
+				<h3>About</h3>
+				<p>
+				<strong>Kaiju</strong> is a program for sensitive <strong>taxonomic classification</strong> of 
+				high-throughput sequencing reads from <strong>metagenomic whole genome sequencing or metatranscriptomics</strong>  experiments.
+				<p>
+				<p>Each sequencing read is assigned to a taxon in the NCBI taxonomy by comparing it to a <strong>reference database containing microbial and viral protein sequences</strong>.
+				By using protein-level classification, Kaiju achieves a higher sensitivity compared with methods based on nucleotide comparison.
+				</p>
+				<p>
+				Kaiju can use either the set of available complete genomes from NCBI <strong>RefSeq</strong> or the microbial subset of
+				the NCBI <strong>BLAST non-redundant protein database <em>nr</em></strong>, optionally also including fungi and microbial eukaryotes.
+				</p>
+				<p>
+				Reads are translated into amino acid sequences, which are then
+				searched in the database using a modified backward search on a
+				memory-efficient implementation of the Burrows-Wheeler transform, which
+				finds maximum exact matches (MEMs), optionally allowing mismatches in
+				the protein alignment.
+				</p>
+				<p>The search can process up to <strong>millions of reads
+					per minute</strong> using, for example, only 10 GB RAM with a reference database comprising 4821 complete microbial genomes.
+				</p>
+				<p>
+				Kaiju can also be used for querying any custom protein database without
+				taxonomic classification, using either protein or nucleotide queries.
+				</p>
+				<p>
+				Kaiju is described in <a href="http://www.nature.com/ncomms/2016/160413/ncomms11257/full/ncomms11257.html">Menzel, P. et al. (2016) Fast and sensitive taxonomic classification for metagenomics with Kaiju. <em>Nat. Commun.</em> 7:11257</a> (open access).
+				</p>
+				<p>The program can be downloaded for a local installation or can be accessed via a <a href="/server">web server</a>, where reads can be uploaded for 
+				online analysis.
+				</p>
+
+				<h3>Download</h3>
+				<p>The latest version of Kaiju's source code can be downloaded from <a href="https://github.com/bioinformatics-centre/kaiju">GitHub</a>
+				either as <a href="https://github.com/bioinformatics-centre/kaiju/archive/master.tar.gz">compressed archive</a> or by cloning the repository
+				via <code>git</code>:
+				</p>
+				<p><code>git clone https://github.com/bioinformatics-centre/kaiju.git</code></p>
+				<p>Please refer to the <a href="https://github.com/bioinformatics-centre/kaiju/blob/master/README.md">README</a> file for installation and usage instructions.
+				<p>The source code is available under the GNU General Public License 3.</p>
+
+
+			<h3 id="releases">Release notes</h3>
+			<h5>Version 1.9.2</h5>
+			<h6>2022-11-19</h6>
+			<ul>
+				<li>small bugfixes regarding using command line option <code>-a</code></li>
+				<li>statically linked Linux binaries are <a href="https://github.com/bioinformatics-centre/kaiju/releases/tag/v1.9.2">available on GitHub</a></li>
+			</ul>
+			<h5>Version 1.9.0</h5>
+			<h6>2022-05-12</h6>
+			<ul>
+				<li>set default E-value to 0.01 in Greedy mode</li>
+				<li>fix MAR databases downloads</li>
+				<li>fix RefSeq plasmid downloads</li>
+				<li>update RVDB-prot to v23.0</li>
+				<li>statically linked Linux binaries are <a href="https://github.com/bioinformatics-centre/kaiju/releases/tag/v1.9.0">available on GitHub</a></li>
+			</ul>
+			<h5>Version 1.8.2</h5>
+			<h6>2021-10-26</h6>
+			<ul>
+				<li>make downloading RefSeq genomes work again in <code>kaiju-makedb</code></li>
+				<li>statically linked Linux binaries are <a href="https://github.com/bioinformatics-centre/kaiju/releases/tag/v1.8.2">available on GitHub</a></li>
+			</ul>
+			<h5>Version 1.8.1</h5>
+			<h6>2021-10-13</h6>
+			<ul>
+				<li>update RVDB-prot to v22.0</li>
+				<li>use <code>curl</code> for downloading virus/plasmid sequences from RefSeq FTP server</li>
+				<li>statically linked Linux binaries are <a href="https://github.com/bioinformatics-centre/kaiju/releases/tag/v1.8.1">available on GitHub</a></li>
+			</ul>
+			<h5>2021-08-05</h5>
+			<ul>
+				<li>new <a href="http://kaiju.binf.ku.dk/server">web server</a> with updated databases and option for setting E-value</li>
+			</ul>
+			<h5>Version 1.8</h5>
+			<h6>2021-08-05</h6>
+			<ul>
+				<li>add <code>kaiju-multi</code></li>
+				<li>add option <code>-l</code> to kaiju2krona</li>
+				<li>update RVDB-prot to v21.0</li>
+				<li>better handling of downloading virus and plasmid sequences from RefSeq</li>
+				<li>statically linked Linux binaries are <a href="https://github.com/bioinformatics-centre/kaiju/releases/tag/v1.8.0">available on GitHub</a></li>
+			</ul>
+			<h5>Version 1.7.4</h5>
+			<h6>2020-11-04</h6>
+			<ul>
+				<li>update RVDB-prot to v20.0</li>
+				<li>fix bug in RefSeq download</li>
+				<li>statically linked Linux binaries are <a href="https://github.com/bioinformatics-centre/kaiju/releases/tag/v1.7.4">available on GitHub</a></li>
+			</ul>
+			<h5>Version 1.7.3</h5>
+			<h6>2020-01-16</h6>
+			<ul>
+				<li>update RVDB-prot to v17.0</li>
+				<li>add list with excluded accession numbers for NR database, based on <a href="https://genome.cshlp.org/content/early/2019/05/07/gr.245373.118.abstract">Breitwieser et al., 2019</a></li>
+				<li>add option -s to kaiju-mergeOutputs</li>
+				<li>statically linked Linux binaries are <a href="https://github.com/bioinformatics-centre/kaiju/releases/tag/v1.7.3">available on GitHub</a></li>
+			</ul>
+			<h5>Version 1.7.2</h5>
+			<h6>2019-07-12</h6>
+			<ul>
+				<li>fix download of virus genomes for source databases <code>viruses</code>, <code>refseq</code>, <code>progenomes</code></li>
+				<li>add source database <code>fungi</code>, which contains all fungi assemblies from NCBI RefSeq</li>
+				<li>statically linked Linux binaries are <a href="https://github.com/bioinformatics-centre/kaiju/releases/tag/v1.7.2">available on GitHub</a></li>
+			</ul>
+			<h5>Version 1.7.1</h5>
+			<h6>2019-06-27</h6>
+			<ul>
+				<li>update download of virus genomes for source databases <code>viruses</code>, <code>refseq</code>, <code>progenomes</code></li>
+				<li>statically linked Linux binaries are <a href="https://github.com/bioinformatics-centre/kaiju/releases/tag/v1.7.1">available on GitHub</a></li>
+			</ul>
+			<h5>Version 1.7.0</h5>
+			<h6>2019-04-28</h6>
+			<ul>
+				<li>replace <code>makeDB.sh</code> with <code>kaiju-makedb</code></li>
+				<li>replace <code>kaijuReport</code> with <a href="https://github.com/bioinformatics-centre/kaiju#creating-classification-summary"><code>kaiju2table</code></a></li>
+				<li>rename <code>addTaxonNames</code> to <code>kaiju-addTaxonNames</code></li>
+				<li>rename <code>mergeOutputs</code> to <code>kaiju-mergeOutputs</code></li>
+				<li>add <a href="https://rvdb-prot.pasteur.fr/">RVDB-prot</a> as reference database</li>
+				<li>statically linked Linux binaries are <a href="https://github.com/bioinformatics-centre/kaiju/releases/tag/v1.7.0">available on GitHub</a></li>
+			</ul>
+			<h5>Version 1.6.3</h5>
+			<h6>2018-10-01</h6>
+			<ul>
+				<li>new options for <code>makeDB.sh</code> to only download plasmids (<code>-l</code>) or viruses (<code>-v</code>)</li>
+				<li>extend list of downloaded files for viruses and plasmids in <code>makeDB.sh</code></li>
+				<li>updates to marDB</li>
+				<li>statically linked Linux binaries are <a href="https://github.com/bioinformatics-centre/kaiju/releases/tag/v1.6.3">available on GitHub</a></li>
+			</ul>
+				<h5>Version 1.6.2</h5>
+				<h6>2018-02-24</h6>
+				<ul>
+					<li>fixed crash of <code>makeDB.sh</code> on MacOS</li>
+					<li>statically linked Linux binaries are <a href="https://github.com/bioinformatics-centre/kaiju/releases/tag/v1.6.2">available on GitHub</a></li>
+				</ul>
+				<h5>Version 1.6.1</h5>
+				<h6>2018-02-16</h6>
+				<ul>
+					<li>fixed bug in MacOS compilation</li>
+					<li>statically linked Linux binaries are <a href="https://github.com/bioinformatics-centre/kaiju/releases/tag/v1.6.1">available on GitHub</a></li>
+				</ul>
+				<h5>Version 1.6.0</h5>
+				<h6>2018-01-09</h6>
+				<ul>
+					<li>changed default search parameters to Greedy mode with 3 allowed mismatches and enabled SEG filter (can be disabled with the new option <code>-X</code>)</li>
+					<li>E-value is calculated in Greedy mode and can be used as a threshold for classification using option <code>-E</code></li>
+					<li>Kaiju can now also open gzip-compressed FASTQ/A input files</li>
+					<li>the <a href="https://mmp.sfb.uit.no/">MarDB</a> database can be selected in <code>makeDB.sh</code> using option <code>-m</code>
+					<li>statically linked Linux binaries are <a href="https://github.com/bioinformatics-centre/kaiju/releases/tag/v1.6.0">available on GitHub</a></li>
+				</ul>
+				<h5>Version 1.5.0</h5>
+				<h6>2017-02-20</h6>
+				<ul>
+					<li>add accession numbers to database identifiers</li>
+					<li>Kaiju's long output format via option <code>-v</code> will now print the accession numbers of the matched database sequences in column 6</li>
+					<li><strong>Important:</strong> Kaiju 1.5.0 does not work with index files (<code>.fmi</code>) from previous versions and previous versions will not work with index files made with Kaiju 1.5.0</li>
+					<li>statically linked Linux binaries are <a href="https://github.com/bioinformatics-centre/kaiju/releases/tag/v1.5.0">available on GitHub</a></li>
+				</ul>
+				<h5>Version 1.4.5</h5>
+				<h6>2017-01-27</h6>
+				<ul>
+					<li>various small bug fixes and improvements</li>
+					<li>add option <code>-c lowest</code> to <code>mergeOutputs</code></li>
+					<li>add option <code>-p</code> to <code>kaijuReport</code> for printing the full taxon path in the report</li>
+					<li>add option <code>-l</code> to <code>kaijuReport</code> for selecting specific ranks for taxon path</li>
+					<li>statically linked Linux binaries are <a href="https://github.com/bioinformatics-centre/kaiju/releases/tag/v1.4.5">available on GitHub</a></li>
+				</ul>
+				<h5>Version 1.4.4</h5>
+				<h6>2016-10-31</h6>
+				<ul>
+					<li>add option <code>-p</code> to <code>makeDB.sh</code> for using the representative set from <a href="http://progenomes.embl.de/">proGenomes</a> as a reference database</li>
+					<li>add option <code>-r</code> to <code>makeDB.sh</code> for using RefSeq complete genomes as a reference database</li>
+					<li>remove default option in <code>makeDB.sh</code>. Now, one of the options <code>-r</code>, <code>-p</code>, <code>-n</code>, or <code>-e</code> has to be used.</li>
+					<li>add option for static linking</li>
+					<li>statically linked Linux binaries are <a href="https://github.com/bioinformatics-centre/kaiju/releases/tag/v1.4.4">available on GitHub</a></li>
+				</ul>
+				<h5>Version 1.4.3</h5>
+				<h6>2016-10-19</h6>
+				<ul>
+					<li>adjust <code>makeDB.sh</code> to the new folder structure of RefSeq genomes on the NCBI FTP server</li>
+					<li>increase precision of percentage numbers in <code>kaijuReport</code></li>
+				</ul>
+				<h5>Version 1.4.2</h5>
+				<h6>2016-09-03</h6>
+				<ul>
+					<li>change <code>makeDB.sh</code> and <code>convertNR</code> to accommodate the removal of GI numbers from the NCBI BLAST <em>nr</em> database</li>
+				</ul>
+				<h5>Version 1.4.1</h5>
+				<h6>2016-07-06</h6>
+				<ul>
+					<li>fix bug in calculation of percentage of unassigned reads in <code>kaijuReport</code></li>
+					<li>fix parsing of names of taxon ranks from nodes.dmp in <code>kaijuReport</code> and <code>addTaxonNames</code></li>
+				</ul>
+				<h5>Version 1.4</h5>
+				<h6>2016-05-17</h6>
+				<ul>
+					<li>add BLAST's SEG low complexity filter via option <code>-x</code></li>
+					<li>add option <code>-p</code> to <code>kaiju</code> for protein sequence input, which disables the translation from nucleotide to amino acids</li>
+					<li>add option <code>-e</code> to <code>makeDB.sh</code> for including proteins from fungi and microbial eukaryotes when using the <em>nr</em> database</li>
+					<li>add program <code>addTaxonNames</code> for extending the output file by taxon names or taxon paths</li>
+				</ul>
+				<h5>Version 1.3.1</h5>
+				<h6>2016-04-19</h6>
+				<ul>
+					<li>fix read name detection on PE reads for newer Illumina name standard</li>
+				</ul>
+				<h5>Version 1.3</h5>
+				<h6>2016-04-13</h6>
+				<ul>
+					<li>add <code>makeDB.sh</code> for downloading genomes and building reference database and Kaiju index</li>
+					<li>add <code>convertNR</code> for using the BLAST <em>nr</em> database</li>
+					<li>fix overflow bug for large DBs</li>
+					<li>improved file type detection</li>
+					<li>update README and minor cosmetic changes</li>
+					<li><a href="http://www.nature.com/ncomms/2016/160413/ncomms11257/full/ncomms11257.html">Paper published</a></li>
+				</ul>
+				<h5>2016-02-23</h5>
+				<ul>
+					<li><a href="http://kaiju.binf.ku.dk/server">web server</a> launched</li>
+				</ul>
+				<h5>Version 1.2</h5>
+				<h6>2016-01-11</h6>
+				<ul>
+					<li>update for Greedy mode, which is now approximately twice as fast without change of accuracy.</li>
+					<li>add <code>kaijup</code>, for searching protein queries against a protein database without taxonomy classification, so that the database names of best matches are printed.</li>
+				</ul>
+				<h5>Version 1.1</h5>
+				<h6>2015-12-18</h6>
+				<ul>
+					<li>new implementation of the FM-index, which improves query speed to the BWT.</li>
+					<li>the distance between suffix array checkpoints can be set using the <code>-e</code> option for <code>mkbwt</code>, which allows trading off database size vs speed. </li>
+					<li>MEM mode now only prints the matching sequence(s) in verbose mode instead of the full query sequence.</li>
+					<li>add <code>kaijux</code>, for searching translated reads against a protein database without taxonomy classification, so that the database names of best matches are printed.</li>
+				</ul>
+				<h5>Version 1.0.1</h5>
+				<h6>2015-11-24</h6>
+				<ul>
+					<li>add <code>kaijuReport</code></li>
+					<li>bugfix in <code>kaiju</code> for FASTA input files, which caused the last input line to be read twice</li>
+				</ul>
+				<h5>Version 1.0</h5>
+				<h6>2015-11-16</h6>
+				<ul>
+					<li>initial release</li>
+					<li>preprint paper on bioRxiv published</li>
+				</ul>
+
+				<p>Previous releases can be downloaded <a href="https://github.com/bioinformatics-centre/kaiju/releases">here</a>.</p>
+				<h3>Contact</h3>
+				<p>For questions, bug reports or more information about Kaiju, please contact <a href="mailto:pmenzel@gmail.com">Peter Menzel</a>. Bug reports can also be filed 
+				in GitHub's <a href="https://github.com/bioinformatics-centre/kaiju/issues">issue tracker</a>.
+
+				<h3>Citation</h3>
+				<p> 
+				<a href="http://www.nature.com/ncomms/2016/160413/ncomms11257/full/ncomms11257.html">Menzel P., Ng K.L., Krogh A. (2016) Fast and sensitive taxonomic classification for metagenomics with Kaiju. <em>Nat. Commun.</em> 7:11257</a>
+				</p>
+				<p>Read the <a href="https://naturemicrobiologycommunity.nature.com/users/10226-peter-menzel/posts/6200-from-metagenomics-of-hot-springs-to-bioinformatics-software-development" target="_black">behind the paper</a> post on Nature Microbiology Community.</p>
+				<p>
+				The program is being developed by Peter Menzel and Anders Krogh at the Bioinformatics Centre, a part of the 
+				<a href="http://www1.bio.ku.dk/binf/">Section for Computational and RNA Biology</a> at the <a href="http://www.ku.dk/english">University of Copenhagen</a>.
+				</p>
+
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">This page is maintained by <a href="https://github.com/pmenzel">pmenzel</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
