@@ -416,7 +416,7 @@ then
 	mkdir -p $DB
 	if [ $index_only -eq 0 ]
 	then
-		fname="U-RVDBv25.0-prot.fasta.xz"
+		fname="U-RVDBv26.0-prot.fasta.xz"
 		if [ $DL -eq 1 ]
 		then
 			echo Downloading RVDB
