@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+		<meta name="description" content="Kaiju is a program for sensitive taxonomic classification of high-throughput sequencing reads from metagenomic whole genome sequencing experiments.">
+		<link rel="icon" type="image/gif" href="images/kaiju3_favicon.gif" />
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+    <title>Kaiju: Fast and sensitive taxonomic classification for metagenomics</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+					<a id="home_banner" href="/">Home</a>
+					<a id="dl_banner" href="downloads.html">Download DBs</a>
+					<a id="cloud_banner" href="https://kaiju.binf.ku.dk/server">Web Server</a>
+					<a id="forkme_banner" title="View source code on GitHub" href="https://github.com/bioinformatics-centre/kaiju">Source</a>
+
+					<img style="border:none" src="images/kaiju3_header.gif"/>
+          <h2 id="project_tagline">Fast and sensitive taxonomic classification for metagenomics</h2>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+
+				<h3>Download pre-built indixes</h3>
+
+<p>Pre-built indixes for all reference databases are available for download. Each compressed archive contains the kaiju <code>.fmi</code> index file, as well as the corresponding <code>nodes.dmp</code> and <code>names.dmp</code> from the NCBI taxonomy.
+
+<table>
+  <thead>
+    <tr>
+      <th>Database</th>
+      <th>Date</th>
+      <th style="text-align: right">Archive size (GB)</th>
+      <th style="text-align: right">RAM needed (GB)</th>
+      <th>Download</th>
+    </tr>
+  </thead>
+  <tbody>
+		<tr><td><strong>nr</strong></td><td colspan="4">Subset of NCBI BLAST nr database containing Archaea, bacteria and viruses.</td></tr>
+		<tr><td></td>
+      <td>2023-05-10</td>
+      <td style="text-align: right">67</td>
+      <td style="text-align: right">177</td>
+      <td><a href="https://kaiju.binf.ku.dk/database/kaiju_db_nr_2023-05-10.tgz">.tgz</a></td>
+    </tr>
+		<tr><td><strong>nr_euk</strong></td><td colspan="4">Like nr, but additionally including fungi and microbial eukaryotes, see <a href="https://github.com/bioinformatics-centre/kaiju/blob/master/util/kaiju-taxonlistEuk.tsv">taxon list</a></td></tr>
+		<tr><td></td>
+      <td>2023-05-10</td>
+      <td style="text-align: right">82</td>
+      <td style="text-align: right">204</td>
+      <td><a href="https://kaiju.binf.ku.dk/database/kaiju_db_nr_euk_2023-05-10.tgz">.tgz</a></td>
+    </tr>
+		<tr><td><strong>refseq</strong></td><td colspan="4">Reference genomes of Archaea, bacteria, and viruses from NCBI RefSeq.</td></tr>
+		<tr><td></td>
+      <td>2023-05-10</td>
+      <td style="text-align: right">30</td>
+      <td style="text-align: right">87</td>
+      <td><a href="https://kaiju.binf.ku.dk/database/kaiju_db_refseq_2023-05-23.tgz">.tgz</a></td>
+    </tr>
+		<tr><td><strong>progenomes</strong></td><td colspan="4">Representative proteins from <a href="http://progenomes.embl.de/">proGenomes v3</a> + viruses from NCBI RefSeq</td></tr>
+		<tr><td></td>
+      <td>2023-05-10</td>
+      <td style="text-align: right">66</td>
+      <td style="text-align: right">102</td>
+      <td><a href="https://kaiju.binf.ku.dk/database/kaiju_db_progenomes_2023-05-25">.tgz</a></td>
+    </tr>
+		<tr><td><strong>fungi</strong></td><td colspan="4">Fungi + viruses from NCBI RefSeq</td></tr>
+		<tr><td></td>
+      <td>2023-05-10</td>
+      <td style="text-align: right">3.4</td>
+      <td style="text-align: right">5</td>
+      <td><a href="https://kaiju.binf.ku.dk/database/kaiju_db_fungi_2023-05-26.tgz">.tgz</a></td>
+    </tr>
+		<tr><td><strong>viruses</strong></td><td colspan="4">Viruses from NCBI RefSeq</td></tr>
+		<tr><td></td>
+      <td>2023-05-10</td>
+      <td style="text-align: right">0.25</td>
+      <td style="text-align: right">0.5</td>
+      <td><a href="https://kaiju.binf.ku.dk/database/kaiju_db_viruses_2023-05-26.tgz">.tgz</a></td>
+    </tr>
+		<tr><td><strong>plasmids</strong></td><td colspan="4">Viruses from NCBI RefSeq</td></tr>
+		<tr><td></td>
+      <td>2023-05-10</td>
+      <td style="text-align: right">1.4</td>
+      <td style="text-align: right">4</td>
+      <td><a href="https://kaiju.binf.ku.dk/database/kaiju_db_plasmids_2023-05-26.tgz">.tgz</a></td>
+    </tr>
+		<tr><td><strong>rvdb</strong></td><td colspan="4">Proteins from <a href="https://rvdb-prot.pasteur.fr/">RVDB-prot</a> v26</td></tr>
+		<tr><td></td>
+      <td>2023-05-10</td>
+      <td style="text-align: right">16</td>
+      <td style="text-align: right">75</td>
+      <td><a href="https://kaiju.binf.ku.dk/database/kaiju_db_rvdb_2023-05-26.tgz">.tgz</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Older databases are available <a href="http://kaiju.binf.ku.dk/server">at the web server page</a>.</p>
+
+</section>
+</div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">This page is maintained by <a href="https://github.com/pmenzel">pmenzel</a></p>
+      </footer>
+    </div>
+
+
+  </body>
+</html>
