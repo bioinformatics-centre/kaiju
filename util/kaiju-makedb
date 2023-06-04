@@ -23,10 +23,10 @@ index_only=0
 usage() {
 	echo
 	echo kaiju-makedb
-	echo Copyright 2015-2022 Peter Menzel, Anders Krogh
+	echo Copyright 2015-2023 Peter Menzel, Anders Krogh
 	echo License GPLv3+: GNU GPL version 3 or later, http://gnu.org/licenses/gpl.html
 	echo
-	echo This program creates a protein reference database and index for Kaiju.
+	echo This program creates a index for Kaiju for a reference database.
 	echo
 	echo Select one of the available source databases using option -s:
 	echo
@@ -38,9 +38,9 @@ usage() {
 	echo
 	echo  " nr_euk: nr and additionally including fungi and microbial eukaryotes"
 	echo
-	echo  " mar_ref, mar_db: individual marine reference databases or assembled genomes from the Marine Metagenomics Portal"
-	echo  " mar: combination of both MAR databases"
-	echo
+#	echo  " mar_ref, mar_db: individual marine reference databases or assembled genomes from the Marine Metagenomics Portal"
+#	echo  " mar: combination of both MAR databases"
+#	echo
 	echo  " fungi: All fungi genomes from NCBI RefSeq (any assembly status)."
 	echo
 	echo  " viruses: Viral genomes from NCBI RefSeq"
@@ -49,7 +49,7 @@ usage() {
 	echo
 	echo  " rvdb: Viral proteins from RVDB-prot"
 	echo
-	echo "For example: $0 -s nr will create the database file kaiju_db_nr.fmi"
+	echo "For example: $0 -s nr will create the kaiju index file kaiju_db_nr.fmi"
 	echo
 	echo Additional options:
 	echo
@@ -58,7 +58,7 @@ usage() {
 	echo
 	echo  "  --no-download   Do not download files, but use the existing files in the folder."
 	echo
-	echo  "  --index-only    Only create BWT and FMI from kaiju_db_*.faa files, implies --no-download."
+	echo  "  --index-only    Only create kaiju index from kaiju_db_*.faa files, implies --no-download."
 	echo
 }
 
