@@ -27,27 +27,23 @@
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
 
-				<h3>About</h3>
+				<h3>About Kaiju</h3>
 				<p>
-				<strong>Kaiju</strong> is a program for sensitive <strong>taxonomic classification</strong> of 
+				<strong>Kaiju</strong> is a program for fast and sensitive <strong>taxonomic classification</strong> of
 				high-throughput sequencing reads from <strong>metagenomic whole genome sequencing or metatranscriptomics</strong>  experiments.
 				<p>
-				<p>Each sequencing read is assigned to a taxon in the NCBI taxonomy by comparing it to a <strong>reference database containing microbial and viral protein sequences</strong>.
+				<p>Each sequencing read is assigned to a taxon in the NCBI taxonomy by comparing it to a <strong>reference protein database containing microbial and viral protein sequences</strong>.
 				By using protein-level classification, Kaiju achieves a higher sensitivity compared with methods based on nucleotide comparison.
 				</p>
 				<p>
-				Kaiju can use either the set of available complete genomes from NCBI <strong>RefSeq</strong> or the microbial subset of
+				Several reference protein databases can be used, such as complete genomes from NCBI <strong>RefSeq</strong> or the microbial subset of
 				the NCBI <strong>BLAST non-redundant protein database <em>nr</em></strong>, optionally also including fungi and microbial eukaryotes.
 				</p>
 				<p>
 				Reads are translated into amino acid sequences, which are then
 				searched in the database using a modified backward search on a
-				memory-efficient implementation of the Burrows-Wheeler transform, which
-				finds maximum exact matches (MEMs), optionally allowing mismatches in
-				the protein alignment.
-				</p>
-				<p>The search can process up to <strong>millions of reads
-					per minute</strong> using, for example, only 10 GB RAM with a reference database comprising 4821 complete microbial genomes.
+				memory-efficient implementation of the Burrows-Wheeler transform by finding
+				maximum exact matches (MEMs), optionally allowing mismatches.
 				</p>
 				<p>
 				Kaiju can also be used for querying any custom protein database without
@@ -56,11 +52,11 @@
 				<p>
 				Kaiju is described in <a href="http://www.nature.com/ncomms/2016/160413/ncomms11257/full/ncomms11257.html">Menzel, P. et al. (2016) Fast and sensitive taxonomic classification for metagenomics with Kaiju. <em>Nat. Commun.</em> 7:11257</a> (open access).
 				</p>
-				<p>The program can be downloaded for a local installation or can be accessed via a <a href="/server">web server</a>, where reads can be uploaded for 
+				<p>The program can be downloaded for a local installation or can be accessed via a <a href="https://kaiju.binf.ku.dk/server">web server</a>, where reads can be uploaded for 
 				online analysis.
 				</p>
 
-				<p>Pre-built kaiju indexes for various reference databases can <a href="downloads.html">be downloaded</a>.
+				<p>Pre-built kaiju indexes for various reference databases can also <a href="downloads.html">be downloaded</a>.
 				</p>
 
 				<h3>Download</h3>
@@ -114,7 +110,7 @@
 			<h6>2021-08-05</h6>
 			<ul>
 				<li>add <code>kaiju-multi</code></li>
-				<li>add option <code>-l</code> to kaiju2krona</li>
+				<li>add option <code>-l</code> to <code>kaiju2krona</code></li>
 				<li>update RVDB-prot to v21.0</li>
 				<li>better handling of downloading virus and plasmid sequences from RefSeq</li>
 				<li>statically linked Linux binaries are <a href="https://github.com/bioinformatics-centre/kaiju/releases/tag/v1.8.0">available on GitHub</a></li>
@@ -131,7 +127,7 @@
 			<ul>
 				<li>update RVDB-prot to v17.0</li>
 				<li>add list with excluded accession numbers for NR database, based on <a href="https://genome.cshlp.org/content/early/2019/05/07/gr.245373.118.abstract">Breitwieser et al., 2019</a></li>
-				<li>add option -s to kaiju-mergeOutputs</li>
+				<li>add option <code>-s</code> to <code>kaiju-mergeOutputs</code></li>
 				<li>statically linked Linux binaries are <a href="https://github.com/bioinformatics-centre/kaiju/releases/tag/v1.7.3">available on GitHub</a></li>
 			</ul>
 			<h5>Version 1.7.2</h5>
