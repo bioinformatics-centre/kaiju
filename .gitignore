@@ -9,6 +9,7 @@ kaiju2table
 kaiju-mergeOutputs
 kaiju-convertNR
 kaiju-addTaxonNames
+kaiju-convertRefSeq
 mkbwt
 mkfmi
 bin/

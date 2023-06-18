@@ -30,17 +30,13 @@ int main(int argc, char **argv) {
 
 	std::unordered_map<uint64_t,unsigned int> node2depth;
 	std::unordered_map<std::string,uint64_t> acc2taxid;
-	std::unordered_set<std::string> excluded_accessions;
 
 	std::string nodes_filename;
 	std::string merged_filename;
 	std::string list_filename;
 	std::string acc_taxid_filename;
-	std::string excluded_accession_filename;
-	std::string nr_filename;
 	std::string out_filename;
 
-	//uint64_t include_ids [3] = { 2, 2157, 10239 };  //Bacteria, Archaea, Viruses
 	std::unordered_set<uint64_t> include_ids;
 	bool verbose = false;
 	bool debug = false;
@@ -59,8 +55,6 @@ int main(int argc, char **argv) {
 				verbose = true; break;
 			case 'a':
 				addAcc = true; break;
-			case 'e':
-				excluded_accession_filename = optarg; break;
 			case 'l':
 				list_filename = optarg; break;
 			case 'm':
@@ -69,8 +63,6 @@ int main(int argc, char **argv) {
 				nodes_filename = optarg; break;
 			case 'g':
 				acc_taxid_filename = optarg; break;
-			case 'i':
-				nr_filename = optarg; break;
 			case 'o':
 				out_filename = optarg; break;
 			default:
@@ -142,7 +134,7 @@ int main(int argc, char **argv) {
 		list_file.close();
 	}
 
-	acc2taxid.reserve(400e6);
+	acc2taxid.reserve(300e6);
 
 	zstr::ifstream* acc_taxid_file = nullptr;
 	try {
@@ -156,32 +148,42 @@ int main(int argc, char **argv) {
 		if(line.length() == 0) { continue; }
 		try {
 			size_t start = line.find('\t',0);
-			size_t end = line.find("\t",start+1);
+			if((start = line.find('\t', 0)) == std::string::npos) {
+				std::cerr << "Error parsing line: " << line << std::endl;
+				continue;
+			}
 			//std::string acc = line.substr(start+1,end-start-1);
-			uint64_t taxid = strtoul(line.c_str() + end + 1,NULL,10);
+			if(line.substr(0, 3) != "WP_") {
+				continue;
+			}
+			uint64_t taxid = strtoul(line.c_str() + start + 1,NULL,10);
 			if(taxid == ULONG_MAX) {
 				std::cerr << "Found bad taxid number (out of range error) in line: " << line << std::endl;
+				continue;
+			}
+			if(taxid == 0) {
+				if(debug) std::cerr << "Taxon ID is zero in line: " << line << std::endl;
 				continue;
 			}
 			// check if taxon id is in nodes.dmp, otherwise check merged.dmp
 			if(nodes->count(taxid) == 0) {
 				if(merged->count(taxid) > 0) {
-					if(verbose) std::cerr << "Taxon ID " << taxid << " for accession " << line.substr(start+1,end-start-1) << " was replaced by " << merged->at(taxid) << "\n";
+					if(debug) std::cerr << "Taxon ID " << taxid << " for accession " << line.substr(0, start) << " was replaced by " << merged->at(taxid) << "\n";
 					taxid = merged->at(taxid);
 					if(nodes->count(taxid) == 0) {
 						if(verbose) std::cerr << "Taxon ID " << taxid << " was not found in nodes.dmp\n";
 					}
 					else {
-						acc2taxid.emplace(line.substr(start+1,end-start-1), taxid);
+						acc2taxid.emplace(line.substr(0, start-1), taxid);
 					}
 				}
 				else {
-					if(verbose) std::cerr << "Taxon ID " << taxid << " for accession " << line.substr(start+1,end-start-1) << " was not found in nodes.dmp and merged.dmp\n";
+					if(verbose) std::cerr << "Taxon ID " << taxid << " for accession " << line.substr(0, start) << " was not found in nodes.dmp and merged.dmp\n";
 				}
 			}
 			else { // taxid was found in nodes.dmp, so add accession to acc2taxid
 				//std::cerr << acc << "\t" << taxid << "\n";
-				acc2taxid.emplace(line.substr(start+1,end-start-1), taxid);
+				acc2taxid.emplace(line.substr(0, start), taxid);
 			}
 		}
 		catch(const std::invalid_argument& ia) {
@@ -193,99 +195,55 @@ int main(int argc, char **argv) {
 	}
 	delete acc_taxid_file;
 
-	if(excluded_accession_filename.length()>0) {
-		std::ifstream list_file;
-		list_file.open(excluded_accession_filename);
-		if(!list_file.is_open()) { error("Could not open file " + excluded_accession_filename); exit(EXIT_FAILURE); }
-		std::cerr << getCurrentTime() << " Reading excluded accessions from file " << excluded_accession_filename << std::endl;
-		std::string line;
-		while(getline(list_file, line)) {
-			if(line.length() == 0) { continue; }
-			excluded_accessions.emplace(line);
-		}
-	}
-
-	std::ifstream inputfile;
-	if(nr_filename.length()>0) {
-		inputfile.open(nr_filename);
-		if(!inputfile.is_open()) { error("Could not open file " + nr_filename); exit(EXIT_FAILURE); }
-	}
-
 	if(verbose) std::cerr << "Writing to file " << out_filename << std::endl;
 	std::ofstream out_file;
 	out_file.open(out_filename);
 	if(!out_file.is_open()) {  error("Could not open file " + out_filename + " for writing."); exit(EXIT_FAILURE); }
 
-	std::cerr << getCurrentTime() << " Processing NR file " << nr_filename << std::endl;
+	std::cerr << getCurrentTime() << " Processing STDIN " << std::endl;
 
 	bool skip = true;
 	bool first = true;
 	std::ostringstream output;
 	uint64_t outlinecount = 0;
-	std::set<uint64_t> ids;
-	while(getline(inputfile.is_open() ? inputfile : std::cin, line)){
+	while(getline(std::cin, line)){
 		if(line.length() == 0) { continue; }
 		if(line[0]=='>') {
-			std::string first_acc;
-			ids.clear();
 			if(debug) std::cerr << "processing line " << line << std::endl;
-			skip = false;
+			uint64_t tax_id = 0;
+			std::string acc = "";
+			skip = true;
 			size_t start = 1, end = 0;
-			while((end = line.find(' ',start)) != std::string::npos) {
+			// lookg for space
+			if((end = line.find(' ',start)) != std::string::npos) {
 				// acc is between start and end
-				std::string acc = line.substr(start, end - start);
-				if(excluded_accessions.count(acc) > 0) {
-					skip = true;
-					break;
-				}
+				acc = line.substr(start, end - start);
 				auto pos = acc2taxid.find(acc);
 				if(pos != acc2taxid.end() && pos->second > 0) {
-					if(addAcc && first_acc.empty()) { first_acc = acc; } // use first Accession that has taxon id as first part of DB identifier
 					if(debug) std::cerr << "Accession " << acc << " belongs to taxon id " << pos->second  << std::endl;
-					ids.insert(pos->second);
-				}
-				else if(verbose) { std::cerr << "Accession " << acc <<" was either not found in " << acc_taxid_filename << " or in " << nodes_filename << "\n"; }
-				//look for next ID
-				if((start = line.find("\x01",end+1)) == std::string::npos) { // no more entries
-					break;
+					tax_id =  pos->second;
+					uint64_t temp_id = tax_id;
+					while(nodes->count(temp_id) > 0 && temp_id != 1) {
+						if(include_ids.count(temp_id) > 0) {
+							skip = false;
+							break;
+						}
+						temp_id = nodes->at(temp_id);
+					}
 				}
 				else {
-					start++;
+					if(verbose) { std::cerr << "Accession " << acc <<" was not found in " << acc_taxid_filename << "\n"; }
 				}
-			}
-			if(skip) {
-				if(verbose) std::cerr << "Found excluded accession nr. on line " << line << "\n";
-				continue;
 			}
 
-			skip = true;
-			if(!ids.empty()) {
-				bool keep = false;
-				uint64_t lca = (ids.size()==1) ?  *(ids.begin()) : lca_from_ids(config, node2depth, ids);
-				if(debug) std::cerr << "LCA=" << lca << std::endl;
-				if(nodes->count(lca)==0) {
-					if(verbose) std::cerr << "Taxon ID " << lca << " not found in taxonomy!" << std::endl;
-					continue;
-				}
-				uint64_t id = lca;
-				while(nodes->count(id)>0 && id != 1) {
-					if(include_ids.count(id) > 0) {
-						keep = true;
-						break;
-					}
-					id = nodes->at(id);
-				}
-				if(keep) {
+			if(!skip) {
 					if(!first) { output << "\n";  } else { first = false; }
 					output << ">";
-					if(addAcc) output << first_acc << "_";
-					output << lca << "\n";
-					skip = false;
+					if(addAcc) output << acc << "_";
+					output << tax_id << "\n";
 					outlinecount++;
 				}
-				else if(debug) { std::cerr << "Skipping sequence starting with taxon id " << *(ids.begin()) << std::endl; }
-			}
-			else if(verbose) std::cerr << "Could not find any taxonomy id for line " << line << "\n";
+				else if(debug) { std::cerr << "Skipping sequence with header: " << line << std::endl; }
 		}
 		else {
 			if(!skip) {
@@ -304,8 +262,6 @@ int main(int argc, char **argv) {
 	}
 	output << std::endl;
 	out_file << output.str();
-	if(inputfile.is_open())
-		inputfile.close();
 	out_file.close();
 
 	std::cerr << getCurrentTime() << " Finished." << std::endl;
@@ -314,17 +270,16 @@ int main(int argc, char **argv) {
 
 void usage(char *progname) {
 	print_usage_header();
-	fprintf(stderr, "Usage:\n   %s -t nodes.dmp -m merged.dmp -g prot.accession2taxid [-i nr]\n", progname);
+	fprintf(stderr, "Usage:\n   %s -t nodes.dmp -m merged.dmp -g prot.accession2taxid \n", progname);
 	fprintf(stderr, "Mandatory arguments:\n");
 	fprintf(stderr, "   -t FILENAME   Name of nodes.dmp file.\n");
 	fprintf(stderr, "   -m FILENAME   Name of merged.dmp file.\n");
-	fprintf(stderr, "   -g FILENAME   Name of prot.accession2taxid file.\n");
+	fprintf(stderr, "   -g FILENAME   Name of prot.accession2taxid.FULL.gz file.\n");
 	fprintf(stderr, "   -o FILENAME   Name of output file.\n");
 	fprintf(stderr, "Optional arguments:\n");
-	fprintf(stderr, "   -a            Prefix taxon ID in database names with the first accession number per record.\n");
-	fprintf(stderr, "   -i FILENAME   Name of NR file. If this option is not used, then the program will read from STDIN.\n");
-	fprintf(stderr, "   -l FILENAME   Name of file with taxon IDs. Only records having one of these IDs as ancestor in the taxonomy will be used.\n");
-	fprintf(stderr, "   -e FILENAME   Name of file with accession numbers that will be excluded.\n");
+	fprintf(stderr, "   -a            Prefix taxon ID with the accession number.\n");
+	fprintf(stderr, "   -v            Verbose mode\n");
+	fprintf(stderr, "   -d            Debug mode\n");
 	exit(EXIT_FAILURE);
 }
 

@@ -32,6 +32,8 @@ usage() {
 	echo
 	echo  " refseq: bacterial, Archaeal and viral genomes in the NCBI RefSeq database with assembly status Complete"
 	echo
+	echo  " refseq_nr: proteins from bacteria, Archaea, viruses, fungi and microbial eukaryotes from the NCBI RefSeq non-redundant proteins collection"
+	echo
 	echo  " progenomes: proteins in the set of representative genomes from the proGenomes v3 database and viral genomes from NCBI RefSeq"
 	echo
 	echo  " nr: NCBI BLAST non-redundant protein database \"nr\", only Archaea, bacteria, and viruses"
@@ -129,7 +131,7 @@ command -v kaiju-mkbwt >/dev/null 2>/dev/null || { echo Error: kaiju-mkbwt not f
 command -v kaiju-convertNR >/dev/null 2>/dev/null || { echo Error: kaiju-convertNR not found in $PATH; exit 1; }
 
 [ -z "$DB" ] && { echo Error: Use option -s to select a source database; usage; exit 1; }
-[ "$DB" = "fungi" -o "$DB" = "mar" -o "$DB" = "mar_ref" -o "$DB" = "mar_db" -o "$DB" = "nr" -o "$DB" = "nr_euk" -o "$DB" = "refseq" -o "$DB" = "progenomes" -o "$DB" = "viruses" -o "$DB" = "plasmids" -o "$DB" = "rvdb" ] || { echo Error: $DB is not a valid source database; usage; exit 1; }
+[ "$DB" = "fungi" -o "$DB" = "mar" -o "$DB" = "mar_ref" -o "$DB" = "mar_db" -o "$DB" = "nr" -o "$DB" = "nr_euk" -o "$DB" = "refseq" -o "$DB" = "refseq_nr" -o "$DB" = "progenomes" -o "$DB" = "viruses" -o "$DB" = "plasmids" -o "$DB" = "rvdb" ] || { echo Error: $DB is not a valid source database; usage; exit 1; }
 
 if [ "$DB" = "mar" -o "$DB" = "mar_ref" -o "$DB" = "mar_db" ]
 then
@@ -330,6 +332,35 @@ then
 	echo Creating Borrows-Wheeler transform
 	kaiju-mkbwt -n $threadsBWT -e $exponentSA -a ACDEFGHIKLMNPQRSTVWY -o $DB/kaiju_db_$DB $DB/kaiju_db_$DB.faa
 	echo Creating FM-Index
+	kaiju-mkfmi $DB/kaiju_db_$DB
+fi
+#----------------------------------------------------------------------------------------------------------------------------------
+if [ "$DB" = "refseq_nr" ]
+then
+	mkdir -p $DB
+	if [ $DL -eq 1 ]
+	then
+		echo "Downloading nonredundant protein files"
+		for i in `seq 1 999`
+		do
+			if ! wget -P $DB/source -nc -nv 'https://ftp.ncbi.nlm.nih.gov/refseq/release/complete/complete.nonredundant_protein.'$i'.protein.faa.gz'
+			then 
+				break
+			fi
+		done
+		echo Downloading prot.accession2taxid.FULL.gz
+		wget -c -N -nv $wgetProgress -P $DB http://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/prot.accession2taxid.FULL.gz
+	fi
+	[ -r $DB/prot.accession2taxid.FULL.gz ] || { echo Missing file prot.accession2taxid.FULL.gz; exit 1; }
+	if [ $index_only -eq 0 ]
+	then
+		echo "Converting RefSeq non-redundant proteins to Kaiju database"
+		gunzip -c $DB/source/complete.nonredundant_protein.*.protein.faa.gz | kaiju-convertRefSeq -l $SCRIPTDIR/kaiju-taxonlistEuk.tsv -m merged.dmp -t nodes.dmp -g $DB/prot.accession2taxid.FULL.gz -a -o $DB/kaiju_db_$DB.faa 2>log
+	fi
+	[ -r $DB/kaiju_db_$DB.faa ] || { echo Missing file $DB/kaiju_db_$DB.faa; exit 1; }
+	echo Creating BWT from Kaiju database
+	kaiju-mkbwt -e $exponentSA_NR -n $threadsBWT -a ACDEFGHIKLMNPQRSTVWY -o $DB/kaiju_db_$DB $DB/kaiju_db_$DB.faa
+	echo Creating FM-index
 	kaiju-mkfmi $DB/kaiju_db_$DB
 fi
 #----------------------------------------------------------------------------------------------------------------------------------

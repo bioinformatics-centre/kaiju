@@ -34,9 +34,9 @@ LD_LIBS_STATIC = -Wl,--whole-archive -lpthread -lz -Wl,--no-whole-archive
 endif
 
 
-all: makefile kaiju kaiju-multi kaiju2krona kaiju-mergeOutputs kaiju2table kaijux kaijup kaiju-convertNR kaiju-addTaxonNames bwt/mkbwt
+all: makefile kaiju kaiju-multi kaiju2krona kaiju-mergeOutputs kaiju2table kaijux kaijup kaiju-convertNR kaiju-convertRefSeq kaiju-addTaxonNames bwt/mkbwt
 	mkdir -p ../bin
-	cp kaiju kaiju-multi kaijux kaijup kaiju2krona kaiju-mergeOutputs kaiju2table kaiju-convertNR kaiju-addTaxonNames ../util/kaiju-gbk2faa.pl ../util/kaiju-makedb ../util/kaiju-taxonlistEuk.tsv ../util/kaiju-excluded-accessions.txt ../util/kaiju-convertMAR.py ../bin/
+	cp kaiju kaiju-multi kaijux kaijup kaiju2krona kaiju-mergeOutputs kaiju2table kaiju-convertNR kaiju-convertRefSeq kaiju-addTaxonNames ../util/kaiju-gbk2faa.pl ../util/kaiju-makedb ../util/kaiju-taxonlistEuk.tsv ../util/kaiju-excluded-accessions.txt ../util/kaiju-convertMAR.py ../bin/
 	cp bwt/mkbwt ../bin/kaiju-mkbwt
 	cp bwt/mkfmi ../bin/kaiju-mkfmi
 
@@ -71,6 +71,8 @@ kaiju-addTaxonNames: makefile bwt/mkbwt kaiju-addTaxonNames.o util.o
 kaiju-convertNR: makefile bwt/mkbwt Config.o kaiju-convertNR.o util.o $(BLASTOBJS)
 	$(CXX) $(LDFLAGS) -o kaiju-convertNR kaiju-convertNR.o Config.o util.o $(BWTOBJS) $(BLASTOBJS) -lz
 
+kaiju-convertRefSeq: makefile bwt/mkbwt Config.o kaiju-convertRefSeq.o util.o $(BLASTOBJS)
+	$(CXX) $(LDFLAGS) -o kaiju-convertRefSeq kaiju-convertRefSeq.o Config.o util.o $(BWTOBJS) $(BLASTOBJS) -lz
 
 %.o : %.c
 	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
@@ -79,7 +81,7 @@ kaiju-convertNR: makefile bwt/mkbwt Config.o kaiju-convertNR.o util.o $(BLASTOBJ
 
 
 clean:
-	rm -f -v bwt/mkbwt bwt/mkfmi kaiju-multi kaiju kaijux kaijup kaiju2krona kaiju2table kaiju-mergeOutputs kaiju-convertNR kaiju-addTaxonNames ../bin/*
+	rm -f -v bwt/mkbwt bwt/mkfmi kaiju-multi kaiju kaijux kaijup kaiju2krona kaiju2table kaiju-mergeOutputs kaiju-convertNR kaiju-convertRefSeq kaiju-addTaxonNames ../bin/*
 	find . -name "*.o" -delete
 	$(MAKE) -C bwt/ clean
 
@@ -92,3 +94,4 @@ debug: CFLAGS = -g -O3 -Wall -Wno-uninitialized
 debug: all
 
 .PHONY: clean debug static
+
