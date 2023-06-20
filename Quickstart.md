@@ -2,7 +2,7 @@
 
 ## Installation
 
-Kaiju can be downloaded and compiled [from source](https://github.com/bioinformatics-centre/kaiju#downloading-and-compiling-kaiju),
+Kaiju can be downloaded and compiled [from source](https://github.com/bioinformatics-centre/kaiju#compiling-kaiju-from-source),
 or easily installed via the [bioconda channel](https://anaconda.org/bioconda/kaiju):
 
 ```
@@ -11,9 +11,9 @@ conda install -c bioconda kaiju
 
 ## Obtaining a Kaiju index
 
-Kaiju requires a index file created from a reference database of protein sequences.
+Kaiju requires an index file created from a reference database of protein sequences.
 
-You can either [create a such an index locally](https://github.com/bioinformatics-centre/kaiju#creating-the-reference-database-and-index) or
+You can either [create such an index locally](https://github.com/bioinformatics-centre/kaiju#creating-the-kaiju-index) or
 [download a pre-built index](https://bioinformatics-centre.github.io/kaiju/downloads.html).
 
 For example, to download the Kaiju index for the NCBI BLAST nr database, download the index file with
@@ -42,12 +42,12 @@ kaiju -t nodes.dmp -f kaiju_db_nr.fmi -i sequencing_reads.fastq.gz
 
 For paired-end reads use:
 ```
-kaiju -t nodes.dmp -f kaiju_db_nr.fmi -i sequencing_reads_R1.fastq.gz -j sequencing_reads_R2.fastq
+kaiju -t nodes.dmp -f kaiju_db_nr.fmi -i sequencing_reads_R1.fastq.gz -j sequencing_reads_R2.fastq.gz
 ```
 
 Note: The reads must be in the same order in both files!
 
-Kaiju can read input files in FASTQ and FASTA format, which may be gzip-compressed.
+Kaiju can read input files in FASTQ or FASTA format, which may be gzip-compressed.
 
 By default, Kaiju will print the output to the terminal (STDOUT).
 The output can also be written to a file using the `-o` option:
