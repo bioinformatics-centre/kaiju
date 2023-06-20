@@ -22,7 +22,7 @@ Anders Krogh <krogh@binf.ku.dk>
 
 ### License
 
-Copyright (c) 2015-2022 Peter Menzel and Anders Krogh
+Copyright (c) 2015-2023 Peter Menzel and Anders Krogh
 
 Kaiju is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -38,8 +38,9 @@ You should have received a copy of the GNU General Public License
 along with the source code.  If not, see <http://www.gnu.org/licenses/>.
 
 
-## Downloading and compiling Kaiju
-Kaiju can be downloaded directly from GitHub either as a
+## Installation
+### Compiling Kaiju from source
+Kaiju's source code can be downloaded directly from GitHub either as a
 [compressed archive](https://github.com/bioinformatics-centre/kaiju/archive/master.tar.gz) or
 using the git command line client:
 ```
@@ -60,14 +61,22 @@ make
 ```
 
 After compilation, Kaiju's executable files are available in the `kaiju/bin` directory.
-You can add this directory to your shell's `$PATH` variable or copy the files to a directory in your PATH.
+You can add this directory to your shell's `$PATH` variable or copy all files from `kaiju/bin` to a directory in your `$PATH`.
 
-## Creating the reference database and index
+### Installation via Bioconda
+
+Kaiju is also available via the `bioconda` channel and can be installed via
+```
+conda install -c bioconda kaiju
+# or
+mamba install -c bioconda kaiju
+```
+
+## Creating the Kaiju index
 
 Before classification of reads, Kaiju's database index needs to be built from
 the reference protein database.  You can either create a local index based on
-the currently available data from GenBank, or download one of the indexes used
-by the [Kaiju web server](http://kaiju.binf.ku.dk/).
+the currently available reference databases, or [download a pre-built index](https://bioinformatics-centre.github.io/kaiju/downloads.html).
 
 For creating a local index, the program `kaiju-makedb` in the `bin/` directory
 will download a source database and the taxonomy files from the NCBI FTP server,
@@ -76,8 +85,8 @@ Burrows-Wheeler transform and the FM-index) in one go.
 
 `kaiju-makedb` needs `curl` and `wget` for downloading the reference databases.
 
-The downloaded files are several GB in size.
-It is therefore recommended to run the program in a directory with at least 500 GB of free space.
+The downloaded files can be very large, depending on the selected reference database.
+It is therefore recommended to run `kaiju-makedb` in a directory with at least 500 GB of free space.
 
 Example usage:
 ```
@@ -88,9 +97,9 @@ kaiju-makedb -s <DB>
 The table below lists the available source databases.
 Use the database name shown in the first column as argument to option `-s` in `kaiju-makedb`.
 The last column denotes the required memory for running Kaiju with the
-respective database and for creating the database (in brackets).
+respective index and for creating the index (in brackets).
 
-| Option | Description | Sequences<sup>\*</sup> | RAM in GB (makedb)<sup>\*</sup> |
+| Index name | Description | Sequences<sup>\*</sup> | RAM in GB (makedb)<sup>\*</sup> |
 | --- | --- | --- | --- |
 | `refseq` | Completely assembled and annotated reference genomes of Archaea, Bacteria, and viruses from the NCBI RefSeq database. |  127 M |  87 (112) |
 | `refseq_nr` | Sequences for Archaea, Bacteria, viruses and microbial eukaryotes from the NCBI RefSeq non-redundant protein collection. |  210 M |  116 (194) |
@@ -167,7 +176,7 @@ Kaiju can use multiple parallel threads, which can be specified with the `-z` op
 kaiju -z 25 -t nodes.dmp -f kaiju_db.fmi -i inputfile.fastq -o kaiju.out
 ```
 
-**kaiju-multi**  
+### kaiju-multi
 While `kaiju` can only process one input, `kaiju-multi` can take a comma-separated list of input files (and optionally output files) for processing multiple samples at once:
 ```
 kaiju-multi -z 25 -t nodes.dmp -f kaiju_db.fmi -i sample1_R1.fastq,sample2_R1.fastq,sample3_R1.fastq -j sample1_R2.fastq,sample2_R2.fastq,sample3_R2.fastq  -o sample1.out,sample2.out,sample3.out
