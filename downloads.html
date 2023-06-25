@@ -34,6 +34,8 @@
 <p>See the <a href="https://github.com/bioinformatics-centre/kaiju/blob/master/Quickstart.md" target="_blank">Quickstart guide</a> for instructions on installing Kaiju and running it with a downloadable index. 
 The <a href="https://github.com/bioinformatics-centre/kaiju" target="_blank">README</a> contains more detailed information about the program and the databases.
 </p>
+<p>Files are hosted on Amazon AWS S3 storage through the <a href="https://aws.amazon.com/opendata/open-data-sponsorship-program/" target="_blank">Open Data Sponsorship Program</a>.
+</p>
 
 <table>
   <thead>
@@ -42,7 +44,7 @@ The <a href="https://github.com/bioinformatics-centre/kaiju" target="_blank">REA
       <th>Date</th>
       <th style="text-align: right">Archive size (GB)</th>
       <th style="text-align: right">RAM needed (GB)</th>
-      <th>Download</th>
+      <th>HTTPS URL</th>
     </tr>
   </thead>
   <tbody>
@@ -52,7 +54,7 @@ The <a href="https://github.com/bioinformatics-centre/kaiju" target="_blank">REA
       <td>2023-05-10</td>
       <td style="text-align: right">67</td>
       <td style="text-align: right">177</td>
-      <td><a href="https://kaiju.binf.ku.dk/database/kaiju_db_nr_2023-05-10.tgz">.tgz</a></td>
+      <td><a href="https://kaiju-idx.s3.eu-central-1.amazonaws.com/2023/kaiju_db_nr_2023-05-10.tgz">.tgz</a></td>
     </tr>
 		<tr><td><strong>nr_euk</strong></td><td colspan="4">Like nr, but additionally including fungi and microbial eukaryotes, see <a href="https://github.com/bioinformatics-centre/kaiju/blob/master/util/kaiju-taxonlistEuk.tsv">taxon list</a></td></tr>
 		<tr>
@@ -60,7 +62,7 @@ The <a href="https://github.com/bioinformatics-centre/kaiju" target="_blank">REA
       <td>2023-05-10</td>
       <td style="text-align: right">82</td>
       <td style="text-align: right">204</td>
-      <td><a href="https://kaiju.binf.ku.dk/database/kaiju_db_nr_euk_2023-05-10.tgz">.tgz</a></td>
+      <td><a href="https://kaiju-idx.s3.eu-central-1.amazonaws.com/2023/kaiju_db_nr_euk_2023-05-10.tgz">.tgz</a></td>
     </tr>
 		<tr><td><strong>refseq</strong></td><td colspan="4">Reference genomes of Archaea, bacteria, and viruses from NCBI RefSeq.</td></tr>
 		<tr>
@@ -68,7 +70,7 @@ The <a href="https://github.com/bioinformatics-centre/kaiju" target="_blank">REA
       <td>2023-05-10</td>
       <td style="text-align: right">30</td>
       <td style="text-align: right">87</td>
-      <td><a href="https://kaiju.binf.ku.dk/database/kaiju_db_refseq_2023-05-23.tgz">.tgz</a></td>
+      <td><a href="https://kaiju-idx.s3.eu-central-1.amazonaws.com/2023/kaiju_db_refseq_2023-05-23.tgz">.tgz</a></td>
     </tr>
     <tr><td><strong>refseq_nr</strong></td><td colspan="4">Protein sequences from Archaea, bacteria, viruses, and microbial eukaryotes from NCBI RefSeq non-redundant protein collection.</td></tr>
     <tr>
@@ -76,42 +78,42 @@ The <a href="https://github.com/bioinformatics-centre/kaiju" target="_blank">REA
       <td>2023-06-17</td>
       <td style="text-align: right">49</td>
       <td style="text-align: right">116</td>
-      <td><a href="https://kaiju.binf.ku.dk/database/kaiju_db_refseq_nr_2023-06-17.tgz">.tgz</a></td>
+      <td><a href="https://kaiju-idx.s3.eu-central-1.amazonaws.com/2023/kaiju_db_refseq_nr_2023-06-17.tgz">.tgz</a></td>
     </tr>
 		<tr><td><strong>progenomes</strong></td><td colspan="4">Representative proteins from <a href="http://progenomes.embl.de/">proGenomes v3</a> + viruses from NCBI RefSeq</td></tr>
 		<tr><td></td>
       <td>2023-05-10</td>
       <td style="text-align: right">66</td>
       <td style="text-align: right">102</td>
-      <td><a href="https://kaiju.binf.ku.dk/database/kaiju_db_progenomes_2023-05-25">.tgz</a></td>
+      <td><a href="https://kaiju-idx.s3.eu-central-1.amazonaws.com/2023/kaiju_db_progenomes_2023-05-25">.tgz</a></td>
     </tr>
 		<tr><td><strong>fungi</strong></td><td colspan="4"><a href="https://ftp.ncbi.nlm.nih.gov/refseq/release/fungi/">Fungi</a> + <a href="https://ftp.ncbi.nlm.nih.gov/refseq/release/viral/">virus</a> sequences from NCBI RefSeq</td></tr>
 		<tr><td></td>
       <td>2023-05-10</td>
       <td style="text-align: right">3.4</td>
       <td style="text-align: right">5</td>
-      <td><a href="https://kaiju.binf.ku.dk/database/kaiju_db_fungi_2023-05-26.tgz">.tgz</a></td>
+      <td><a href="https://kaiju-idx.s3.eu-central-1.amazonaws.com/2023/kaiju_db_fungi_2023-05-26.tgz">.tgz</a></td>
     </tr>
 		<tr><td><strong>viruses</strong></td><td colspan="4"><a href="https://ftp.ncbi.nlm.nih.gov/refseq/release/viral/">Virus sequences</a> from NCBI RefSeq</td></tr>
 		<tr><td></td>
       <td>2023-05-10</td>
       <td style="text-align: right">0.25</td>
       <td style="text-align: right">0.5</td>
-      <td><a href="https://kaiju.binf.ku.dk/database/kaiju_db_viruses_2023-05-26.tgz">.tgz</a></td>
+      <td><a href="https://kaiju-idx.s3.eu-central-1.amazonaws.com/2023/kaiju_db_viruses_2023-05-26.tgz">.tgz</a></td>
     </tr>
 		<tr><td><strong>plasmids</strong></td><td colspan="4"><a href="https://ftp.ncbi.nlm.nih.gov/refseq/release/plasmid/">Plasmid sequences</a> from NCBI RefSeq</td></tr>
 		<tr><td></td>
       <td>2023-05-10</td>
       <td style="text-align: right">1.4</td>
       <td style="text-align: right">4</td>
-      <td><a href="https://kaiju.binf.ku.dk/database/kaiju_db_plasmids_2023-05-26.tgz">.tgz</a></td>
+      <td><a href="https://kaiju-idx.s3.eu-central-1.amazonaws.com/2023/kaiju_db_plasmids_2023-05-26.tgz">.tgz</a></td>
     </tr>
 		<tr><td><strong>rvdb</strong></td><td colspan="4">Proteins from <a href="https://rvdb-prot.pasteur.fr/">RVDB-prot</a> v26.0</td></tr>
 		<tr><td></td>
       <td>2023-05-10</td>
       <td style="text-align: right">16</td>
       <td style="text-align: right">75</td>
-      <td><a href="https://kaiju.binf.ku.dk/database/kaiju_db_rvdb_2023-05-26.tgz">.tgz</a></td>
+      <td><a href="https://kaiju-idx.s3.eu-central-1.amazonaws.com/2023/kaiju_db_rvdb_2023-05-26.tgz">.tgz</a></td>
     </tr>
   </tbody>
 </table>
