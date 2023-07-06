@@ -34,7 +34,9 @@ usage() {
 	echo
 	echo  " refseq_nr: proteins from bacteria, Archaea, viruses, fungi and microbial eukaryotes from the NCBI RefSeq non-redundant proteins collection"
 	echo
-	echo  " progenomes: proteins in the set of representative genomes from the proGenomes v3 database and viral genomes from NCBI RefSeq"
+	echo  " refseq_ref: proteins from bacteria, Archaea from the NCBI RefSeq representative assemblies + viral proteins from NCBI RefSeq"
+	echo
+	echo  " progenomes: proteins in the set of representative genomes from the proGenomes v3 database and viral proteins from NCBI RefSeq"
 	echo
 	echo  " nr: NCBI BLAST non-redundant protein database \"nr\", only Archaea, bacteria, and viruses"
 	echo
