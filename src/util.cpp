@@ -9,7 +9,7 @@ extern "C" {
 
 void print_usage_header() {
 	fprintf(stderr, "Kaiju %s\n",KAIJUVERSION);
-	fprintf(stderr, "Copyright 2015-2022 Peter Menzel, Anders Krogh\n");
+	fprintf(stderr, "Copyright 2015-2023 Peter Menzel, Anders Krogh\n");
 	fprintf(stderr, "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>\n");
 	fprintf(stderr, "\n");
 }
