@@ -323,9 +323,9 @@ files (which also have to be of same length).  In the case of conflicting taxon
 identifiers for a classified read in both input files, `kaiju-mergeOutputs` will use the identifier found in the
 first input file (specified by `-i`).  This behavior can be changed using the
 `-c` option, which can take four possible values:
-- `1`: use taxon identifier from the first input file (default)
-- `2`: use taxon identifier from the second input file
-- `lca`: use the least common ancestor of the taxon identifiers from both files.
+- `1`: use taxon identifier from the first input file.
+- `2`: use taxon identifier from the second input file.
+- `lca`: use the least common ancestor of the taxon identifiers from both files (default).
 - `lowest`: use the lowest ranking of the two taxon identifiers if they are within the same lineage. Otherwise use the LCA.
 
 Options `lca` and `lowest` require the path to the file `nodes.dmp` by using the `-t` option.
