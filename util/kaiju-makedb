@@ -300,8 +300,8 @@ then
 		echo "Downloading nonredundant protein files"
 		for i in `seq 1 999`
 		do
-			if ! wget -P $DB/source -nc -nv 'https://ftp.ncbi.nlm.nih.gov/refseq/release/complete/complete.nonredundant_protein.'$i'.protein.faa.gz'
-			then 
+			if ! wget -P $DB/source -nc -nv 'https://ftp.ncbi.nlm.nih.gov/refseq/release/complete/complete.wp_protein.'$i'.protein.faa.gz'
+			then
 				break
 			fi
 		done
@@ -312,7 +312,7 @@ then
 	if [ $index_only -eq 0 ]
 	then
 		echo "Converting RefSeq non-redundant proteins to Kaiju database"
-		gunzip -c $DB/source/complete.nonredundant_protein.*.protein.faa.gz | kaiju-convertRefSeq -l $SCRIPTDIR/kaiju-taxonlistEuk.tsv -m merged.dmp -t nodes.dmp -g $DB/prot.accession2taxid.FULL.gz -a -o $DB/kaiju_db_$DB.faa 2>log
+		gunzip -c $DB/source/complete.wp_protein.*.protein.faa.gz | kaiju-convertRefSeq -l $SCRIPTDIR/kaiju-taxonlistEuk.tsv -m merged.dmp -t nodes.dmp -g $DB/prot.accession2taxid.FULL.gz -a -o $DB/kaiju_db_$DB.faa 2>log
 	fi
 	[ -r $DB/kaiju_db_$DB.faa ] || { echo Missing file $DB/kaiju_db_$DB.faa; exit 1; }
 	echo Creating BWT from Kaiju database
