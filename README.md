@@ -10,8 +10,6 @@ reference database of protein sequences from microbial and viral genomes.
 
 The program is described in [Menzel, P. et al. (2016) Fast and sensitive taxonomic classification for metagenomics with Kaiju. *Nat. Commun.* 7:11257](http://www.nature.com/ncomms/2016/160413/ncomms11257/full/ncomms11257.html) (open access).
 
-Kaiju can be installed locally (see below) or used via a [web server](http://kaiju.binf.ku.dk/).
-
 See the release notes for all releases [here](https://bioinformatics-centre.github.io/kaiju/index.html#releases).
 
 
