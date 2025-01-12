@@ -99,18 +99,18 @@ respective index and for creating the index (in brackets).
 
 | Index name | Description | Sequences<sup>\*</sup> | RAM in GB (makedb)<sup>\*</sup> |
 | --- | --- | --- | --- |
-| `refseq` | Completely assembled and annotated reference genomes of Archaea, Bacteria, and viruses from the NCBI RefSeq database. |  127 M |  87 (112) |
-| `refseq_nr` | Sequences for Archaea, Bacteria, viruses and microbial eukaryotes from the [NCBI RefSeq non-redundant protein collection](https://www.ncbi.nlm.nih.gov/refseq/about/nonredundantproteins/). |  210 M |  116 (194) |
-| `refseq_ref` | Protein sequences from representative assemblies of Archaea and bacteria from NCBI RefSeq plus viruses from NCBI RefSeq. |  69 M |  49 (63) |
-| `progenomes` |  Representative set of genomes from the [proGenomes](http://progenomes.embl.de/) database and viruses from the NCBI RefSeq database. |  141 M | 102 (120) |
-| `viruses` |  Only viruses from the NCBI RefSeq database. | 0.65 M | 0.5  (0.5) |
-| `plasmids` |  Plasmid sequences from the NCBI RefSeq database. |  5.6 M | 4 (5) |
-| `fungi` |  [Fungi](ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/fungi) sequences from the NCBI RefSeq database. |  5.2 M | 5 (6.5) |
-| `nr` | Subset of NCBI BLAST _nr_ database containing all proteins belonging to Archaea, bacteria and viruses. |  283 M | 177 (308) |
-| `nr_euk` | Like option `-s nr` and additionally include proteins from fungi and microbial eukaryotes, see taxon list in `bin/kaiju-taxonlistEuk.tsv`. | 321 M | 204 (354) |
-| `rvdb` | Protein sequences from [RVDB-prot](https://rvdb-prot.pasteur.fr/) |  34 M | 75 (215) |
+| `refseq` | Completely assembled and annotated reference genomes of Archaea, Bacteria, and viruses from the NCBI RefSeq database. | 164 M | 111 (144) |
+| `refseq_nr` | Sequences for Archaea, Bacteria, viruses and microbial eukaryotes from the [NCBI RefSeq non-redundant protein collection](https://www.ncbi.nlm.nih.gov/refseq/about/nonredundantproteins/). | 276 M | 153  (263) |
+| `refseq_ref` | Protein sequences from representative assemblies of Archaea and bacteria from NCBI RefSeq plus viruses from NCBI RefSeq. |  76.9 M | 54 (70) |
+| `progenomes` |  Representative set of genomes from the [proGenomes v3](http://progenomes.embl.de/) database and viruses from the NCBI RefSeq database. | 141 M | 102 (120) |
+| `viruses` |  Only viruses from the NCBI RefSeq database. | 0.68 M | 0.5 (0.6) |
+| `plasmids` |  Plasmid sequences from the NCBI RefSeq database. |  7 M | 4 (6) |
+| `fungi` |  [Fungi](ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/fungi) sequences from the NCBI RefSeq database. | 6.5 M | 6 (9) |
+| `nr` | Subset of NCBI BLAST _nr_ database containing all proteins belonging to Archaea, bacteria and viruses. |   353 M | 219 (491) |
+| `nr_euk` | Like option `-s nr` and additionally include proteins from fungi and microbial eukaryotes, see taxon list in `bin/kaiju-taxonlistEuk.tsv`. |  397 M | 250 (432) |
+| `rvdb` | Protein sequences from [RVDB-prot](https://rvdb-prot.pasteur.fr/) | 39 M | 86 (253) |
 
-\* as of Mai 2023.
+\* as of late 2024.
 
 Pre-built indexes for each reference database can be [downloaded](https://bioinformatics-centre.github.io/kaiju/downloads.html).
 
