@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
 	// --------------------- START ------------------------------------------------------------------
 	// Read command line params
 	int c;
-	while ((c = getopt(argc, argv, "a:hdxvn:m:e:E:l:f:i:s:z:o:")) != -1) {
+	while ((c = getopt(argc, argv, "a:hdxXvn:m:e:E:l:f:i:s:z:o:")) != -1) {
 		switch (c)  {
 			case 'a': {
 									if("mem" == std::string(optarg)) {
@@ -65,6 +65,8 @@ int main(int argc, char** argv) {
 				verbose = true; break;
 			case 'x':
 				config->SEG = true; break;
+			case 'X':
+				config->SEG = false; break;
 			case 'o':
 				output_filename = optarg; break;
 			case 'f':
