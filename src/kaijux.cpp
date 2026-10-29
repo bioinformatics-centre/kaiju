@@ -173,6 +173,7 @@ int main(int argc, char** argv) {
 		std::cerr << "Parameters: \n";
 		std::cerr << "  run mode: "  << ((config->mode==MEM) ? "MEM" : "Greedy") << "\n";
 		std::cerr << "  minimum match length: " << config->min_fragment_length << "\n";
+		std::cerr << "  SEG low complexity filter: " << ((config->SEG) ? "enabled" : "disabled") << "\n";
 		if(config->mode==GREEDY) {
 		std::cerr << "  seed length: " << config->seed_length << "\n";
 			std::cerr << "  minimum blosum62 score for matches: " << config->min_score << "\n";
@@ -182,6 +183,10 @@ int main(int argc, char** argv) {
 		std::cerr << "  input file 1: " << in1_filename << "\n";
 		if(in2_filename.length() > 0)
 			std::cerr << "  input file 2: " << in2_filename << "\n";
+		if(output_filename.length() > 0)
+			std::cerr << "  output file: " << output_filename << std::endl;
+		else
+			std::cerr << "  output to STDOUT" << std::endl;
 	}
 
 	config->debug = debug;

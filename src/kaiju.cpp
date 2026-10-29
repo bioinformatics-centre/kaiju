@@ -205,6 +205,7 @@ int main(int argc, char** argv) {
 		std::cerr << "Parameters: \n";
 		std::cerr << "  run mode: "  << ((config->mode==MEM) ? "MEM" : "Greedy") << "\n";
 		std::cerr << "  minimum match length: " << config->min_fragment_length << "\n";
+		std::cerr << "  SEG low complexity filter: " << ((config->SEG) ? "enabled" : "disabled") << "\n";
 		if(config->mode==GREEDY) {
 			std::cerr << "  seed length: " << config->seed_length << "\n";
 			std::cerr << "  minimum blosum62 score for matches: " << config->min_score << "\n";
