@@ -20,7 +20,7 @@ Anders Krogh <krogh@binf.ku.dk>
 
 ### License
 
-Copyright (c) 2015-2024 Peter Menzel and Anders Krogh
+Copyright (c) 2015-2026 Peter Menzel and Anders Krogh
 
 Kaiju is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -99,18 +99,18 @@ respective index and for creating the index (in brackets).
 
 | Index name | Description | Sequences<sup>\*</sup> | RAM in GB (makedb)<sup>\*</sup> |
 | --- | --- | --- | --- |
-| `refseq` | Completely assembled and annotated reference genomes of Archaea, Bacteria, and viruses from the NCBI RefSeq database. | 164 M | 111 (144) |
-| `refseq_nr` | Sequences for Archaea and Bacteria from the [NCBI RefSeq non-redundant protein collection](https://www.ncbi.nlm.nih.gov/refseq/about/nonredundantproteins/) + viruses from the NCBI RefSeq database. | 276 M | 153  (263) |
-| `refseq_ref` | Protein sequences from representative assemblies of Archaea and bacteria from NCBI RefSeq plus viruses from NCBI RefSeq. |  76.9 M | 54 (70) |
+| `refseq` | Completely assembled and annotated reference genomes of Archaea, Bacteria, and viruses from the NCBI RefSeq database. | 242 M | 185 (242) |
+| `refseq_nr` | Sequences for Archaea and Bacteria from the [NCBI RefSeq non-redundant protein collection](https://www.ncbi.nlm.nih.gov/refseq/about/nonredundantproteins/) + viruses from the NCBI RefSeq database. | 401 M | 222  (383) |
+| `refseq_ref` | Protein sequences from representative assemblies of Archaea and bacteria from NCBI RefSeq plus viruses from NCBI RefSeq. |  94 M | 66 (80) |
 | `progenomes` |  Representative set of genomes from the [proGenomes v3](http://progenomes.embl.de/) database and viruses from the NCBI RefSeq database. | 141 M | 102 (120) |
-| `viruses` |  Only viruses from the NCBI RefSeq database. | 0.68 M | 0.5 (0.6) |
-| `plasmids` |  Plasmid sequences from the NCBI RefSeq database. |  7 M | 4 (6) |
-| `fungi` |  [Fungi](ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/fungi) sequences from the NCBI RefSeq database. | 6.5 M | 6 (9) |
+| `viruses` |  Only viruses from the NCBI RefSeq database. | 0.71 M | 0.5 (0.6) |
+| `plasmids` |  Plasmid sequences from the NCBI RefSeq database. |  11 M | 6 (8) |
+| `fungi` |  [Fungi](ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/fungi) sequences from the NCBI RefSeq database. | 7 M | 7 (9) |
 | `nr` | Subset of NCBI BLAST _nr_ database containing all proteins belonging to Archaea, bacteria and viruses. |   353 M | 219 (491) |
 | `nr_euk` | Like option `-s nr` and additionally include proteins from fungi and microbial eukaryotes, see taxon list in `bin/kaiju-taxonlistEuk.tsv`. |  397 M | 250 (432) |
-| `rvdb` | Protein sequences from [RVDB-prot](https://rvdb-prot.pasteur.fr/) | 39 M | 86 (253) |
+| `rvdb` | Protein sequences from [RVDB-prot](https://rvdb-prot.pasteur.fr/) | 41 M | 88 (261) |
 
-\* as of late 2024.
+\* as of late 2024 (`nr`, `nr_euk`, `progenomes`) or 2026 (others)
 
 Pre-built indexes for each reference database can be [downloaded](https://bioinformatics-centre.github.io/kaiju/downloads.html).
 
